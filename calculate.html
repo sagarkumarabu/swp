@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toilet Cubicle Partition Calculator</title>
+    <link rel="stylesheet" href="cstyle.css">
+</head>
+<body>
+<div class="container">
+ <button><a href="index.html">hpl calculate</a></button>
+    <h1> Cubicle Partition calculator</h1>
+    <div class="layout-grid">
+        <div class="input-panel">
+            <!-- Input Section -->
+            <div class="form-group">
+                <label for="numStalls">Select Item</label>
+              <select name="item" id="item">
+                    <option value="item1">CUBICLE</option>
+                    <option value="item2">URINAL</option>
+                    <OPTION value="item3">LOCKER</OPTION>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="wall">wall</label>
+                <select name="wall" id="wall">
+                    <option value="l">Lwall</option>
+                    <option value="c">Cwall</option>
+                </select>
+            </div>
+        
+            <div class="form-group">
+                <label for="numStalls">Number of cubicle</label>
+                <input type="number" id="numStalls" value="4" min="1" max="20">
+            </div>
+              <div class="form-group">
+                <label for="totalwidth">Area width (mm)</label>
+                <input type="number" id="totalwidth" value="2000" min="1000">
+            </div>
+            <div class="form-group">
+                <label for="dividerHeight">Divider height (mm)</label>
+                <input type="number" id="dividerHeight" value="1790" min="1000">
+            </div>
+             <div class="form-group">
+                <label for="depth">Divider Depth (mm)</label>
+                <input type="number" id="depth" value="1500" min="500">
+            </div>
+             <div class="form-group">
+                <label for="doorHeight">Door Height (mm)</label>
+                <input type="number" id="doorHeight" value="1790" min="1000">
+            </div>
+             <div class="form-group">
+                <label for="doorWidth"> Door  Width (mm)</label>
+                <input type="number" id="doorWidth" value="600" min="400">
+            </div>
+            <div class="form-group">
+                <label for="pilasterHeight">Pilaster Height (mm)</label>
+                <input type="number" id="pilasterHeight" value="1830" min="1000">
+            </div>
+        </div>
+        <!-- Output Section -->
+        <div class="output-panel">
+            <div id="errorBox" class="alert-error"></div>
+            
+            <div class="results-panel" id="resultsPanel">
+                <div class="results-title">Calculated Requirements</div>
+                
+                <!-- Component Counts -->
+                <div class="kpi-row">
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="countDividers">0</div>
+                        <div class="kpi-lbl">Dividers</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="countPilasters">0</div>
+                        <div class="kpi-lbl">Pilasters</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="countDoors">0</div>
+                        <div class="kpi-lbl">Doors</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="endwall">0</div>
+                        <div class="kpi-lbl">End Wall</div>
+                    </div>
+                </div>
+
+                <!-- Cutting Sizes -->
+                <div class="matrix-box">
+                    <h3>🔍 Component Sizing Matrix</h3>
+                    <ul>
+                        <li id="sizeDividers"> Dividers: -</li>
+                        <li id="sizeDoors">Front Doors: -</li>
+                        <li id="sizePilasters">Front Pilasters: -</li>
+                        <li id="sizeEndwalls">End Walls: -</li>
+                        <li id="sizeCubicleWidth">Each Cubicle Width: -</li>
+                    </ul>
+                </div>
+                <!-- Material Purchasing Estimates -->
+                <div class="order-box">
+                    <h3>📦 Material Order Summary</h3>
+                    <ul>
+                        <li>Net Panel Surface Area: <span id="netArea">0.00</span> m²</li>
+                        <li>Gross Area (incl. waste): <span id="grossArea">0.00</span> m²</li>
+                        <li>Exact Volumetric Run: <span id="rawSheets">0.00</span> Boards</li>
+                        <li style="margin-top:8px; list-style-type:none;">
+                            <strong>FINAL SHEET ORDER: </strong> 
+                            <span id="finalOrder" class="order-highlight">0 Boards</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<canvas id="resultsCanvas">
+</canvas>
+<script>
+    const itemSelect = document.getElementById('item');
+    const wallSelect = document.getElementById('wall');
+    const numStallsInput = document.getElementById('numStalls');
+    const totalWidthInput = document.getElementById('totalwidth');
+    const dividerHeightInput = document.getElementById('dividerHeight');
+    const depthInput = document.getElementById('depth');
+    const doorHeightInput = document.getElementById('doorHeight');
+    const doorWidthInput = document.getElementById('doorWidth');
+    const pilasterHeightInput = document.getElementById('pilasterHeight');
+    const resultPanel = document.getElementById('resultsPanel');
+    const errorBox = document.getElementById('errorBox');
+    const netAreaEl = document.getElementById('netArea');
+    const grossAreaEl = document.getElementById('grossArea');
+    const rawSheetsEl = document.getElementById('rawSheets');
+    const finalOrderEl = document.getElementById('finalOrder');
+
+    const availablesheets = [
+      { name: "12 x 6 feet", width: 3670, height: 1860 },
+      { name: "14 x 6 feet", width: 4300, height: 1830 }
+    ];
+
+    function init() {
+        if (itemSelect && wallSelect && numStallsInput && totalWidthInput && dividerHeightInput && depthInput && doorHeightInput && doorWidthInput && pilasterHeightInput) {
+            itemSelect.addEventListener('change', calculate);
+            wallSelect.addEventListener('change', calculate);
+            numStallsInput.addEventListener('input', calculate);
+            totalWidthInput.addEventListener('input', calculate);
+            dividerHeightInput.addEventListener('input', calculate);
+            depthInput.addEventListener('input', calculate);
+            doorHeightInput.addEventListener('input', calculate);
+            doorWidthInput.addEventListener('input', calculate);
+            pilasterHeightInput.addEventListener('input', calculate);
+        }
+
+        if (resultPanel) {
+            resultPanel.style.display = 'none';
+        }
+        if (errorBox) {
+            errorBox.style.display = 'none';
+        }
+
+        calculate();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    function showError(message) {
+        if (errorBox) {
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+        if (resultPanel) {
+            resultPanel.style.display = 'none';
+        }
+    }
+
+    function hideError() {
+        if (errorBox) {
+            errorBox.style.display = 'none';
+            errorBox.textContent = '';
+        }
+    }
+
+    function calculate() {
+        if (!itemSelect || !wallSelect || !numStallsInput || !totalWidthInput || !dividerHeightInput || !depthInput || !doorHeightInput || !doorWidthInput || !pilasterHeightInput) {
+            return;
+        }
+
+        const item = itemSelect.value;
+        const wallType = wallSelect.value;
+        const numStalls = parseInt(numStallsInput.value, 10);
+        const totalWidth = parseFloat(totalWidthInput.value);
+        const dividerHeight = parseFloat(dividerHeightInput.value);
+        const depth = parseFloat(depthInput.value);
+        const doorHeight = parseFloat(doorHeightInput.value);
+        const doorWidth = parseFloat(doorWidthInput.value);
+        const pilasterHeight = parseFloat(pilasterHeightInput.value);
+
+        if (isNaN(numStalls) || isNaN(totalWidth) || isNaN(dividerHeight) || isNaN(depth) || isNaN(doorHeight) || isNaN(doorWidth) || isNaN(pilasterHeight)) {
+            showError('Please enter valid numeric values for all fields.');
+            return;
+        }
+
+        if (numStalls < 1 || totalWidth < 1000 || dividerHeight < 1000 || depth < 500 || doorHeight < 1000 || doorWidth < 400 || pilasterHeight < 1000) {
+            showError('Please ensure all values meet the minimum requirements.');
+            return;
+        }
+
+        hideError();
+
+        const cubicleWidth = totalWidth / numStalls;
+        const countDividers = Math.max(0, numStalls - 1);
+        const countDoors = numStalls;
+        const countPilasters = numStalls + 1;
+        const endWalls = wallType === 'c' ? 0 : 1;
+
+        const dividerArea = countDividers * dividerHeight * depth;
+        const doorArea = countDoors * doorHeight * doorWidth;
+        const pilasterArea = countPilasters * pilasterHeight * depth;
+        const endwallArea = endWalls * dividerHeight * depth;
+        const netArea = (dividerArea + doorArea + pilasterArea + endwallArea) / 1_000_000;
+        const wasteFactor = 1.10;
+        const grossArea = netArea * wasteFactor;
+
+        const sheetOptions = availablesheets.map(sheet => {
+            const sheetArea = (sheet.width * sheet.height) / 1_000_000;
+            return {
+                sheet,
+                boards: Math.ceil(grossArea / sheetArea),
+                sheetArea
+            };
+        });
+
+        const bestSheet = sheetOptions.reduce((best, option) => {
+            if (!best || option.boards < best.boards || (option.boards === best.boards && option.sheetArea > best.sheetArea)) {
+                return option;
+            }
+            return best;
+        }, null);
+
+        document.getElementById('countDividers').textContent = countDividers;
+        document.getElementById('countPilasters').textContent = countPilasters;
+        document.getElementById('countDoors').textContent = countDoors;
+        document.getElementById('endwall').textContent = endWalls;
+
+        document.getElementById('sizeDividers').textContent = `Dividers: ${dividerHeight}mm x ${depth}mm`;
+        document.getElementById('sizeDoors').textContent = `Front Doors: ${doorHeight}mm x ${doorWidth}mm`;
+        document.getElementById('sizePilasters').textContent = `Front Pilasters: ${pilasterHeight}mm x ${depth}mm`;
+        document.getElementById('sizeEndwalls').textContent = `End Walls: ${dividerHeight}mm x ${depth}mm`;
+        document.getElementById('sizeCubicleWidth').textContent = `Each Cubicle Width: ${cubicleWidth.toFixed(0)}mm`;
+
+        if (netAreaEl) netAreaEl.textContent = netArea.toFixed(2);
+        if (grossAreaEl) grossAreaEl.textContent = grossArea.toFixed(2);
+        if (rawSheetsEl) rawSheetsEl.textContent = bestSheet ? `${bestSheet.boards}` : '0.00';
+        if (finalOrderEl) {
+            finalOrderEl.textContent = bestSheet ? `${bestSheet.boards} x ${bestSheet.sheet.name}` : '0 Boards';
+        }
+
+        if (resultPanel) {
+            resultPanel.style.display = 'block';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+    function drawResults() {
+        const canvas = document.getElementById('resultsCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Placeholder for future visualizations
+        }
+    }
+</script>
+
+</body>
+</html>
