@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+          body {
+            background-color: black;
+            font-family: Arial, sans-serif;
+            margin: 20px;}    
+           #logo {
+                border-radius: 50%;
+            }
+    </style>
+</head>
+<body>
+    <table id="myTable" border="2px">
+        <tr>
+          <th>Item</th>  
+            <th>Width</th>
+            <th>Height</th>
+            <th>Quantity</th>
+            <th>action</th>
+        </tr>
+   <tr>
+    <td><select name="" id="item">
+        <option value="item1">door</option>
+        <option value="item2">plaster</option>
+        <option value="item3">divider</option>
+        <option value="item4">urinal</option>
+        <option value="item5">endwall</option>
+    </select></td>
+    <td><input type="number" id="width" placeholder="Width"></td>
+    <td><input type="number" id="height" placeholder="Height"></td>
+    <td><input type="number" id="quantity" placeholder="Quantity"></td>
+    <td><button onclick="deleteRow(this)">Delete</button></td>
+   </tr> </table>
+    <button id="addRow" onclick="addrow()">Add Row</button>
+      <button id="add" onclick="calculate()">calculate</button><br>
+      <image src="logo.png" alt="Logo" height="100" id="logo"></image>
+    <span id="output"></span>
+    <canvas id="canvas" width="300" height="200" 
+    style="border:1px solid #ccc; display:block; margin-top:20px;"></canvas>
+    <script>
+        document.getElementById('add').addEventListener('click', function() {
+            const item = document.getElementById('item').value;
+            const width = document.getElementById('width').value;
+            const height = document.getElementById('height').value;
+            const quantity = document.getElementById('quantity').value;
+        });
+        
+        function calculate() {
+            const item = document.getElementById('item').value;
+            const width = parseFloat(document.getElementById('width').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            const area = width * height * quantity;
+            document.getElementById('output').textContent = 
+            `Total Area for ${item}: ${area} square units`;
+            drawSheet("12 x 6 feet", width, height, quantity, item);
+        }
+        function addrow() {
+            const table = document.getElementById('myTable');
+            const newRow = table.insertRow();
+            const cell1 = newRow.insertCell(0);
+            const cell2 = newRow.insertCell(1);
+            const cell3 = newRow.insertCell(2);
+            const cell4 = newRow.insertCell(3);
+            const cell5 = newRow.insertCell(4);
+
+            cell1.innerHTML = `<select name="" id="item">
+                <option value="item1">door</option>
+                <option value="item2">plaster</option>
+                <option value="item3">divider</option>
+                <option value="item4">urinal</option>
+                <option value="item5">endwall</option>
+            </select>`;
+            cell2.innerHTML = '<input type="number" placeholder="Width">';
+            cell3.innerHTML = '<input type="number" placeholder="Height">';
+            cell4.innerHTML = '<input type="number" placeholder="Quantity">';
+            cell5.innerHTML = '<button onclick="deleteRow(this)">Delete</button>';
+        }
+      deleteRow = (button) => {
+        const row = button.parentNode.parentNode;
+        row.parentNode.removeChild(row); }
+        const availablesheets = {
+            "12 x 6 feet": { width: 3670, height: 1860 },
+            "14 x 6 feet": { width: 4300, height: 1860 }
+        };
+        drawSheet = (sheet, panelWidth, panelHeight, quantity, itemName) => {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const sheetWidth = availablesheets[sheet].width;
+            const sheetHeight = availablesheets[sheet].height;
+            
+            // Clear canvas
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw sheet border
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            const scale = Math.min(canvas.width / sheetWidth, canvas.height / sheetHeight) * 0.9;
+            ctx.strokeRect(10, 10, sheetWidth * scale, sheetHeight * scale);
+            
+            // Draw panels on sheet
+            let x = 20;
+            let y = 20;
+            ctx.fillStyle = '#bbdefb';
+            ctx.strokeStyle = '#0d47a1';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < quantity; i++) {
+                const panelX = x + i * (panelWidth * scale + 5);
+                const panelY = y;
+                
+                // Check if we need to wrap to next row
+                if (panelX + panelWidth * scale > canvas.width - 10) {
+                    x = 20;
+                    y += panelHeight * scale + 10;
+                }
+                
+                ctx.fillRect(x, y, panelWidth * scale, panelHeight * scale);
+                ctx.strokeRect(x, y, panelWidth * scale, panelHeight * scale);
+                
+                // Draw text label
+                ctx.fillStyle = '#000000';
+                ctx.font = '10px Arial';
+                ctx.fillText(itemName, x + 5, y + 15);
+                ctx.fillText(panelWidth + 'x' + panelHeight, x + 5, y + 27);
+                ctx.fillStyle = '#bbdefb';
+                
+                x += panelWidth * scale + 10;
+            }
+        };
+    </script>
+
+
+</body>
+</html>

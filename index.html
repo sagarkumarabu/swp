@@ -35,10 +35,11 @@
             <tr>
                 <td><select class="item-name" onchange="setDefaultDimensions(this)">
                     <option value="door">Door</option>
-                    <option value="plaster">Plaster</option>
+                    <option value="plaster">Midpanel</option>
                     <option value="divider">Divider</option>
                     <option value="urinal">Urinal</option>
                     <option value="endwall">Endwall</option>
+                    <option value="endpanel">Endpanel</option>
                 </select></td>
                 <td><input type="number" value="600" class="item-w"></td>
                 <td><input type="number" value="1790" class="item-h"></td>
@@ -83,7 +84,7 @@ function addRow() {
     const row = `<tr>
         <td><select class="item-name" onchange="setDefaultDimensions(this)">
             <option value="door">Door</option>
-            <option value="plaster">Plaster</option>
+            <option value="plaster">Midpanel</option>
             <option value="divider">Divider</option>
             <option value="urinal">Urinal</option>
             <option value="endwall">Endwall</option>
@@ -98,10 +99,11 @@ function addRow() {
 
 const ITEM_DEFAULT_DIMENSIONS = {
     door: { w: 600, h: 1790 },
-    plaster: { w: 600, h: 1830 },
+    plaster: { w: 400, h: 1830 },
     divider: { w: 1500, h: 1790 },
     urinal: { w: 450, h: 900 },
-    endwall: { w: 200, h: 1830 }
+    endwall: { w: 200, h: 1830 },
+    endpanel: { w: 200, h: 1830 }
 };
 
 function setDefaultDimensions(select) {
@@ -259,7 +261,8 @@ function packItemsIndividually(items, stockInventory, kerf) {
     let sortedStock = [...stockInventory].sort((a, b) => (a.w * a.h) - (b.w * b.h));
     let itemsToPack = items.map(p => ({ ...p }));
 
-    for (let item of itemsToPack) {
+    for (let itemIndex = 0; itemIndex < itemsToPack.length; itemIndex++) {
+        let item = itemsToPack[itemIndex];
         let packed = false;
 
         for (let sheet of sheets) {
@@ -270,16 +273,17 @@ function packItemsIndividually(items, stockInventory, kerf) {
         }
 
         if (!packed) {
-            let matchedStock = null;
-            for (let stock of sortedStock) {
+            let candidateStocks = sortedStock.filter(stock => {
                 let fitsNormal = item.w <= stock.w && item.h <= stock.h;
                 let fitsRotated = item.h <= stock.w && item.w <= stock.h;
-                if (fitsNormal || fitsRotated) {
-                    matchedStock = stock;
-                    break;
-                }
-            }
-            if (!matchedStock) return null;
+                return fitsNormal || fitsRotated;
+            });
+            if (candidateStocks.length === 0) return null;
+
+            const remainingItems = itemsToPack.slice(itemIndex);
+            let matchedStock = candidateStocks.find(stock =>
+                canPackItemsOnSingleSheet(remainingItems, stock, kerf)
+            ) || candidateStocks[0];
 
             let newSheet = {
                 stock: matchedStock,
@@ -295,6 +299,21 @@ function packItemsIndividually(items, stockInventory, kerf) {
         }
     }
     return sheets;
+}
+
+function canPackItemsOnSingleSheet(items, stock, kerf) {
+    const tempSheet = {
+        stock,
+        placedItems: [],
+        freeRects: [{ x: 0, y: 0, w: stock.w, h: stock.h }]
+    };
+
+    for (let item of items.map(p => ({ ...p }))) {
+        if (!tryPlaceOnSheetFreeRects(tempSheet, item, kerf)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function tryPlaceOnSheetFreeRects(sheet, item, kerf) {
@@ -387,9 +406,11 @@ function splitFreeRectangles(freeRect, usedRect) {
 
     return rects.filter(r => r.w > 0 && r.h > 0);
 }
+
 function rectContains(a, b) {
     return a.x <= b.x && a.y <= b.y && a.x + a.w >= b.x + b.w && a.y + a.h >= b.y + b.h;
 }
+
 function pruneFreeRectangles(rects) {
     const result = [...rects];
     for (let i = result.length - 1; i >= 0; i--) {
@@ -402,6 +423,7 @@ function pruneFreeRectangles(rects) {
     }
     return result;
 }
+
 function drawSheetDiagram(canvas, sheet, scale, kerf = 2) {
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = "#f5f5f5";
