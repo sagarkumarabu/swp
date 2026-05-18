@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> Cubicle Partition Calculator</title>
-    <link rel="stylesheet" href="cstyle.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+
 <div class="container">
- <button><a href="index.html">hpl calculate</a></button>
-    <h1> Cubicle Partition calculator</h1>
+     <button><a href="index.html">hpl calculate</a></button>
+    <h3> Cubicle Partition calculator</h3>
     <div class="layout-grid">
         <div class="input-panel">
             <!-- Input Section -->
@@ -119,7 +121,7 @@
         </div>
     </div>
 </div>
-<div class="order-box" id="sheetLayoutPanel" style="display:none;">
+<div  id="sheetLayoutPanel" class="container" >
                     <h3>📐 Cut Sheet Layout</h3>
                     <p>Sheets required: <strong id="layoutSheets">0</strong></p>
                     <div id="sheetSummary"></div>
@@ -186,7 +188,7 @@
         const totalDoorsWidth = countDoors * doorWidth;
         const panelUnitWidth = (totalWidth - totalDoorsWidth) / (2 * numStalls);
         if (panelUnitWidth <= 0) {
-            showError('Total width is too small for the configured doors and panels.');
+            showError('Total width is too small .');
             return;
         }
 
