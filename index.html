@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <title>2D Sheet Cutting Optimizer</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; color: #333; }
-        table { border-collapse: collapse; margin-bottom: 15px; width: 100%; max-width: 600px; }
+        body { font-family: sans-serif; background-color: #cac0c0; 
+        font-size: larger;}
+        table { border-collapse: collapse; margin-bottom: 15px; width: 80vw; 
+             }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         input { width: 90%; padding: 4px; }
         button { padding: 6px 12px; cursor: pointer; }
-        .result-box { display: none; background: #eff1f1; border: 1px solid #d2e7de; padding: 15px; margin-top: 20px; }
-        .sheet-canvas { border: 2px solid #333; background: #fff; margin-top: 15px; display: block; }
+        .result-box { display: none; background: #eff1f1;
+             border: 1px solid #d2e7de; padding: 15px; margin-top: 20px;
+            width: 80vw;  }
+        .sheet-canvas { border: 2px solid #333;
+             background: #fff; margin-top: 15px; display: block;
+            width: 80vw;  }
         .sheet-container { margin-bottom: 30px; }
         .waste-info { color: #c62828; font-weight: bold; margin: 5px 0; }
     </style>
@@ -60,9 +66,9 @@
         <div id="canvasContainer"></div>
     </div>
     <!-- Insert this inside your #results div container -->
-<div id="orderSummarySection" style="margin: 15px 0; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+<div id="orderSummarySection">
     <h3 style="margin-top: 0; color: #333;">Material Order Summary</h3>
-    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+    <table >
         <thead>
             <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
                 <th style="padding: 8px;">Sheet Size / Specification</th>
