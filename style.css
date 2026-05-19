@@ -156,7 +156,7 @@
 .canvas-wrapper {
     width: 100%;
     max-width: 900px; /* Optional: Sets an absolute upper boundary limit */
-    height: 50vh;     /* Uses 50% of the active device viewport height */
+    height: 70vh;     /* Uses 50% of the active device viewport height */
     margin: 0 auto;
     position: relative;
     border: 1px solid #ccc;
