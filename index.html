@@ -737,10 +737,14 @@
                     const cx = stallStartX + (stallWidthMm / 2) * scale;
                     const cy = startY + (depthMm * scale) / 2;
                     
-                    // 1. Cubicle Name & Total Stall Width
-                    ctx.fillStyle = "black";
-                    ctx.fillText(`Cubicle ${i + 1}`, cx, cy - 10);
-                    ctx.fillText(`Stall: ${Math.round(stallWidthMm)}mm`, cx, cy + 5);
+                     ctx.fillStyle = "black";
+                ctx.font = "11px sans-serif";
+                for (let i = 0; i < numStalls; i++) {
+                    const cx = startX + (i * stallWidthMm + stallWidthMm / 2) * scale;
+                    const cy = startY + (depthMm * scale) / 2;
+                    ctx.fillText(`Cubicle ${i + 1}`, cx, cy);
+                    ctx.fillText(`${Math.round(stallWidthMm)}mm`, cx, cy + 15);
+                }
 
                     // 2. Specific Door & Panel Metrics
                     // FIX: Ensure 'item' check targets your array data structure (e.g., stalls[i].item or current item context)
@@ -757,5 +761,4 @@
         }
     </script>
 </body>
-
 </html>
