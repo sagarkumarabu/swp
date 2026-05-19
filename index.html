@@ -132,6 +132,7 @@
 <!-- <canvas id="resultsCanvas">
 </canvas> -->
 <canvas id="layoutCanvas"></canvas>
+<button id="downloadLayout">Download Layout Image</button>
 <script src="jq.js"></script>
 <script>
     const availablesheets = [
@@ -446,22 +447,42 @@
             drawSheetDiagram(canvas, sheet, scale, 2);
         });
     }
+// AutoCAD style 2D layout rendering of the cubicle configuration based on user inputs
+$(document).ready(init);
 
-    // autocad style 2D layout rendering of the cubicle configuration based on user inputs, using the HTML5 Canvas API for dynamic visualization
-$(document).ready(function() {
-    // 1. Target form elements and the canvas viewport
+function init() {
+    // 1. Target form elements, canvas viewport, and download action button
     const $item = $('#item');
     const $wall = $('#wall');
     const $numStalls = $('#numStalls');
     const $totalWidth = $('#totalwidth');
     const $depth = $('#depth');
     const $doorWidth = $('#doorWidth');
-    const canvas = $('#layoutCanvas')[0]; // Extract the raw DOM element for standard 2D Context API
+    const canvas = $('#layoutCanvas')[0]; // Extract raw DOM element for standard 2D Context API
+    const $downloadBtn = $('#downloadLayout'); // Target download button component
 
     // 2. Attach jQuery event listeners to trigger a redraw on any configuration change
     const inputElements = [$item, $wall, $numStalls, $totalWidth, $depth, $doorWidth];
     $.each(inputElements, function() {
         this.on('input change', drawLayout);
+    });
+
+    // 3. Attach export listener to standard image conversion stream
+    $downloadBtn.on('click', function(e) {
+        e.preventDefault();
+        
+        // Convert canvas buffer to clean binary data stream
+        const imageURI = canvas.toDataURL("image/png");
+        
+        // Generate an ephemeral anchor link to force browser system download
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `cubicle_layout_${$numStalls.val() || 1}stall.png`;
+        downloadLink.href = imageURI;
+        
+        // Click and purge temporary structural node
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
     });
 
     // Run primary initial draw calculations on script boot
@@ -471,7 +492,7 @@ $(document).ready(function() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // 3. Extract, parse, and clean values using jQuery selectors
+        // Extract, parse, and clean values using jQuery selectors
         const item = $item.val();
         const wallType = $wall.val(); // 'l' = L-wall configuration, 'c' = C-wall configuration
         const numStalls = parseInt($numStalls.val()) || 1;
@@ -479,7 +500,7 @@ $(document).ready(function() {
         const depthMm = parseFloat($depth.val()) || 1500;
         const doorWidthMm = parseFloat($doorWidth.val()) || 600;
 
-        // 4. Structural Layout Boundaries & Scaling Calculations
+        // Structural Layout Boundaries & Scaling Calculations
         const padding = 60; 
         canvas.width = 800;
         canvas.height = 500;
@@ -496,7 +517,7 @@ $(document).ready(function() {
         const stallWidthMm = totalWidthMm / numStalls;
         const wallThickness = 12 * scale; // Structural line weight simulation
 
-        // 5. Classic CAD Vector Styling Themes
+        // Classic CAD Vector Styling Themes
         const COLORS = {
             bg: "#1e1e1e",      // Dark engineering terminal background
             wall: "#00ffff",    // Cyan structural walls
@@ -510,7 +531,7 @@ $(document).ready(function() {
         ctx.fillStyle = COLORS.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 6. DRAW STRUCTURAL BUILDING WALLS (Cyan Lines)
+        // DRAW STRUCTURAL BUILDING WALLS (Cyan Lines)
         ctx.strokeStyle = COLORS.wall;
         ctx.lineWidth = wallThickness;
         ctx.lineCap = "square";
@@ -530,7 +551,7 @@ $(document).ready(function() {
         }
         ctx.stroke();
 
-        // 7. DRAW CUBICLE SEPARATING PARTITIONS (White Lines)
+        // DRAW CUBICLE SEPARATING PARTITIONS (White Lines)
         ctx.strokeStyle = COLORS.panel;
         ctx.lineWidth = 3; 
 
@@ -574,7 +595,7 @@ $(document).ready(function() {
             ctx.lineTo(rightX, frontY);
             ctx.stroke();
 
-            // 8. DRAW INTRA-STALL SWING DOORS & ARC VECTORS (Magenta & Green)
+            // DRAW INTRA-STALL SWING DOORS & ARC VECTORS (Magenta & Green)
             if (item === "item1") { // Only draw opening systems for Cubicle item types
                 const doorLeftX = leftX + pilasterWidth * scale;
 
@@ -592,13 +613,12 @@ $(document).ready(function() {
                 ctx.strokeStyle = COLORS.arc;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                // Arc parameters: (centerX, centerY, radius, startAngle, endAngle, counterClockwise)
                 ctx.arc(doorLeftX, frontY, doorWidthMm * scale, 0, -Math.PI / 4, true);
                 ctx.stroke();
             }
         }
 
-        // 9. AUTOMATED BLUEPRINT METRICS & MEASUREMENT MARKERS (Yellow)
+        // AUTOMATED BLUEPRINT METRICS & MEASUREMENT MARKERS (Yellow)
         ctx.fillStyle = COLORS.text;
         ctx.font = "12px monospace";
         ctx.textAlign = "center";
@@ -623,9 +643,8 @@ $(document).ready(function() {
             ctx.fillText(`${Math.round(stallWidthMm)}mm`, cx, cy + 15);
         }
     }
-});
+}
 
-    $(document).ready(init);
 </script>
 </body>
 </html>
