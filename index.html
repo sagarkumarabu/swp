@@ -7,7 +7,6 @@
     <title> Cubicle Partition Calculator</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
     <div class="container">
         <button><a href="calculate.html">hpl calculate</a></button>
@@ -131,9 +130,11 @@
         <div id="sheetSummary"></div>
         <div id="sheetLayouts"></div>
     </div>
-    <!-- <canvas id="resultsCanvas">
-</canvas> -->
+   <div class="canvas-wrapper">
+    <!-- DO NOT put fixed width/height attributes here; JavaScript will handle it dynamically -->
     <canvas id="layoutCanvas"></canvas>
+</div>
+
     <button id="downloadLayout">Download Layout Image</button>
     <script src="jq.js"></script>
     <script>
@@ -588,7 +589,7 @@
                     const remainingSpace = stallWidthMm - doorWidthMm;
                     const pilasterWidth = remainingSpace > 0 ? remainingSpace / 2 : 0;
 
-                    ctx.strokeStyle = COLORS.panel;
+                                       ctx.strokeStyle = COLORS.panel;
                     // Left Pilaster Segment
                     ctx.beginPath();
                     ctx.moveTo(leftX, frontY);
@@ -600,10 +601,59 @@
                     ctx.moveTo(rightX - pilasterWidth * scale, frontY);
                     ctx.lineTo(rightX, frontY);
                     ctx.stroke();
+                    
+            // --- ADDED: PILASTER DIMENSION LINES & TEXT MARKERS ---
+                    ctx.lineWidth = 1;
+                    ctx.font = "10px sans-serif";
+                    ctx.textAlign = "center";
+                    
+                    // Style config for dimension markers
+                    const dimOffset = 15; // Distance below the front line
+                    const tickHeight = 3;  // Height of vertical boundary ticks
+                    ctx.strokeStyle = "#888888"; // Subtle grey for dimension lines
+                    ctx.fillStyle = "#555555";   // Readable charcoal text
 
-                    // DRAW INTRA-STALL SWING DOORS & ARC VECTORS (Magenta & Green)
+                    // 1. Left Pilaster Dimension Graphics
+                    const leftPilasterEndX = leftX + (pilasterWidth * scale);
+                    const leftMidX = leftX + (pilasterWidth * scale) / 2;
+
+                    ctx.beginPath();
+                    // Horizontal line
+                    ctx.moveTo(leftX, frontY + dimOffset);
+                    ctx.lineTo(leftPilasterEndX, frontY + dimOffset);
+                    // Left vertical tick
+                    ctx.moveTo(leftX, frontY + dimOffset - tickHeight);
+                    ctx.lineTo(leftX, frontY + dimOffset + tickHeight);
+                    // Right vertical tick
+                    ctx.moveTo(leftPilasterEndX, frontY + dimOffset - tickHeight);
+                    ctx.lineTo(leftPilasterEndX, frontY + dimOffset + tickHeight);
+                    ctx.stroke();
+                    // Text label
+                    ctx.fillText(`${Math.round(pilasterWidth)}mm`, leftMidX, frontY + dimOffset + 12);
+
+                    // 2. Right Pilaster Dimension Graphics
+                    const rightPilasterStartX = rightX - (pilasterWidth * scale);
+                    const rightMidX = rightPilasterStartX + (pilasterWidth * scale) / 2;
+
+                    ctx.beginPath();
+                    // Horizontal line
+                    ctx.moveTo(rightPilasterStartX, frontY + dimOffset);
+                    ctx.lineTo(rightX, frontY + dimOffset);
+                    // Left vertical tick
+                    ctx.moveTo(rightPilasterStartX, frontY + dimOffset - tickHeight);
+                    ctx.lineTo(rightPilasterStartX, frontY + dimOffset + tickHeight);
+                    // Right vertical tick
+                    ctx.moveTo(rightX, frontY + dimOffset - tickHeight);
+                    ctx.lineTo(rightX, frontY + dimOffset + tickHeight);
+                    ctx.stroke();
+                    // Text label
+                    ctx.fillText(`${Math.round(pilasterWidth)}mm`, rightMidX, frontY + dimOffset + 12);
+// --- END PILASTER DIMENSION ANNOTATIONS ---
+
+                                  // DRAW INTRA-STALL SWING DOORS & ARC VECTORS (Magenta & Green)
                     if (item === "item1") { // Only draw opening systems for Cubicle item types
                         const doorLeftX = leftX + pilasterWidth * scale;
+                        const doorRightX = doorLeftX + (doorWidthMm * scale); // Calculate right side of door clear opening
 
                         // Inward open door geometry vector 
                         ctx.strokeStyle = COLORS.door;
@@ -619,7 +669,6 @@
                         ctx.lineWidth = 2;
 
                         // 1. Set the dot pattern: [dashLength, spaceLength]
-                        // [2, 4] creates small dots/dashes with a slightly larger space
                         ctx.setLineDash([2, 4]);
 
                         ctx.beginPath();
@@ -629,10 +678,40 @@
                         // 2. IMPORTANT: Reset the line dash so other lines drawn later stay solid
                         ctx.setLineDash([]);
 
+                        // --- ADDED: DOOR OPENING DIMENSION LINES & TEXT MARKERS ---
+                        ctx.lineWidth = 1;
+                        ctx.font = "10px sans-serif";
+                        ctx.textAlign = "center";
+                        
+                        // Style config for dimension markers (Matches pilaster offsets)
+                        const dimOffset = 15; 
+                        const tickHeight = 3;  
+                        ctx.strokeStyle = "#888888"; // Subtle grey for dimension lines
+                        ctx.fillStyle = "#555555";   // Readable charcoal text
+                        
+                        const doorMidX = doorLeftX + (doorWidthMm * scale) / 2;
+
+                        ctx.beginPath();
+                        // Horizontal dimension line
+                        ctx.moveTo(doorLeftX, frontY + dimOffset);
+                        ctx.lineTo(doorRightX, frontY + dimOffset);
+                        
+                        // Left vertical boundary tick
+                        ctx.moveTo(doorLeftX, frontY + dimOffset - tickHeight);
+                        ctx.lineTo(doorLeftX, frontY + dimOffset + tickHeight);
+                        
+                        // Right vertical boundary tick
+                        ctx.moveTo(doorRightX, frontY + dimOffset - tickHeight);
+                        ctx.lineTo(doorRightX, frontY + dimOffset + tickHeight);
+                        ctx.stroke();
+                        
+                        // Door Width Text Label
+                        ctx.fillText(`${Math.round(doorWidthMm)}mm`, doorMidX, frontY + dimOffset + 12);
                     }
                 }
 
-                // AUTOMATED BLUEPRINT METRICS & MEASUREMENT MARKERS (Yellow)
+
+              // AUTOMATED BLUEPRINT METRICS & MEASUREMENT MARKERS (Black Text Annotations)
                 ctx.fillStyle = COLORS.text;
                 ctx.font = "1em sans-serif";
                 ctx.textAlign = "center";
@@ -647,18 +726,35 @@
                 ctx.fillText(`${depthMm} mm (System Depth)`, 0, 0);
                 ctx.restore();
 
-                // Individual Internal Bay Labels
-                ctx.fillStyle = "black";
+                // Individual Internal Bay, Door, and Panel Labels
                 ctx.font = "11px sans-serif";
+                
+                // Calculate frontY dynamically if it is not globally scoped
+                const calculatedFrontY = startY + depthMm * scale;
+
                 for (let i = 0; i < numStalls; i++) {
-                    const cx = startX + (i * stallWidthMm + stallWidthMm / 2) * scale;
+                    const stallStartX = startX + (i * stallWidthMm) * scale;
+                    const cx = stallStartX + (stallWidthMm / 2) * scale;
                     const cy = startY + (depthMm * scale) / 2;
-                    ctx.fillText(`Cubicle ${i + 1}`, cx, cy);
-                    ctx.fillText(`${Math.round(stallWidthMm)}mm`, cx, cy + 15);
+                    
+                    // 1. Cubicle Name & Total Stall Width
+                    ctx.fillStyle = "black";
+                    ctx.fillText(`Cubicle ${i + 1}`, cx, cy - 10);
+                    ctx.fillText(`Stall: ${Math.round(stallWidthMm)}mm`, cx, cy + 5);
+
+                    // 2. Specific Door & Panel Metrics
+                    // FIX: Ensure 'item' check targets your array data structure (e.g., stalls[i].item or current item context)
+                    // If your item type is uniform across the system, ensure 'item' variable is passed correctly.
+                    if (item === "item1" || (typeof stalls !== 'undefined' && stalls[i]?.item === "item1")) {
+                        ctx.fillStyle = "blue"; // Distinct color for internal component specs
+                        
+                        // Render text relative to the calculated front baseline
+                        ctx.fillText(`Pilaster: ${Math.round(pilasterWidth)}mm`, cx, calculatedFrontY + 20);
+                        ctx.fillText(`Door: ${Math.round(doorWidthMm)}mm`, cx, calculatedFrontY + 35);
+                    }
                 }
             }
         }
-
     </script>
 </body>
 
