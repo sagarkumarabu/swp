@@ -2,468 +2,483 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Cubicle Partition Calculator</title>
-    <link rel="stylesheet" href="style.css">
+    <title>2D Sheet Cutting Optimizer</title>
+    <style>
+        body { font-family: sans-serif; background-color: #cac0c0; 
+        font-size: larger;}
+        table { border-collapse: collapse; margin-bottom: 15px; width: 80vw; 
+            border: solid 2px #333; background: #a59a9a;
+             }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        input { width: 90%; padding: 4px; }
+        button { padding: 6px 12px; cursor: pointer; }
+        .result-box { display: none; background: #eff1f1;
+             border: 1px solid #d2e7de; padding: 15px; margin-top: 20px;
+            width: 80vw;  }
+        .sheet-canvas { border: 2px solid #333;
+             background: #fff; margin-top: 15px; display: block;
+            width: 80vw;  }
+        .sheet-container { margin-bottom: 30px; }
+        .waste-info { color: #c62828; font-weight: bold; margin: 5px 0; }
+    </style>
 </head>
 <body>
+<button><a href="index.html">hpl calculate</a></button>
+    <h2>2D Sheet Cutting Optimizer</h2>
+    <label>Kerf / Blade Width (mm): 
+        <input type="number" id="kerf" value="2" style="width:60px;"></label>
+    <br><br>
+    <table>
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Width (mm)</th>
+                <th>Height (mm)</th>
+                <th>Qty</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="itemBody">
+            <tr>
+                <td><select class="item-name" onchange="setDefaultDimensions(this)">
+                    <option value="door">Door</option>
+                    <option value="plaster">Midpanel</option>
+                    <option value="divider">Divider</option>
+                    <option value="urinal">Urinal</option>
+                    <option value="endwall">Endwall</option>
+                    <option value="endpanel">Endpanel</option>
+                </select></td>
+                <td><input type="number" value="600" class="item-w"></td>
+                <td><input type="number" value="1790" class="item-h"></td>
+                <td><input type="number" value="1" class="item-q"></td>
+                <td><button onclick="this.closest('tr').remove()" style="color:red;">&times;</button></td>
+            </tr>
+        </tbody>
+    </table>
 
+    <button onclick="addRow()">+ Add Row</button>
+    <button onclick="calculateOptimization()" 
+    style="background:#2e7d32; color:white; font-weight:bold;">Calculate Cuts</button>
 
-<div class="container">
-     <button><a href="index.html">hpl calculate</a></button>
-    <h3> Cubicle Partition calculator</h3>
-    <div class="layout-grid">
-        <div class="input-panel">
-            <!-- Input Section -->
-            <div class="form-group">
-                <label for="numStalls">Select Item</label>
-              <select name="item" id="item">
-                    <option value="item1">CUBICLE</option>
-                    <option value="item2">URINAL</option>
-                    <OPTION value="item3">LOCKER</OPTION>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="wall">wall</label>
-                <select name="wall" id="wall">
-                    <option value="l">Lwall</option>
-                    <option value="c">Cwall</option>
-                </select>
-            </div>
-        
-            <div class="form-group">
-                <label for="numStalls">Number of cubicle</label>
-                <input type="number" id="numStalls" value="2" min="1" max="20">
-            </div>
-              <div class="form-group">
-                <label for="totalwidth">Area width (mm)</label>
-                <input type="number" id="totalwidth" value="2000" min="1000">
-            </div>
-            <div class="form-group">
-                <label for="dividerHeight">Divider height (mm)</label>
-                <input type="number" id="dividerHeight" value="1790" min="1000">
-            </div>
-             <div class="form-group">
-                <label for="depth">Divider Depth (mm)</label>
-                <input type="number" id="depth" value="1500" min="500">
-            </div>
-             <div class="form-group">
-                <label for="doorHeight">Door Height (mm)</label>
-                <input type="number" id="doorHeight" value="1790" min="1000">
-            </div>
-             <div class="form-group">
-                <label for="doorWidth"> Door  Width (mm)</label>
-                <input type="number" id="doorWidth" value="600" min="400">
-            </div>
-            <div class="form-group">
-                <label for="pilasterHeight">Pilaster Height (mm)</label>
-                <input type="number" id="pilasterHeight" value="1830" min="1000">
-            </div>
-        </div>
-        <!-- Output Section -->
-        <div class="output-panel">
-            <div id="errorBox" class="alert-error"></div>
-            
-            <div class="results-panel" id="resultsPanel">
-                <div class="results-title">Calculated Requirements</div>
-                
-                <!-- Component Counts -->
-                <div class="kpi-row">
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countDividers">0</div>
-                        <div class="kpi-lbl">Dividers</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countPilasters">0</div>
-                        <div class="kpi-lbl">mid panels</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countEndPanels">0</div>
-                        <div class="kpi-lbl">End panels</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countDoors">0</div>
-                        <div class="kpi-lbl">Doors</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="endwall">0</div>
-                        <div class="kpi-lbl">End Wall</div>
-                    </div>
-                </div>
-
-                <!-- Cutting Sizes -->
-                <div class="matrix-box">
-                    <h3>🔍 Component Sizing Matrix</h3>
-                    <ul>
-                        <li id="sizeDividers"> Dividers: -</li>
-                        <li id="sizeDoors">Front Doors: -</li>
-                        <li id="sizeEndPanel">End Panel: -</li>
-                        <li id="sizeMidPanel">Mid Panel: -</li>
-                        <li id="sizeEndwalls">End Walls: -</li>
-                        <li id="sizeCubicleWidth">Each Cubicle Width: -</li>
-                        <li id="sizeConstraint" style="color: #d9534f; font-weight: bold;">Constraint: -</li>
-                    </ul>
-                </div>
-                <!-- Material Purchasing Estimates -->
-        <div class="order-box">
-         <h3>📦 Material Order Summary</h3>
-         <ul>
-          <li>Net Panel Surface Area: <span id="netArea">0.00</span> m²</li>
-       <li>Gross Area (incl. waste): <span id="grossArea">0.00</span> m²</li>
-                        <li>Exact Volumetric Run: <span id="rawSheets">0.00</span> Boards</li>
-                        <li style="margin-top:8px; list-style-type:none;">
-                            <strong>FINAL SHEET ORDER: </strong> 
-                            <span id="finalOrder" class="order-highlight">0 Boards</span>
-                        </li>
-                    </ul>
-                </div>      
-         </div>
-        </div>
+    <div id="results" class="result-box">
+        <h3>Optimal Choice: <span id="bestSheet"></span></h3>
+        <p>Total Sheets Required: <strong id="sheetsNeeded"></strong></p>
+        <p>Total Cut Panels Area: <span id="usedArea"></span> m² (<span id="ft2"></span> sq.ft)</p>
+        <div id="canvasContainer"></div>
     </div>
+    <!-- Insert this inside your #results div container -->
+<div id="orderSummarySection">
+    <h3 style="margin-top: 0; color: #333;">Material Order Summary</h3>
+    <table >
+        <thead>
+            <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
+                <th style="padding: 8px;">Sheet Size / Specification</th>
+                <th style="padding: 8px;">Qty</th>
+                <th style="padding: 8px;">Total Area</th>
+                <th style="padding: 8px;">Used Area</th>
+                <th style="padding: 8px;">Remaining Area</th>
+            </tr>
+        </thead>
+        <tbody id="summaryTableBody">
+            <!-- Dynamic data will be generated here -->
+        </tbody>
+    </table>
 </div>
-<div  id="sheetLayoutPanel" class="container" >
-                    <h3>📐 Cut Sheet Layout</h3>
-                    <p>Sheets required: <strong id="layoutSheets">0</strong></p>
-                    <div id="sheetSummary"></div>
-                    <div id="sheetLayouts"></div>
-                </div> 
-<canvas id="resultsCanvas">
-</canvas>
-<script src="jq.js"></script>
+
 <script>
-    const availablesheets = [
-      { name: "12 x 6 feet", width: 3670, height: 1860 },
-      { name: "14 x 6 feet", width: 4300, height: 1830 }
+function addRow() {
+    const tbody = document.getElementById('itemBody');
+    const row = `<tr>
+        <td><select class="item-name" onchange="setDefaultDimensions(this)">
+            <option value="door">Door</option>
+            <option value="plaster">Midpanel</option>
+            <option value="divider">Divider</option>
+            <option value="urinal">Urinal</option>
+            <option value="endwall">Endwall</option>
+        </select></td>
+        <td><input type="number" class="item-w" placeholder="mm" value="600"></td>
+        <td><input type="number" class="item-h" placeholder="mm" value="1790"></td>
+        <td><input type="number" value="1" class="item-q"></td>
+        <td><button onclick="this.closest('tr').remove()" style="color:red;">&times;</button></td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+}
+
+const ITEM_DEFAULT_DIMENSIONS = {
+    door: { w: 600, h: 1790 },
+    plaster: { w: 400, h: 1830 },
+    divider: { w: 1500, h: 1790 },
+    urinal: { w: 450, h: 900 },
+    endwall: { w: 1500, h: 1830 },
+    endpanel: { w: 200, h: 1830 }
+};
+
+function setDefaultDimensions(select) {
+    const dims = ITEM_DEFAULT_DIMENSIONS[select.value] || { w: '', h: '' };
+    const row = select.closest('tr');
+    const widthInput = row.querySelector('.item-w');
+    const heightInput = row.querySelector('.item-h');
+    if (widthInput) widthInput.value = dims.w;
+    if (heightInput) heightInput.value = dims.h;
+}
+
+// Fixed sheet inventory definitions (Width x Height in mm)
+const AVAILABLE_SHEETS = [
+    { name: "12 x 6 Feet", w: 3670, h: 1860 },
+    { name: "14 x 6 Feet", w: 4300, h: 1860 }
+    // { name: "8 x 6 Feet",  w: 2438, h: 1829 }
+];
+function calculateOptimization() {
+    const kerf = parseFloat(document.getElementById('kerf').value) || 0;
+    const names = document.querySelectorAll('.item-name');
+    const widths = document.querySelectorAll('.item-w');
+    const heights = document.querySelectorAll('.item-h');
+    const quantities = document.querySelectorAll('.item-q');
+
+    let rawItems = [];
+    let totalUsedAreaSqMm = 0;
+
+    for (let i = 0; i < widths.length; i++) {
+        let w = parseFloat(widths[i].value) || 0;
+        let h = parseFloat(heights[i].value) || 0;
+        let q = parseInt(quantities[i].value) || 0;
+        let label = names[i].value || `Item ${i+1}`;
+        
+        if (w <= 0 || h <= 0 || q <= 0) continue;
+
+        totalUsedAreaSqMm += (w * h * q);
+
+        for (let j = 0; j < q; j++) {
+            rawItems.push({ label: label, w: w, h: h });
+        }
+    }
+    if (rawItems.length === 0) return alert("Please enter valid panel dimensions.");
+
+    rawItems.sort((a, b) => {
+        const areaA = a.w * a.h;
+        const areaB = b.w * b.h;
+        if (areaB !== areaA) return areaB - areaA;
+        return Math.max(b.w, b.h) - Math.max(a.w, a.h);
+    });
+
+    let bestOption = null;
+    let minSheetsUsed = Infinity;
+
+    let packedSheets = packItemsIndividually(rawItems, AVAILABLE_SHEETS, kerf);
+
+if (!packedSheets || packedSheets.length === 0) {
+    return alert("Some parts are too large to fit on any available stock sheet sizes.");
+}
+
+// Map parameters dynamically to support mixed sizes in output summary logs
+let totalStockAreaSqMm = 0;
+packedSheets.forEach(sheet => {
+    totalStockAreaSqMm += sheet.stock.w * sheet.stock.h;
+});
+
+// Update standard display blocks safely
+document.getElementById('bestSheet').innerText = "Mixed Sizes Used";
+document.getElementById('sheetsNeeded').innerText = packedSheets.length;
+document.getElementById('usedArea').innerText = (totalUsedAreaSqMm / 1000000).toFixed(2);
+document.getElementById('ft2').innerText = (totalUsedAreaSqMm / 92903.04).toFixed(2);
+
+const summaryTableBody = document.getElementById('summaryTableBody');
+summaryTableBody.innerHTML = '';
+const orderSummary = {};
+packedSheets.forEach(sheet => {
+    const sheetName = sheet.stock.name;
+    if (!orderSummary[sheetName]) {
+        orderSummary[sheetName] = { count: 0, totalArea: 0, usedArea: 0, remainingArea: 0 };
+    }
+    const sheetArea = sheet.stock.w * sheet.stock.h;
+    let usedArea = 0;
+    sheet.placedItems.forEach(item => {
+        usedArea += item.finalW * item.finalH;
+    });
+    orderSummary[sheetName].count += 1;
+    orderSummary[sheetName].totalArea += sheetArea;
+    orderSummary[sheetName].usedArea += usedArea;
+    orderSummary[sheetName].remainingArea += sheetArea - usedArea;
+});
+Object.entries(orderSummary).forEach(([sizeName, summary]) => {
+    const row = `
+        <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px; font-weight: bold; color: #1565c0;">${sizeName}</td>
+            <td style="padding: 8px; font-weight: bold;">${summary.count} pcs</td>
+            <td style="padding: 8px; font-weight: bold;">${(summary.totalArea / 1000000).toFixed(2)} m²</td>
+            <td style="padding: 8px; font-weight: bold;">${(summary.usedArea / 1000000).toFixed(2)} m²</td>
+            <td style="padding: 8px; font-weight: bold;">${(summary.remainingArea / 1000000).toFixed(2)} m²</td>
+        </tr>
+    `;
+    summaryTableBody.insertAdjacentHTML('beforeend', row);
+});
+
+const container = document.getElementById('canvasContainer');
+container.innerHTML = ''; 
+
+// Build responsive HTML output layout containers dynamically per unique mixed canvas instance
+packedSheets.forEach((sheet, index) => {
+    let sheetUsedAreaSqMm = 0;
+    sheet.placedItems.forEach(item => {
+        sheetUsedAreaSqMm += (item.finalW * item.finalH);
+    });
+
+    let currentSheetTotalArea = sheet.stock.w * sheet.stock.h;
+    let usedAreaSqMm = sheetUsedAreaSqMm;
+    let remainingAreaSqMm = currentSheetTotalArea - usedAreaSqMm;
+    let sheetTotalSqM = (currentSheetTotalArea / 1000000).toFixed(2);
+    let usedSqM = (usedAreaSqMm / 1000000).toFixed(2);
+    let remainingSqM = (remainingAreaSqMm / 1000000).toFixed(2);
+    let remainingSqFt = (remainingAreaSqMm / 92903.04).toFixed(2);
+
+    const sheetDiv = document.createElement('div');
+    sheetDiv.className = 'sheet-container';
+
+    const title = document.createElement('h4');
+    title.style.margin = "5px 0";
+    title.innerText = `Sheet Layout #${index + 1} (${sheet.stock.name})`; // Uses individual sheet identity
+    sheetDiv.appendChild(title);
+
+    const sheetInfo = document.createElement('div');
+    sheetInfo.className = 'waste-info';
+    sheetInfo.style.color = '#333';
+    sheetInfo.innerHTML = `Sheet area: ${sheetTotalSqM} m²<br>Used area: ${usedSqM} m²<br>Remaining area: ${remainingSqM} m² (${remainingSqFt} sq.ft)`;
+    sheetDiv.appendChild(sheetInfo);
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'sheet-canvas';
+    
+    const maxDisplayWidth = 700;
+    const scale = maxDisplayWidth / sheet.stock.w; // Scales down relative to specific stock size
+    canvas.width = maxDisplayWidth;
+    canvas.height = sheet.stock.h * scale;
+    
+    sheetDiv.appendChild(canvas);
+    drawSheetDiagram(canvas, sheet, scale, kerf);
+    
+    container.appendChild(sheetDiv);
+});
+
+document.getElementById('results').style.display = 'block';
+}
+// Next-Fit/First-Fit Decreasing Shelf Bin Packing Algorithm
+// New packing coordinator managing item placement item-by-item across different stock metrics
+function packItemsIndividually(items, stockInventory, kerf) {
+    let sheets = [];
+    let sortedStock = [...stockInventory].sort((a, b) => (a.w * a.h) - (b.w * b.h));
+    let itemsToPack = items.map(p => ({ ...p }));
+
+    for (let itemIndex = 0; itemIndex < itemsToPack.length; itemIndex++) {
+        let item = itemsToPack[itemIndex];
+        let packed = false;
+
+        for (let sheet of sheets) {
+            if (tryPlaceOnSheetFreeRects(sheet, item, kerf)) {
+                packed = true;
+                break;
+            }
+        }
+
+        if (!packed) {
+            let candidateStocks = sortedStock.filter(stock => {
+                let fitsNormal = item.w <= stock.w && item.h <= stock.h;
+                let fitsRotated = item.h <= stock.w && item.w <= stock.h;
+                return fitsNormal || fitsRotated;
+            });
+            if (candidateStocks.length === 0) return null;
+
+            const remainingItems = itemsToPack.slice(itemIndex);
+            let matchedStock = candidateStocks.find(stock =>
+                canPackItemsOnSingleSheet(remainingItems, stock, kerf)
+            ) || candidateStocks[0];
+
+            let newSheet = {
+                stock: matchedStock,
+                placedItems: [],
+                freeRects: [{ x: 0, y: 0, w: matchedStock.w, h: matchedStock.h }]
+            };
+
+            if (tryPlaceOnSheetFreeRects(newSheet, item, kerf)) {
+                sheets.push(newSheet);
+            } else {
+                return null;
+            }
+        }
+    }
+    return sheets;
+}
+
+function canPackItemsOnSingleSheet(items, stock, kerf) {
+    const tempSheet = {
+        stock,
+        placedItems: [],
+        freeRects: [{ x: 0, y: 0, w: stock.w, h: stock.h }]
+    };
+
+    for (let item of items.map(p => ({ ...p }))) {
+        if (!tryPlaceOnSheetFreeRects(tempSheet, item, kerf)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function tryPlaceOnSheetFreeRects(sheet, item, kerf) {
+    let bestPlacement = null;
+    let orientations = [
+        { w: item.w, h: item.h, rotated: false },
+        { w: item.h, h: item.w, rotated: true }
     ];
 
-    function init() {
-        const inputs = $('#item, #wall, #numStalls, #totalwidth, #dividerHeight, #depth, #doorHeight, #doorWidth, #pilasterHeight');
-        inputs.on('change input', calculate);
+    for (let orient of orientations) {
+        if (orient.w > sheet.stock.w || orient.h > sheet.stock.h) continue;
 
-        $('#resultsPanel').hide();
-        $('#errorBox').hide();
-        $('#sheetLayoutPanel').hide();
+        for (let rect of sheet.freeRects) {
+            if (orient.w > rect.w || orient.h > rect.h) continue;
 
-        calculate();
-    }
+            const rightMargin = (rect.x + orient.w < sheet.stock.w ? kerf : 0);
+            const bottomMargin = (rect.y + orient.h < sheet.stock.h ? kerf : 0);
+            const usedWidth = orient.w + rightMargin;
+            const usedHeight = orient.h + bottomMargin;
+            if (usedWidth > rect.w || usedHeight > rect.h) continue;
 
-    function showError(message) {
-        $('#errorBox').text(message).show();
-        $('#resultsPanel').hide();
-        $('#sheetLayoutPanel').hide();
-    }
-
-    function hideError() {
-        $('#errorBox').hide().text('');
-    }
-
-    function calculate() {
-        const item = $('#item').val();
-        const wallType = $('#wall').val();
-        const numStalls = parseInt($('#numStalls').val(), 10);
-        const totalWidth = parseFloat($('#totalwidth').val());
-        const dividerHeight = parseFloat($('#dividerHeight').val());
-        const depth = parseFloat($('#depth').val());
-        const doorHeight = parseFloat($('#doorHeight').val());
-        const doorWidth = parseFloat($('#doorWidth').val());
-        const pilasterHeight = parseFloat($('#pilasterHeight').val());
-
-        if (!Number.isFinite(numStalls) || !Number.isFinite(totalWidth) || !Number.isFinite(dividerHeight) || !Number.isFinite(depth) || !Number.isFinite(doorHeight) || !Number.isFinite(doorWidth) || !Number.isFinite(pilasterHeight)) {
-            showError('Please enter valid numeric values for all fields.');
-            return;
-        }
-
-        if (numStalls < 1 || totalWidth < 1000 || dividerHeight < 1000 || depth < 500 || doorHeight < 1000 || doorWidth < 400 || pilasterHeight < 1000) {
-            showError('Please ensure all values meet the minimum requirements.');
-            return;
-        }
-
-        const cubicleWidth = totalWidth / numStalls;
-        const countDividers = Math.max(0, numStalls - 1);
-        const countDoors = numStalls;
-        const countEndPanels = 2;
-        const countMidPanels = Math.max(0, numStalls - 1);
-        const endWalls = wallType === 'c' ? 0 : 1;
-
-        const totalDoorsWidth = countDoors * doorWidth;
-        const panelUnitWidth = (totalWidth - totalDoorsWidth) / (2 * numStalls);
-        if (panelUnitWidth <= 0) {
-            showError('Total width is too small .');
-            return;
-        }
-
-        const endPanelWidth = panelUnitWidth;
-        const midPanelWidth = panelUnitWidth * 2;
-
-        const dividerArea = countDividers * dividerHeight * depth;
-        const doorArea = countDoors * doorHeight * doorWidth;
-        const endPanelArea = countEndPanels * pilasterHeight * endPanelWidth;
-        const midPanelArea = countMidPanels * pilasterHeight * midPanelWidth;
-        const endwallArea = endWalls * dividerHeight * depth;
-        const netArea = (dividerArea + doorArea + endPanelArea + midPanelArea + endwallArea) / 1_000_000;
-        const wasteFactor = 1.10;
-        const grossArea = netArea * wasteFactor;
-
-        const sheetOptions = availablesheets.map(sheet => {
-            const sheetArea = (sheet.width * sheet.height) / 1_000_000;
-            return {
-                sheet,
-                boards: Math.ceil(grossArea / sheetArea),
-                sheetArea
-            };
-        });
-
-        $('#countDividers').text(countDividers);
-        $('#countPilasters').text(countMidPanels);
-        $('#countEndPanels').text(countEndPanels);
-        $('#countDoors').text(countDoors);
-        $('#endwall').text(endWalls);
-
-        $('#sizeDividers').text(`Dividers: ${dividerHeight}mm x ${depth}mm`);
-        $('#sizeDoors').text(`Front Doors: ${doorHeight}mm x ${doorWidth}mm`);
-        $('#sizeEndPanel').text(`End Panel: ${pilasterHeight}mm x ${endPanelWidth.toFixed(0)}mm`);
-        $('#sizeMidPanel').text(`Mid Panel: ${pilasterHeight}mm x ${midPanelWidth.toFixed(0)}mm`);
-        $('#sizeEndwalls').text(`End Walls: ${dividerHeight}mm x ${depth}mm`);
-        $('#sizeCubicleWidth').text(`Each Cubicle Width: ${cubicleWidth.toFixed(0)}mm`);
-
-        const calculatedTotalWidth = countEndPanels * endPanelWidth + countDoors * doorWidth + countMidPanels * midPanelWidth;
-        const isValidLayout = Math.abs(calculatedTotalWidth - totalWidth) < 1;
-        const constraintText = `Layout Width: ${countEndPanels}×${endPanelWidth.toFixed(0)}mm + ${countDoors}×${doorWidth}mm + ${countMidPanels}×${midPanelWidth.toFixed(0)}mm = ${calculatedTotalWidth.toFixed(0)}mm (target: ${totalWidth}mm)`;
-
-        $('#sizeConstraint').text(constraintText).css('color', isValidLayout ? '#5cb85c' : '#d9534f');
-        $('#netArea').text(netArea.toFixed(2));
-        $('#grossArea').text(grossArea.toFixed(2));
-        $('#rawSheets').text('0.00');
-        $('#finalOrder').text('0 Boards');
-
-        const parts = [];
-        function addParts(label, w, h, qty) {
-            for (let i = 0; i < qty; i++) {
-                parts.push({ label, w, h });
+            const waste = rect.w * rect.h - (usedWidth * usedHeight);
+            const fitScore = waste + rect.w + rect.h;
+            if (!bestPlacement || fitScore < bestPlacement.fitScore) {
+                bestPlacement = { rect, orient, usedWidth, usedHeight, fitScore };
             }
         }
-        addParts('Door', doorWidth, doorHeight, countDoors);
-        addParts('End Panel', endPanelWidth, pilasterHeight, countEndPanels);
-        addParts('Mid Panel', midPanelWidth, pilasterHeight, countMidPanels);
-        addParts('Divider', depth, dividerHeight, countDividers);
-        addParts('End Wall', depth, dividerHeight, endWalls);
-
-        const packedSheets = packItemsIndividually(parts, availablesheets, 2);
-        if (!packedSheets) {
-            showError('Parts cannot fit on available sheet sizes with the current configuration.');
-            return;
-        }
-
-        $('#rawSheets').text(packedSheets.length);
-        $('#finalOrder').text(`${packedSheets.length} sheets of mixed sizes`);
-        renderSheetLayouts(packedSheets);
-
-        $('#resultsPanel').show();
-        $('#sheetLayoutPanel').show();
     }
 
-    function renderSheetLayouts(sheets) {
-        $('#layoutSheets').text(sheets.length);
-        $('#sheetSummary').empty();
-        $('#sheetLayouts').empty();
+    if (!bestPlacement) return false;
 
-        sheets.forEach((sheet, index) => {
-            const sheetDiv = $('<div>').addClass('sheet-layout-card').css({ marginBottom: '24px' });
-            const title = $('<h4>').text(`Sheet #${index + 1} (${sheet.stock.name})`).css({ margin: '0 0 8px 0' });
-            const itemCount = sheet.placedItems.length;
-            const usedArea = sheet.placedItems.reduce((sum, item) => sum + item.finalW * item.finalH, 0);
-            const totalArea = sheet.stock.width * sheet.stock.height;
-            const remainingArea = totalArea - usedArea;
-            const summaryText = `Parts: ${itemCount}, Used: ${(usedArea / 1000000).toFixed(3)} m², Remaining: ${(remainingArea / 1000000).toFixed(3)} m²`;
-            const info = $('<div>').text(summaryText).css({ marginBottom: '10px', color: '#1f2937' });
-            const canvas = $('<canvas>').addClass('sheet-canvas').css({ border: '1px solid #ccc', display: 'block', width: '100%', maxWidth: '700px' })[0];
-            sheetDiv.append(title, info, canvas);
+    const { rect, orient, usedWidth, usedHeight } = bestPlacement;
+    item.x = rect.x;
+    item.y = rect.y;
+    item.finalW = orient.w;
+    item.finalH = orient.h;
+    item.rotated = orient.rotated;
+    sheet.placedItems.push(item);
 
-            const scale = Math.min(700 / sheet.stock.width, 700 / sheet.stock.height);
-            canvas.width = sheet.stock.width * scale;
-            canvas.height = sheet.stock.height * scale;
-            drawSheetDiagram(canvas, sheet, scale, 2);
+    const usedRect = {
+        x: rect.x,
+        y: rect.y,
+        w: usedWidth,
+        h: usedHeight
+    };
 
-            $('#sheetLayouts').append(sheetDiv);
+    sheet.freeRects = sheet.freeRects.flatMap(freeRect => splitFreeRectangles(freeRect, usedRect));
+    sheet.freeRects = pruneFreeRectangles(sheet.freeRects);
+    return true;
+}
+
+function splitFreeRectangles(freeRect, usedRect) {
+    if (usedRect.x >= freeRect.x + freeRect.w || usedRect.x + usedRect.w <= freeRect.x || usedRect.y >= freeRect.y + freeRect.h || usedRect.y + usedRect.h <= freeRect.y) {
+        return [freeRect];
+    }
+
+    const rects = [];
+    if (usedRect.x > freeRect.x) {
+        rects.push({
+            x: freeRect.x,
+            y: freeRect.y,
+            w: usedRect.x - freeRect.x,
+            h: freeRect.h
+        });
+    }
+    if (usedRect.x + usedRect.w < freeRect.x + freeRect.w) {
+        rects.push({
+            x: usedRect.x + usedRect.w,
+            y: freeRect.y,
+            w: freeRect.x + freeRect.w - (usedRect.x + usedRect.w),
+            h: freeRect.h
+        });
+    }
+    if (usedRect.y > freeRect.y) {
+        rects.push({
+            x: freeRect.x,
+            y: freeRect.y,
+            w: freeRect.w,
+            h: usedRect.y - freeRect.y
+        });
+    }
+    if (usedRect.y + usedRect.h < freeRect.y + freeRect.h) {
+        rects.push({
+            x: freeRect.x,
+            y: usedRect.y + usedRect.h,
+            w: freeRect.w,
+            h: freeRect.y + freeRect.h - (usedRect.y + usedRect.h)
         });
     }
 
-    function packItemsIndividually(items, stockInventory, kerf) {
-        let sheets = [];
-        let sortedStock = [...stockInventory].sort((a, b) => (a.width * a.height) - (b.width * b.height));
-        let itemsToPack = items.map(p => ({ ...p }));
+    return rects.filter(r => r.w > 0 && r.h > 0);
+}
 
-        for (let item of itemsToPack) {
-            let packed = false;
-            for (let sheet of sheets) {
-                if (tryPlaceOnSheetFreeRects(sheet, item, kerf)) {
-                    packed = true;
-                    break;
-                }
-            }
-            if (!packed) {
-                let candidateStocks = sortedStock.filter(stock => {
-                    let fitsNormal = item.w <= stock.width && item.h <= stock.height;
-                    let fitsRotated = item.h <= stock.width && item.w <= stock.height;
-                    return fitsNormal || fitsRotated;
-                });
-                if (candidateStocks.length === 0) return null;
-                let newSheet = {
-                    stock: candidateStocks[0],
-                    placedItems: [],
-                    freeRects: [{ x: 0, y: 0, width: candidateStocks[0].width, height: candidateStocks[0].height }]
-                };
-                if (tryPlaceOnSheetFreeRects(newSheet, item, kerf)) {
-                    sheets.push(newSheet);
-                } else {
-                    return null;
-                }
+function rectContains(a, b) {
+    return a.x <= b.x && a.y <= b.y && a.x + a.w >= b.x + b.w && a.y + a.h >= b.y + b.h;
+}
+
+function pruneFreeRectangles(rects) {
+    const result = [...rects];
+    for (let i = result.length - 1; i >= 0; i--) {
+        for (let j = 0; j < result.length; j++) {
+            if (i !== j && rectContains(result[j], result[i])) {
+                result.splice(i, 1);
+                break;
             }
         }
-        return sheets;
     }
+    return result;
+}
 
-    function tryPlaceOnSheetFreeRects(sheet, item, kerf) {
-        let bestPlacement = null;
-        const orientations = [
-            { w: item.w, h: item.h, rotated: false },
-            { w: item.h, h: item.w, rotated: true }
-        ];
-        for (let orient of orientations) {
-            if (orient.w > sheet.stock.width || orient.h > sheet.stock.height) continue;
-            for (let rect of sheet.freeRects) {
-                if (orient.w > rect.width || orient.h > rect.height) continue;
-                const rightMargin = (rect.x + orient.w < sheet.stock.width ? kerf : 0);
-                const bottomMargin = (rect.y + orient.h < sheet.stock.height ? kerf : 0);
-                const usedWidth = orient.w + rightMargin;
-                const usedHeight = orient.h + bottomMargin;
-                if (usedWidth > rect.width || usedHeight > rect.height) continue;
-                const waste = rect.width * rect.height - usedWidth * usedHeight;
-                const fitScore = waste + rect.width + rect.height;
-                if (!bestPlacement || fitScore < bestPlacement.fitScore) {
-                    bestPlacement = { rect, orient, usedWidth, usedHeight, fitScore };
-                }
-            }
+function drawSheetDiagram(canvas, sheet, scale, kerf = 2) {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = "#f5f5f5";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+
+    sheet.freeRects.forEach(rect => {
+        const rx = rect.x * scale;
+        const ry = rect.y * scale;
+        const rw = rect.w * scale;
+        const rh = rect.h * scale;
+        ctx.fillStyle = "#e0e0e0";
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = "#9e9e9e";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx, ry, rw, rh);
+        if (rw > 40 && rh > 15) {
+            ctx.fillStyle = "#666666";
+            ctx.font = "italic 10px Arial";
+            ctx.fillText(`${Math.round(rect.w)}x${Math.round(rect.h)}`, rx + rw / 2, ry + rh / 2);
         }
-        if (!bestPlacement) return false;
-        const { rect, orient, usedWidth, usedHeight } = bestPlacement;
-        const placed = { ...item, x: rect.x, y: rect.y, finalW: orient.w, finalH: orient.h, rotated: orient.rotated };
-        sheet.placedItems.push(placed);
-        const usedRect = { x: rect.x, y: rect.y, width: usedWidth, height: usedHeight };
-        sheet.freeRects = sheet.freeRects.flatMap(freeRect => splitFreeRectangles(freeRect, usedRect));
-        sheet.freeRects = pruneFreeRectangles(sheet.freeRects);
-        return true;
-    }
+    });
 
-    function splitFreeRectangles(freeRect, usedRect) {
-        if (usedRect.x >= freeRect.x + freeRect.width || usedRect.x + usedRect.width <= freeRect.x || usedRect.y >= freeRect.y + freeRect.height || usedRect.y + usedRect.height <= freeRect.y) {
-            return [freeRect];
+    sheet.placedItems.forEach(item => {
+        const rx = item.x * scale;
+        const ry = item.y * scale;
+        const rw = item.finalW * scale;
+        const rh = item.finalH * scale;
+        ctx.fillStyle = "#bbdefb";
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = "#0d47a1";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx, ry, rw, rh);
+        const centerX = rx + rw / 2;
+        const centerY = ry + rh / 2;
+        if (rw > 40 && rh > 20) {
+            ctx.fillStyle = "#000000";
+            ctx.font = "bold 10px Arial";
+            ctx.fillText(item.label, centerX, centerY - 6);
+            ctx.font = "10px Arial";
+            ctx.fillText(`${Math.round(item.finalW)}x${Math.round(item.finalH)}`, centerX, centerY + 6);
         }
-        const rects = [];
-        if (usedRect.x > freeRect.x) {
-            rects.push({ x: freeRect.x, y: freeRect.y, width: usedRect.x - freeRect.x, height: freeRect.height });
-        }
-        if (usedRect.x + usedRect.width < freeRect.x + freeRect.width) {
-            rects.push({ x: usedRect.x + usedRect.width, y: freeRect.y, width: freeRect.x + freeRect.width - (usedRect.x + usedRect.width), height: freeRect.height });
-        }
-        if (usedRect.y > freeRect.y) {
-            rects.push({ x: freeRect.x, y: freeRect.y, width: freeRect.width, height: usedRect.y - freeRect.y });
-        }
-        if (usedRect.y + usedRect.height < freeRect.y + freeRect.height) {
-            rects.push({ x: freeRect.x, y: usedRect.y + usedRect.height, width: freeRect.width, height: freeRect.y + freeRect.height - (usedRect.y + usedRect.height) });
-        }
-        return rects.filter(r => r.width > 0 && r.height > 0);
-    }
-
-    function rectContains(a, b) {
-        return a.x <= b.x && a.y <= b.y && a.x + a.width >= b.x + b.width && a.y + a.height >= b.y + b.height;
-    }
-
-    function pruneFreeRectangles(rects) {
-        const result = [...rects];
-        for (let i = result.length - 1; i >= 0; i--) {
-            for (let j = 0; j < result.length; j++) {
-                if (i !== j && rectContains(result[j], result[i])) {
-                    result.splice(i, 1);
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
-    function drawSheetDiagram(canvas, sheet, scale, kerf = 2) {
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, canvas.width, canvas.height);
-
-        sheet.freeRects.forEach(rect => {
-            const rx = rect.x * scale;
-            const ry = rect.y * scale;
-            const rw = rect.width * scale;
-            const rh = rect.height * scale;
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(rx, ry, rw, rh);
-            ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(rx, ry, rw, rh);
-            if (rw > 40 && rh > 15) {
-                ctx.fillStyle = '#475569';
-                ctx.font = 'italic 10px Arial';
-                ctx.fillText(`${Math.round(rect.width)}×${Math.round(rect.height)}`, rx + rw / 2, ry + rh / 2);
-            }
-        });
-
-        sheet.placedItems.forEach(item => {
-            const rx = item.x * scale;
-            const ry = item.y * scale;
-            const rw = item.finalW * scale;
-            const rh = item.finalH * scale;
-            ctx.fillStyle = '#bfdbfe';
-            ctx.fillRect(rx, ry, rw, rh);
-            ctx.strokeStyle = '#1e40af';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(rx, ry, rw, rh);
-            const centerX = rx + rw / 2;
-            const centerY = ry + rh / 2;
-            if (rw > 40 && rh > 20) {
-                ctx.fillStyle = '#0f172a';
-                ctx.font = 'bold 10px Arial';
-                ctx.fillText(item.label, centerX, centerY - 6);
-                ctx.font = '10px Arial';
-                ctx.fillText(`${Math.round(item.finalW)}×${Math.round(item.finalH)}`, centerX, centerY + 6);
-            }
-        });
-    }
-
-    function renderSheetLayouts(sheets) {
-        $('#layoutSheets').text(sheets.length);
-        $('#sheetSummary').empty();
-        $('#sheetLayouts').empty();
-
-        sheets.forEach((sheet, index) => {
-            const sheetDiv = $('<div>').css({ marginBottom: '24px' });
-            const title = $('<h4>').text(`Sheet #${index + 1} (${sheet.stock.name})`).css({ margin: '0 0 8px 0' });
-            const itemCount = sheet.placedItems.length;
-            const usedArea = sheet.placedItems.reduce((sum, item) => sum + item.finalW * item.finalH, 0);
-            const remainingArea = sheet.stock.width * sheet.stock.height - usedArea;
-            const info = $('<div>').text(`Parts: ${itemCount}, Used: ${(usedArea / 1000000).toFixed(3)} m², Remaining: ${(remainingArea / 1000000).toFixed(3)} m²`).css({ marginBottom: '10px', color: '#1f2937' });
-            const canvas = $('<canvas>').css({ width: '100%', maxWidth: '700px', border: '1px solid #cbd5e1', display: 'block' })[0];
-
-            const scale = Math.min(700 / sheet.stock.width, 700 / sheet.stock.height);
-            canvas.width = sheet.stock.width * scale;
-            canvas.height = sheet.stock.height * scale;
-
-            sheetDiv.append(title, info, canvas);
-            $('#sheetLayouts').append(sheetDiv);
-            drawSheetDiagram(canvas, sheet, scale, 2);
-        });
-    }
-
-    $(document).ready(init);
+    });
+}
 </script>
 </body>
 </html>
