@@ -7,6 +7,7 @@
     <title> Cubicle Partition Calculator</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <button><a href="calculate.html">hpl calculate</a></button>
@@ -27,12 +28,20 @@
                     <select name="wall" id="wall">
                         <option value="l">Lwall</option>
                         <option value="c">Cwall</option>
+                        <option value="s">Straight wall</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="numStalls">Number of cubicle</label>
                     <input type="number" id="numStalls" value="2" min="1" max="20">
+                </div>
+                <div class="form-group">
+                    <label for="equal"> Spacing for cubicles</label>
+                    <select name="equal" id="equal">
+                        <option value="equal">Equal</option>
+                        <option value="unequal">Unequal</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="totalwidth">Area width (mm)</label>
@@ -130,36 +139,53 @@
         <div id="sheetSummary"></div>
         <div id="sheetLayouts"></div>
     </div>
-   <div class="canvas-wrapper">
-    <!-- DO NOT put fixed width/height attributes here; JavaScript will handle it dynamically -->
-    <canvas id="layoutCanvas"></canvas>
-</div>
+    <div class="canvas-wrapper">
+        <!-- DO NOT put fixed width/height attributes here; JavaScript will handle it dynamically -->
+        <canvas id="layoutCanvas"></canvas>
+    </div>
 
     <button id="downloadLayout">Download Layout Image</button>
     <script src="jq.js"></script>
     <script>
+        $(document).ready(function () {
+            // Watch for changes on the dropdown or the number of stalls
+            $('#equal, #numStalls').on('change keyup', function () {
+                const isUnequal = $('#equal').val() === 'unequal';
+                const numStalls = parseInt($('#numStalls').val(), 10) || 0;
+                const container = $('#unequalWidthsContainer');
+
+                // Clear previous inputs if container exists
+                container.empty();
+
+                if (isUnequal && numStalls > 0) {
+                    // Create a wrapper container if it doesn't exist yet
+                    if (container.length === 0) {
+                        $('#equal').closest('.form-group').after('<div id="unequalWidthsContainer" style="margin-top: 15px; padding: 10px; border-left: 3px solid #0275d8;"></div>');
+                    }
+
+                    // Append an input field for each individual cubicle
+                    for (let i = 1; i <= numStalls; i++) {
+                        const inputHtml = `
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="stallWidth_${i}">Cubicle #${i} Width (mm):</label>
+                        <input type="number" id="stallWidth_${i}" class="form-control stall-width-input" min="400" required>
+                    </div>`;
+                        $('#unequalWidthsContainer').append(inputHtml);
+                    }
+                }
+            });
+        });
+
         const availablesheets = [
             { name: "12 x 6 feet", width: 3670, height: 1860 },
             { name: "14 x 6 feet", width: 4300, height: 1830 }
         ];
-
-        function init() {
-            const inputs = $('#item, #wall, #numStalls, #totalwidth, #dividerHeight, #depth, #doorHeight, #doorWidth, #pilasterHeight');
-            inputs.on('change input', calculate);
-
-            $('#resultsPanel').hide();
-            $('#errorBox').hide();
-            $('#sheetLayoutPanel').hide();
-
-            calculate();
-        }
 
         function showError(message) {
             $('#errorBox').text(message).show();
             $('#resultsPanel').hide();
             $('#sheetLayoutPanel').hide();
         }
-
         function hideError() {
             $('#errorBox').hide().text('');
         }
@@ -185,67 +211,57 @@
                 return;
             }
 
-            const cubicleWidth = totalWidth / numStalls;
+            // Read choice directly from the HTML select element
+            const isEqual = $('#equal').val() === 'equal';
+            let stallWidths = [];
+
+            if (isEqual) {
+                const equalWidth = totalWidth / numStalls;
+                for (let i = 0; i < numStalls; i++) {
+                    stallWidths.push(equalWidth);
+                }
+            } else {
+                let currentTotal = 0;
+                // Parse individual width values from the dynamically created HTML fields
+                for (let i = 1; i <= numStalls; i++) {
+                    let width = parseFloat($(`#stallWidth_${i}`).val());
+
+                    if (isNaN(width) || width <= 0) {
+                        showError(`Please enter a valid width for cubicle #${i}.`);
+                        return;
+                    }
+                    stallWidths.push(width);
+                    currentTotal += width;
+                }
+
+                // Validate that the sum of parts matches the overall layout constraint
+                if (Math.abs(currentTotal - totalWidth) > 1) {
+                    showError(`The sum of individual widths (${currentTotal}mm) does not match the total width (${totalWidth}mm).`);
+                    return;
+                }
+            }
+
+            // Hardware and basic counts
             const countDividers = Math.max(0, numStalls - 1);
             const countDoors = numStalls;
             const countEndPanels = 2;
             const countMidPanels = Math.max(0, numStalls - 1);
-            const endWalls = wallType === 'c' ? 0 : 1;
-
-            const totalDoorsWidth = countDoors * doorWidth;
-            const panelUnitWidth = (totalWidth - totalDoorsWidth) / (2 * numStalls);
-            if (panelUnitWidth <= 0) {
-                showError('Total width is too small .');
-                return;
+            // Set end walls based on layout configuration (c = 0, l = 1, s = 2)
+            let endWalls = 0;
+            if (wallType === 'l') {
+                endWalls = 1;
+            } else if (wallType === 's') {
+                endWalls = 2;
+            } else if (wallType === 'c') {
+                endWalls = 0;
             }
 
-            const endPanelWidth = panelUnitWidth;
-            const midPanelWidth = panelUnitWidth * 2;
 
-            const dividerArea = countDividers * dividerHeight * depth;
-            const doorArea = countDoors * doorHeight * doorWidth;
-            const endPanelArea = countEndPanels * pilasterHeight * endPanelWidth;
-            const midPanelArea = countMidPanels * pilasterHeight * midPanelWidth;
-            const endwallArea = endWalls * dividerHeight * depth;
-            const netArea = (dividerArea + doorArea + endPanelArea + midPanelArea + endwallArea) / 1_000_000;
-            const wasteFactor = 1.10;
-            const grossArea = netArea * wasteFactor;
-
-            const sheetOptions = availablesheets.map(sheet => {
-                const sheetArea = (sheet.width * sheet.height) / 1_000_000;
-                return {
-                    sheet,
-                    boards: Math.ceil(grossArea / sheetArea),
-                    sheetArea
-                };
-            });
-
-            $('#countDividers').text(countDividers);
-            $('#countPilasters').text(countMidPanels);
-            $('#countEndPanels').text(countEndPanels);
-            $('#countDoors').text(countDoors);
-            $('#endwall').text(endWalls);
-
-            $('#sizeDividers').text(`Dividers: ${dividerHeight}mm x ${depth}mm`);
-            $('#sizeDoors').text(`Front Doors: ${doorHeight}mm x ${doorWidth}mm`);
-            $('#sizeEndPanel').text(`End Panel: ${pilasterHeight}mm x ${endPanelWidth.toFixed(0)}mm`);
-            $('#sizeMidPanel').text(`Mid Panel: ${pilasterHeight}mm x ${midPanelWidth.toFixed(0)}mm`);
-            if (endWalls > 0) {
-                $('#sizeEndwalls').text(`End Walls: ${dividerHeight}mm x ${depth}mm`);
-            } else {
-                $('#sizeEndwalls').text(`End Walls: zero`);
-            }
-            $('#sizeCubicleWidth').text(`Each Cubicle Width: ${cubicleWidth.toFixed(0)}mm`);
-
-            const calculatedTotalWidth = countEndPanels * endPanelWidth + countDoors * doorWidth + countMidPanels * midPanelWidth;
-            const isValidLayout = Math.abs(calculatedTotalWidth - totalWidth) < 1;
-            const constraintText = `Layout Width: ${countEndPanels}×${endPanelWidth.toFixed(0)}mm + ${countDoors}×${doorWidth}mm + ${countMidPanels}×${midPanelWidth.toFixed(0)}mm = ${calculatedTotalWidth.toFixed(0)}mm (target: ${totalWidth}mm)`;
-
-            $('#sizeConstraint').text(constraintText).css('color', isValidLayout ? '#5cb85c' : '#d9534f');
-            $('#netArea').text(netArea.toFixed(2));
-            $('#grossArea').text(grossArea.toFixed(2));
-            $('#rawSheets').text('0.00');
-            $('#finalOrder').text('0 Boards');
+            // Track total areas for panels
+            let totalEndPanelWidth = 0;
+            let totalMidPanelWidth = 0;
+            let endPanelArea = 0;
+            let midPanelArea = 0;
 
             const parts = [];
             function addParts(label, w, h, qty) {
@@ -253,12 +269,94 @@
                     parts.push({ label, w, h });
                 }
             }
-            addParts('Door', doorWidth, doorHeight, countDoors);
-            addParts('End Panel', endPanelWidth, pilasterHeight, countEndPanels);
-            addParts('Mid Panel', midPanelWidth, pilasterHeight, countMidPanels);
+
+            // Process panels dynamically based on individual stall widths
+            for (let i = 0; i < stallWidths.length; i++) {
+                const currentStallWidth = stallWidths[i];
+                const panelUnitWidth = (currentStallWidth - doorWidth) / 2;
+
+                if (panelUnitWidth <= 0) {
+                    showError(`Cubicle #${i + 1} width is too small for the selected door width.`);
+                    return;
+                }
+
+                // Add standard front doors
+                addParts('Door', doorWidth, doorHeight, 1);
+
+                if (i === 0 || i === stallWidths.length - 1) {
+                    const epWidth = panelUnitWidth;
+                    totalEndPanelWidth += epWidth;
+                    endPanelArea += pilasterHeight * epWidth;
+                    addParts('End Panel', epWidth, pilasterHeight, 1);
+
+                    if (numStalls > 1) {
+                        const mpHalfWidth = panelUnitWidth;
+                        totalMidPanelWidth += mpHalfWidth;
+                        midPanelArea += pilasterHeight * mpHalfWidth;
+                        addParts('Mid Panel Component', mpHalfWidth, pilasterHeight, 1);
+                    }
+                } else {
+                    const mpHalfWidth = panelUnitWidth * 2;
+                    totalMidPanelWidth += mpHalfWidth;
+                    midPanelArea += pilasterHeight * mpHalfWidth;
+                    addParts('Mid Panel Component', mpHalfWidth, pilasterHeight, 1);
+                }
+            }
+
+            // Add remaining dividers and end walls to the cutlist
             addParts('Divider', depth, dividerHeight, countDividers);
             addParts('End Wall', depth, dividerHeight, endWalls);
 
+            // Area calculations
+            const dividerArea = countDividers * dividerHeight * depth;
+            const doorArea = countDoors * doorHeight * doorWidth;
+            const endwallArea = endWalls * dividerHeight * depth;
+
+            const netArea = (dividerArea + doorArea + endPanelArea + midPanelArea + endwallArea) / 1_000_000;
+            const wasteFactor = 1.10;
+            const grossArea = netArea * wasteFactor;
+
+            // Update DOM counts and labels
+            $('#countDividers').text(countDividers);
+            $('#countPilasters').text(countMidPanels);
+            $('#countEndPanels').text(countEndPanels);
+            $('#countDoors').text(countDoors);
+            $('#endwall').text(endWalls);
+
+            // Calculate display averages or ranges for display panels
+            const avgEndPanelWidth = totalEndPanelWidth / countEndPanels;
+            const avgMidPanelWidth = countMidPanels > 0 ? totalMidPanelWidth / countMidPanels : 0;
+
+            $('#sizeDividers').text(`Dividers: ${dividerHeight}mm x ${depth}mm`);
+            $('#sizeDoors').text(`Front Doors: ${doorHeight}mm x ${doorWidth}mm`);
+            $('#sizeEndPanel').text(`End Panel (Avg): ${pilasterHeight}mm x ${avgEndPanelWidth.toFixed(0)}mm`);
+            $('#sizeMidPanel').text(`Mid Panel (Avg): ${pilasterHeight}mm x ${avgMidPanelWidth.toFixed(0)}mm`);
+
+            if (endWalls > 0) {
+                $('#sizeEndwalls').text(`End Walls: ${dividerHeight}mm x ${depth}mm`);
+            } else {
+                $('#sizeEndwalls').text(`End Walls: zero`);
+            }
+
+            // Handle display string for uniform vs variable cubicle widths
+            if (isEqual) {
+                $('#sizeCubicleWidth').text(`Each Cubicle Width: ${stallWidths[0].toFixed(0)}mm`);
+            } else {
+                const widthsString = stallWidths.map((w, idx) => `#${idx + 1}:${w.toFixed(0)}mm`).join(', ');
+                $('#sizeCubicleWidth').text(`Cubicle Widths: ${widthsString}`);
+            }
+
+            const calculatedTotalWidth = totalEndPanelWidth + (countDoors * doorWidth) + totalMidPanelWidth;
+            const isValidLayout = Math.abs(calculatedTotalWidth - totalWidth) < 1;
+            const constraintText = `Layout Total Width: ${calculatedTotalWidth.toFixed(0)}mm (Target: ${totalWidth}mm)`;
+
+            $('#sizeConstraint').text(constraintText).css('color', isValidLayout ? '#5cb85c' : '#d9534f');
+            $('#netArea').text(netArea.toFixed(2));
+            $('#grossArea').text(grossArea.toFixed(2));
+            $('#rawSheets').text('0.00');
+            $('#finalOrder').text('0 Boards');
+
+            // Packing and layout engine execution
             const packedSheets = packItemsIndividually(parts, availablesheets, 2);
             if (!packedSheets) {
                 showError('Parts cannot fit on available sheet sizes with the current configuration.');
@@ -270,15 +368,19 @@
                 summary[sheet.stock.name] = (summary[sheet.stock.name] || 0) + 1;
                 return summary;
             }, {});
+
             const finalOrderText = Object.entries(sheetCountByName)
                 .map(([name, count]) => `${count} sheets of ${name}`)
                 .join(', ');
+
             $('#finalOrder').text(finalOrderText);
             renderSheetLayouts(packedSheets);
 
             $('#resultsPanel').show();
             $('#sheetLayoutPanel').show();
         }
+
+
 
         function packItemsIndividually(items, stockInventory, kerf) {
             let sheets = [];
@@ -501,11 +603,28 @@
 
                 // Extract, parse, and clean values using jQuery selectors
                 const item = $item.val();
-                const wallType = $wall.val(); // 'l' = L-wall configuration, 'c' = C-wall configuration
+                const wallType = $wall.val(); // 'c' = 0 walls, 'l' = 1 wall, 's' = 2 walls
                 const numStalls = parseInt($numStalls.val()) || 1;
                 const totalWidthMm = parseFloat($totalWidth.val()) || 2000;
                 const depthMm = parseFloat($depth.val()) || 1500;
                 const doorWidthMm = parseFloat($doorWidth.val()) || 600;
+
+                // Read choice directly from the HTML select element (Matching your configuration)
+                const isEqual = $('#equal').val() === 'equal';
+                let stallWidths = [];
+
+                if (isEqual) {
+                    const equalWidth = totalWidthMm / numStalls;
+                    for (let i = 0; i < numStalls; i++) {
+                        stallWidths.push(equalWidth);
+                    }
+                } else {
+                    // Read the dynamic layout values generated on your HTML screen
+                    for (let i = 1; i <= numStalls; i++) {
+                        let width = parseFloat($(`#stallWidth_${i}`).val()) || (totalWidthMm / numStalls);
+                        stallWidths.push(width);
+                    }
+                }
 
                 // Structural Layout Boundaries & Scaling Calculations
                 const padding = 60;
@@ -521,75 +640,95 @@
                 // Core positioning offset baselines
                 const startX = (canvas.width - totalWidthMm * scale) / 2;
                 const startY = padding;
-                const stallWidthMm = totalWidthMm / numStalls;
                 const wallThickness = 50 * scale; // Structural line weight simulation
 
                 // Classic CAD Vector Styling Themes
                 const COLORS = {
-                    bg: "#f9f9f9",      // Dark engineering terminal background
-                    wall: "grey",    // Cyan structural walls
-                    panel: "black",   // White high-pressure laminate panels
-                    door: "brown",    // Magenta privacy swing doors
-                    arc: "dotted",     // Green geometric door clearance path
-                    text: "black"      // Yellow engineering layout dimensions
+                    bg: "#f9f9f9",
+                    wall: "grey",
+                    panel: "black",
+                    door: "brown",
+                    arc: "dotted",
+                    text: "black"
                 };
 
                 // Render Canvas Screen Mask
                 ctx.fillStyle = COLORS.bg;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // DRAW STRUCTURAL BUILDING WALLS (Cyan Lines)
+                // DRAW STRUCTURAL BUILDING WALLS (Based on the new 3-wall parameter rules)
                 ctx.strokeStyle = COLORS.wall;
                 ctx.lineWidth = wallThickness;
                 ctx.lineCap = "square";
                 ctx.beginPath();
 
                 if (wallType === "c") {
-                    // C-Wall Profile: Left Wall, Back Wall, Right Wall
+                    // C-Wall Profile: Left Wall, Back Wall, Right Wall (0 End Walls)
                     ctx.moveTo(startX, startY + depthMm * scale);
                     ctx.lineTo(startX, startY);
                     ctx.lineTo(startX + totalWidthMm * scale, startY);
                     ctx.lineTo(startX + totalWidthMm * scale, startY + depthMm * scale);
-                } else {
-                    // L-Wall Profile: Left Wall and Back Wall only
+                } else if (wallType === "l") {
+                    // L-Wall Profile: Left Wall and Back Wall only (1 End Wall needed on right)
                     ctx.moveTo(startX, startY + depthMm * scale);
                     ctx.lineTo(startX, startY);
+                    ctx.lineTo(startX + totalWidthMm * scale, startY);
+                } else if (wallType === "s") {
+                    // s Wall Profile: Back Wall Only (2 End Walls needed on left & right)
+                    ctx.moveTo(startX, startY);
                     ctx.lineTo(startX + totalWidthMm * scale, startY);
                 }
                 ctx.stroke();
 
-                // DRAW CUBICLE SEPARATING PARTITIONS (White Lines)
+                // DRAW CUBICLE SEPARATING PARTITIONS (Dividers) & END WALL PANELS
                 ctx.strokeStyle = COLORS.panel;
                 ctx.lineWidth = 3;
 
-                // Internal dividing partitions run back-to-front
-                for (let i = 1; i < numStalls; i++) {
-                    const x = startX + i * stallWidthMm * scale;
+                // Track horizontal run accumulation positions dynamically for unequal setups
+                let currentXAccumulator = startX;
+
+                // Draw left-margin panel if freestanding structural profiles demand it
+                if (wallType === "s") {
                     ctx.beginPath();
-                    ctx.moveTo(x, startY);
-                    ctx.lineTo(x, startY + depthMm * scale);
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(startX, startY + depthMm * scale);
                     ctx.stroke();
                 }
 
-                // Side End-Panel (Applies only if using an open L-Wall setup on the right margin)
-                if (wallType === "l") {
+                // Internal dividing partitions run back-to-front 
+                for (let i = 0; i < numStalls - 1; i++) {
+                    currentXAccumulator += stallWidths[i] * scale;
+                    ctx.beginPath();
+                    ctx.moveTo(currentXAccumulator, startY);
+                    ctx.lineTo(currentXAccumulator, startY + depthMm * scale);
+                    ctx.stroke();
+                }
+
+                // Right-margin End-Panel (Applies if using an open L-Wall setup or Freestanding profile)
+                if (wallType === "l" || wallType === "s") {
                     ctx.beginPath();
                     ctx.moveTo(startX + totalWidthMm * scale, startY);
                     ctx.lineTo(startX + totalWidthMm * scale, startY + depthMm * scale);
                     ctx.stroke();
                 }
 
+                // RESET ACCUMULATOR FOR FRONT FASCIA SECTIONS
+                let currentFasciaX = startX;
+
                 // Front Fascia Columns / Front Pilasters
                 for (let i = 0; i < numStalls; i++) {
-                    const leftX = startX + i * stallWidthMm * scale;
-                    const rightX = startX + (i + 1) * stallWidthMm * scale;
+                    const currentStallWidth = stallWidths[i];
+                    const leftX = currentFasciaX;
+                    const rightX = currentFasciaX + (currentStallWidth * scale);
                     const frontY = startY + depthMm * scale;
 
-                    // Divide leftover spacing equally around the explicit door width selection
-                    const remainingSpace = stallWidthMm - doorWidthMm;
+                    // Divide leftover space equally inside this specific stall's width profile
+                    const remainingSpace = currentStallWidth - doorWidthMm;
                     const pilasterWidth = remainingSpace > 0 ? remainingSpace / 2 : 0;
 
-                                       ctx.strokeStyle = COLORS.panel;
+                    ctx.strokeStyle = COLORS.panel;
+                    ctx.lineWidth = 3;
+
                     // Left Pilaster Segment
                     ctx.beginPath();
                     ctx.moveTo(leftX, frontY);
@@ -601,164 +740,92 @@
                     ctx.moveTo(rightX - pilasterWidth * scale, frontY);
                     ctx.lineTo(rightX, frontY);
                     ctx.stroke();
-                    
-            // --- ADDED: PILASTER DIMENSION LINES & TEXT MARKERS ---
+
+                    // --- PILASTER DIMENSION LINES & TEXT MARKERS ---
                     ctx.lineWidth = 1;
                     ctx.font = "10px sans-serif";
                     ctx.textAlign = "center";
-                    
-                    // Style config for dimension markers
-                    const dimOffset = 15; // Distance below the front line
-                    const tickHeight = 3;  // Height of vertical boundary ticks
-                    ctx.strokeStyle = "#888888"; // Subtle grey for dimension lines
-                    ctx.fillStyle = "#555555";   // Readable charcoal text
 
-                    // 1. Left Pilaster Dimension Graphics
-                    const leftPilasterEndX = leftX + (pilasterWidth * scale);
-                    const leftMidX = leftX + (pilasterWidth * scale) / 2;
+                    const dimOffset = 15;
+                    const tickHeight = 3;
+                    ctx.strokeStyle = "#888888";
+                    ctx.fillStyle = COLORS.text;
 
-                    ctx.beginPath();
-                    // Horizontal line
-                    ctx.moveTo(leftX, frontY + dimOffset);
-                    ctx.lineTo(leftPilasterEndX, frontY + dimOffset);
-                    // Left vertical tick
-                    ctx.moveTo(leftX, frontY + dimOffset - tickHeight);
-                    ctx.lineTo(leftX, frontY + dimOffset + tickHeight);
-                    // Right vertical tick
-                    ctx.moveTo(leftPilasterEndX, frontY + dimOffset - tickHeight);
-                    ctx.lineTo(leftPilasterEndX, frontY + dimOffset + tickHeight);
-                    ctx.stroke();
-                    // Text label
-                    ctx.fillText(`${Math.round(pilasterWidth)}mm`, leftMidX, frontY + dimOffset + 12);
+               // 1. Calculate critical X positions
+const leftPilasterEndX = leftX + (pilasterWidth * scale);
+const rightPilasterStartX = rightX - (pilasterWidth * scale);
 
-                    // 2. Right Pilaster Dimension Graphics
-                    const rightPilasterStartX = rightX - (pilasterWidth * scale);
-                    const rightMidX = rightPilasterStartX + (pilasterWidth * scale) / 2;
+// 2. Draw Continuous Dimension Line and Ticks
+ctx.beginPath();
+// Main continuous horizontal line from start to end
+ctx.moveTo(leftX, frontY + dimOffset);
+ctx.lineTo(rightX, frontY + dimOffset);
 
-                    ctx.beginPath();
-                    // Horizontal line
-                    ctx.moveTo(rightPilasterStartX, frontY + dimOffset);
-                    ctx.lineTo(rightX, frontY + dimOffset);
-                    // Left vertical tick
-                    ctx.moveTo(rightPilasterStartX, frontY + dimOffset - tickHeight);
-                    ctx.lineTo(rightPilasterStartX, frontY + dimOffset + tickHeight);
-                    // Right vertical tick
-                    ctx.moveTo(rightX, frontY + dimOffset - tickHeight);
-                    ctx.lineTo(rightX, frontY + dimOffset + tickHeight);
-                    ctx.stroke();
-                    // Text label
-                    ctx.fillText(`${Math.round(pilasterWidth)}mm`, rightMidX, frontY + dimOffset + 12);
-// --- END PILASTER DIMENSION ANNOTATIONS ---
+// Far left outer tick
+ctx.moveTo(leftX, frontY + dimOffset - tickHeight);
+ctx.lineTo(leftX, frontY + dimOffset + tickHeight);
 
-                                  // DRAW INTRA-STALL SWING DOORS & ARC VECTORS (Magenta & Green)
-                    if (item === "item1") { // Only draw opening systems for Cubicle item types
-                        const doorLeftX = leftX + pilasterWidth * scale;
-                        const doorRightX = doorLeftX + (doorWidthMm * scale); // Calculate right side of door clear opening
+// Left pilaster inner tick
+ctx.moveTo(leftPilasterEndX, frontY + dimOffset - tickHeight);
+ctx.lineTo(leftPilasterEndX, frontY + dimOffset + tickHeight);
 
-                        // Inward open door geometry vector 
-                        ctx.strokeStyle = COLORS.door;
-                        ctx.beginPath();
-                        ctx.moveTo(doorLeftX, frontY);
-                        ctx.lineTo(
-                            doorLeftX + doorWidthMm * scale * Math.cos(Math.PI / 2),
-                            frontY - doorWidthMm * scale * Math.sin(Math.PI / 2)
-                        );
-                        ctx.stroke();
+// Right pilaster inner tick
+ctx.moveTo(rightPilasterStartX, frontY + dimOffset - tickHeight);
+ctx.lineTo(rightPilasterStartX, frontY + dimOffset + tickHeight);
 
-                        ctx.strokeStyle = COLORS.arc;
-                        ctx.lineWidth = 2;
+// Far right outer tick
+ctx.moveTo(rightX, frontY + dimOffset - tickHeight);
+ctx.lineTo(rightX, frontY + dimOffset + tickHeight);
 
-                        // 1. Set the dot pattern: [dashLength, spaceLength]
-                        ctx.setLineDash([2, 4]);
+ctx.stroke();
 
-                        ctx.beginPath();
-                        ctx.arc(doorLeftX, frontY, doorWidthMm * scale, 0, -Math.PI / 2, true);
-                        ctx.stroke();
+// 3. Render Text Labels
+ctx.font = "10px sans-serif";
+ctx.fillStyle = COLORS.text;
+ctx.textAlign = "center";
 
-                        // 2. IMPORTANT: Reset the line dash so other lines drawn later stay solid
-                        ctx.setLineDash([]);
+// Left Pilaster Text
+const leftMidX = leftX + (pilasterWidth * scale) / 2;
+ctx.fillText(`${Math.round(pilasterWidth)}mm`, leftMidX, frontY + dimOffset + 12);
 
-                        // --- ADDED: DOOR OPENING DIMENSION LINES & TEXT MARKERS ---
-                        ctx.lineWidth = 1;
-                        ctx.font = "10px sans-serif";
-                        ctx.textAlign = "center";
-                        
-                        // Style config for dimension markers (Matches pilaster offsets)
-                        const dimOffset = 15; 
-                        const tickHeight = 3;  
-                        ctx.strokeStyle = "#888888"; // Subtle grey for dimension lines
-                        ctx.fillStyle = "#555555";   // Readable charcoal text
-                        
-                        const doorMidX = doorLeftX + (doorWidthMm * scale) / 2;
+// Middle Door / Opening Text
+const middleMidX = leftPilasterEndX + (rightPilasterStartX - leftPilasterEndX) / 2;
+ctx.fillText(`${Math.round(doorWidthMm)}mm `, middleMidX, frontY + dimOffset + 12);
 
-                        ctx.beginPath();
-                        // Horizontal dimension line
-                        ctx.moveTo(doorLeftX, frontY + dimOffset);
-                        ctx.lineTo(doorRightX, frontY + dimOffset);
-                        
-                        // Left vertical boundary tick
-                        ctx.moveTo(doorLeftX, frontY + dimOffset - tickHeight);
-                        ctx.lineTo(doorLeftX, frontY + dimOffset + tickHeight);
-                        
-                        // Right vertical boundary tick
-                        ctx.moveTo(doorRightX, frontY + dimOffset - tickHeight);
-                        ctx.lineTo(doorRightX, frontY + dimOffset + tickHeight);
-                        ctx.stroke();
-                        
-                        // Door Width Text Label
-                        ctx.fillText(`${Math.round(doorWidthMm)}mm`, doorMidX, frontY + dimOffset + 12);
-                    }
-                }
+// Right Pilaster Text
+const rightMidX = rightPilasterStartX + (pilasterWidth * scale) / 2;
+ctx.fillText(`${Math.round(pilasterWidth)}mm`, rightMidX, frontY + dimOffset + 12);
 
 
-              // AUTOMATED BLUEPRINT METRICS & MEASUREMENT MARKERS (Black Text Annotations)
-                ctx.fillStyle = COLORS.text;
-                ctx.font = "1em sans-serif";
-                ctx.textAlign = "center";
+if (item === "item1") {
+    const doorLeftX = leftX + pilasterWidth * scale;
+    const doorRightX = doorLeftX + (doorWidthMm * scale);
 
-                // Main Span Width Annotation
-                ctx.fillText(`${totalWidthMm} mm (Total Width)`, startX + (totalWidthMm * scale) / 2, startY - 20);
+    // 1. Draw Door Swung Open Outward at 90 Degrees
+    ctx.strokeStyle = COLORS.door;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(doorLeftX, frontY);
+    ctx.lineTo(doorLeftX, frontY - (doorWidthMm * scale)); // Projects outward/upward
+    ctx.stroke();
 
-                // Depth Annotation (Rotated 90 degrees counter-clockwise for vertical alignment)
-                ctx.save();
-                ctx.translate(startX - 25, startY + (depthMm * scale) / 2);
-                ctx.rotate(-Math.PI / 2);
-                ctx.fillText(`${depthMm} mm (System Depth)`, 0, 0);
-                ctx.restore();
+    // 2. Arc for door swing clearance
+    ctx.strokeStyle = "green"; // Using green line color for geometry path
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]); // Creates the dotted/dashed look
+    ctx.beginPath();
+    //
+    ctx.arc(doorLeftX, frontY, doorWidthMm * scale, 1.5 * Math.PI, 2 * Math.PI, false);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset immediately inside the block so future shapes are solid
+}
+// Advance baseline position to the start point of next cubicle run
+currentFasciaX = rightX;
 
-                // Individual Internal Bay, Door, and Panel Labels
-                ctx.font = "11px sans-serif";
-                
-                // Calculate frontY dynamically if it is not globally scoped
-                const calculatedFrontY = startY + depthMm * scale;
-
-                for (let i = 0; i < numStalls; i++) {
-                    const stallStartX = startX + (i * stallWidthMm) * scale;
-                    const cx = stallStartX + (stallWidthMm / 2) * scale;
-                    const cy = startY + (depthMm * scale) / 2;
-                    
-                     ctx.fillStyle = "black";
-                ctx.font = "11px sans-serif";
-                for (let i = 0; i < numStalls; i++) {
-                    const cx = startX + (i * stallWidthMm + stallWidthMm / 2) * scale;
-                    const cy = startY + (depthMm * scale) / 2;
-                    ctx.fillText(`Cubicle ${i + 1}`, cx, cy);
-                    ctx.fillText(`${Math.round(stallWidthMm)}mm`, cx, cy + 15);
-                }
-
-                    // 2. Specific Door & Panel Metrics
-                    // FIX: Ensure 'item' check targets your array data structure (e.g., stalls[i].item or current item context)
-                    // If your item type is uniform across the system, ensure 'item' variable is passed correctly.
-                    if (item === "item1" || (typeof stalls !== 'undefined' && stalls[i]?.item === "item1")) {
-                        ctx.fillStyle = "blue"; // Distinct color for internal component specs
-                        
-                        // Render text relative to the calculated front baseline
-                        ctx.fillText(`Pilaster: ${Math.round(pilasterWidth)}mm`, cx, calculatedFrontY + 20);
-                        ctx.fillText(`Door: ${Math.round(doorWidthMm)}mm`, cx, calculatedFrontY + 35);
-                    }
                 }
             }
         }
     </script>
 </body>
+
 </html>
