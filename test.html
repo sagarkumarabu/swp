@@ -1,304 +1,410 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Cubicle Partition Calculator</title>
-    <link rel="stylesheet" href="cstyle.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Cubicle Partition Calculator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:13px;background:#f0f2f5;color:#1c1c2e;padding:16px;min-height:100vh}
+.wrap{display:grid;grid-template-columns:330px 1fr;gap:0;border:1px solid #c8cad4;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.10);max-width:1200px;margin:0 auto}
+.sidebar{background:#f8f9fa;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;border-right:1px solid #c8cad4;height: 88vh;}
+.main{background:#fff;display:flex;flex-direction:column}
+h2{font-size:15px;font-weight:700;padding-bottom:10px;border-bottom:1px solid #c8cad4;color:#1560c8}
+.section-title{font-size:10px;font-weight:700;color:#7a7d8c;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;color:#55586a;font-weight:600}
+.fg input,.fg select{width:100%;padding:6px 10px;border:1px solid #c8cad4;border-radius:5px;background:#fff;color:#1c1c2e;font-size:12px;outline:none}
+.fg input:focus,.fg select:focus{border-color:#1560c8;box-shadow: 0 0 0 2px rgba(21,96,200,0.1)}
+.stall-inputs{display:flex;flex-direction:column;gap:5px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:2px}
+.hidden{display:none}
+.stall-row{display:grid;grid-template-columns:100px 1fr;align-items:center;gap:8px}
+.calcbtn{width:100%;padding:12px;border:none;border-radius:6px;background:#1560c8;color:#fff;font-size:13px;cursor:pointer;font-weight:700;margin-top:10px;transition: background 0.2s}
+.calcbtn:hover{background:#0d4fa8}
+.err{color:#b91c1c;font-size:11px;padding:8px;background:#fee2e2;border:1px solid #fca5a5;border-radius:5px;display:none}
+.err.show{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:15px;border-bottom:1px solid #e8eaef;background:#f9fafc}
+.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 5px;text-align:center}
+.kpi .val{font-size:20px;font-weight:700;color:#1560c8}
+.kpi .lbl{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin-top:4px}
+.tabs{display:flex;border-bottom:1px solid #e8eaef;padding:0 15px;background:#f9fafc}
+.tab{padding:12px 20px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b}
+.tab.active{color:#1560c8;border-bottom-color:#1560c8;background: #fff}
+.drawing-area{flex:1;padding:20px;background:#fff;overflow:auto;display:flex;justify-content:center;align-items:center}
+canvas{border:1px solid #e2e8f0;border-radius:8px;box-shadow: 0 2px 10px rgba(0,0,0,0.05)}
+.sizing-box{padding:15px;border-top:1px solid #e8eaef;background:#f9fafc;display:grid;grid-template-columns:repeat(3,1fr);gap:10px 20px}
+.sz{font-size:11px;color:#64748b;border-left:3px solid #1560c8;padding-left:10px}
+.sz b{color:#1e293b;display:block;font-size:12px;margin-bottom:2px}
+</style>
 </head>
 <body>
-<div class="container">
- <button><a href="index.html">hpl calculate</a></button>
-    <h1> Cubicle Partition calculator</h1>
-    <div class="layout-grid">
-        <div class="input-panel">
-            <!-- Input Section -->
-            <div class="form-group">
-                <label for="numStalls">Select Item</label>
-              <select name="item" id="item">
-                    <option value="item1">CUBICLE</option>
-                    <option value="item2">URINAL</option>
-                    <OPTION value="item3">LOCKER</OPTION>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="wall">wall</label>
-                <select name="wall" id="wall">
-                    <option value="l">Lwall</option>
-                    <option value="c">Cwall</option>
-                </select>
-            </div>
-        
-            <div class="form-group">
-                <label for="numStalls">Number of cubicle</label>
-                <input type="number" id="numStalls" value="2" min="1" max="20">
-            </div>
-              <div class="form-group">
-                <label for="totalwidth">Area width (mm)</label>
-                <input type="number" id="totalwidth" value="2000" min="1000">
-            </div>
-            <div class="form-group">
-                <label for="dividerHeight">Divider height (mm)</label>
-                <input type="number" id="dividerHeight" value="1790" min="1000">
-            </div>
-             <div class="form-group">
-                <label for="depth">Divider Depth (mm)</label>
-                <input type="number" id="depth" value="1500" min="500">
-            </div>
-             <div class="form-group">
-                <label for="doorHeight">Door Height (mm)</label>
-                <input type="number" id="doorHeight" value="1790" min="1000">
-            </div>
-             <div class="form-group">
-                <label for="doorWidth"> Door  Width (mm)</label>
-                <input type="number" id="doorWidth" value="600" min="400">
-            </div>
-            <div class="form-group">
-                <label for="pilasterHeight">Pilaster Height (mm)</label>
-                <input type="number" id="pilasterHeight" value="1830" min="1000">
-            </div>
-        </div>
-        <!-- Output Section -->
-        <div class="output-panel">
-            <div id="errorBox" class="alert-error"></div>
-            
-            <div class="results-panel" id="resultsPanel">
-                <div class="results-title">Calculated Requirements</div>
-                
-                <!-- Component Counts -->
-                <div class="kpi-row">
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countDividers">0</div>
-                        <div class="kpi-lbl">Dividers</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countPilasters">0</div>
-                        <div class="kpi-lbl">mid panels</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countEndPanels">0</div>
-                        <div class="kpi-lbl">End panels</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="countDoors">0</div>
-                        <div class="kpi-lbl">Doors</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-val" id="endwall">0</div>
-                        <div class="kpi-lbl">End Wall</div>
-                    </div>
-                </div>
-
-                <!-- Cutting Sizes -->
-                <div class="matrix-box">
-                    <h3>🔍 Component Sizing Matrix</h3>
-                    <ul>
-                        <li id="sizeDividers"> Dividers: -</li>
-                        <li id="sizeDoors">Front Doors: -</li>
-                        <li id="sizeEndPanel">End Panel: -</li>
-                        <li id="sizeMidPanel">Mid Panel: -</li>
-                        <li id="sizeEndwalls">End Walls: -</li>
-                        <li id="sizeCubicleWidth">Each Cubicle Width: -</li>
-                        <li id="sizeConstraint" style="color: #d9534f; font-weight: bold;">Constraint: -</li>
-                    </ul>
-                </div>
-                <!-- Material Purchasing Estimates -->
-        <div class="order-box">
-         <h3>📦 Material Order Summary</h3>
-         <ul>
-          <li>Net Panel Surface Area: <span id="netArea">0.00</span> m²</li>
-       <li>Gross Area (incl. waste): <span id="grossArea">0.00</span> m²</li>
-                        <li>Exact Volumetric Run: <span id="rawSheets">0.00</span> Boards</li>
-                        <li style="margin-top:8px; list-style-type:none;">
-                            <strong>FINAL SHEET ORDER: </strong> 
-                            <span id="finalOrder" class="order-highlight">0 Boards</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+<div class="wrap">
+  <div class="sidebar">
+    <h2>Layout Designer</h2>
+    <div class="err" id="errBox"></div>
+    
+    <div class="section-title">Global Settings</div>
+    <div class="fg"><label>Wall Configuration</label>
+      <select id="wall" onchange="calculate()">
+        <option value="s">Straight Wall (2 Sides)</option>
+        <option value="l">L-Wall (1 Side)</option>
+        <option value="c">C-Wall (No Sides)</option>
+      </select>
     </div>
+    <div class="fg"><label>Number of Cubicles</label>
+      <input type="number" id="numStalls" value="2" min="1" max="15" oninput="onStallCountChange()"></div>
+    
+    <div class="section-title">Dimensions</div>
+    <div class="fg"><label>Total Run Width (mm)</label>
+      <input type="number" id="totalwidth" value="2000" oninput="calculate()"></div>
+    <div class="fg"><label>Cubicle Depth (mm)</label>
+      <input type="number" id="depth" value="1500" oninput="calculate()"></div>
+    
+    <div class="section-title">Pilaster Specs</div>
+    <div class="fg"><label>End Plaster Mode</label>
+      <select id="epMode" onchange="toggleEpMode()">
+        <option value="equal">Equal</option>
+        <option value="unequal">Unequal</option>
+      </select>
+    </div>
+    <div id="epEqualGroup" class="fg">
+      <label>End Plaster Width (mm)</label>
+      <input type="number" id="epW" value="200" oninput="calculate()">
+    </div>
+    <div id="epUnequalGroup" class="stall-inputs hidden">
+      <div class="stall-row"><label>Left (mm)</label><input type="number" id="epW_L" value="150" oninput="calculate()"></div>
+      <div class="stall-row"><label>Right (mm)</label><input type="number" id="epW_R" value="150" oninput="calculate()"></div>
+    </div>
+    <div class="fg"><label>Mid Pilaster Width (mm)</label>
+      <input type="number" id="mPilW" value="400" oninput="calculate()"></div>
+
+    <div class="section-title">Stall Spacing</div>
+    <div class="fg"><select id="spacingType" onchange="onSpacingTypeChange()">
+        <option value="equal">Equal Stalls</option>
+        <option value="unequal">Custom Widths</option>
+    </select></div>
+    <div id="customStallGroup" class="stall-inputs hidden"></div>
+    
+    <div class="fg"><label>Door Height (mm)</label><input type="number" id="dH" value="1800" oninput="calculate()"></div>
+    <div class="fg"><label>Full Height (mm)</label><input type="number" id="pH" value="1950" oninput="calculate()"></div>
+    <div class="fg">
+  <label>Door Width (mm)</label>
+  <input type="number" id="doorW" value="600" oninput="calculate()">
 </div>
-<canvas id="resultsCanvas">
-</canvas>
+  </div>
+
+  <div class="main">
+    <div class="kpi-row">
+      <div class="kpi"><div class="val" id="kStalls">0</div><div class="lbl">Stalls</div></div>
+      <div class="kpi"><div class="val" id="kEP">2</div><div class="lbl">End Pilasters</div></div>
+      <div class="kpi"><div class="val" id="kMP">0</div><div class="lbl">Mid Pilasters</div></div>
+      <div class="kpi"><div class="val" id="kSP">0</div><div class="lbl">Side Panels</div></div>
+      <div class="kpi"><div class="val" id="kArea">0</div><div class="lbl">Total m²</div></div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" id="tFloor" onclick="switchTab('floor')">Floor Plan (CAD)</div>
+      <div class="tab" id="tElev" onclick="switchTab('elev')">Front Elevation</div>
+    </div>
+
+    <div class="drawing-area">
+      <canvas id="cvFloor" width="780" height="450"></canvas>
+      <canvas id="cvElev"  width="780" height="450" style="display:none"></canvas>
+    </div>
+
+    <div class="sizing-box">
+      <div class="sz"><b>End Pilasters</b> <span id="sEP">-</span></div>
+      <div class="sz"><b>Mid Pilaster</b> <span id="sMP">-</span></div>
+      <div class="sz"><b>Clear Opening</b> <span id="sOpen">-</span></div>
+      <div class="sz"><b>Divider Panel</b> <span id="sDiv">-</span></div>
+      <div class="sz"><b>Wall Type</b> <span id="sWall">-</span></div>
+      <div class="sz"><b>Surface Area</b> <span id="sArea">-</span></div>
+    </div>
+  </div>
+</div>
+
 <script>
-    const itemSelect = document.getElementById('item');
-    const wallSelect = document.getElementById('wall');
-    const numStallsInput = document.getElementById('numStalls');
-    const totalWidthInput = document.getElementById('totalwidth');
-    const dividerHeightInput = document.getElementById('dividerHeight');
-    const depthInput = document.getElementById('depth');
-    const doorHeightInput = document.getElementById('doorHeight');
-    const doorWidthInput = document.getElementById('doorWidth');
-    const pilasterHeightInput = document.getElementById('pilasterHeight');
-    const resultPanel = document.getElementById('resultsPanel');
-    const errorBox = document.getElementById('errorBox');
-    const netAreaEl = document.getElementById('netArea');
-    const grossAreaEl = document.getElementById('grossArea');
-    const rawSheetsEl = document.getElementById('rawSheets');
-    const finalOrderEl = document.getElementById('finalOrder');
+let result = null;
+let activeTab = 'floor';
 
-    const availablesheets = [
-      { name: "12 x 6 feet", width: 3670, height: 1860 },
-      { name: "14 x 6 feet", width: 4300, height: 1830 }
-    ];
+function toggleEpMode() {
+    const mode = document.getElementById('epMode').value;
+    document.getElementById('epEqualGroup').classList.toggle('hidden', mode !== 'equal');
+    document.getElementById('epUnequalGroup').classList.toggle('hidden', mode === 'equal');
+    calculate();
+}
 
-    function init() {
-        if (itemSelect && wallSelect && numStallsInput && totalWidthInput && dividerHeightInput && depthInput && doorHeightInput && doorWidthInput && pilasterHeightInput) {
-            itemSelect.addEventListener('change', calculate);
-            wallSelect.addEventListener('change', calculate);
-            numStallsInput.addEventListener('input', calculate);
-            totalWidthInput.addEventListener('input', calculate);
-            dividerHeightInput.addEventListener('input', calculate);
-            depthInput.addEventListener('input', calculate);
-            doorHeightInput.addEventListener('input', calculate);
-            doorWidthInput.addEventListener('input', calculate);
-            pilasterHeightInput.addEventListener('input', calculate);
-        }
+function onSpacingTypeChange() {
+    buildStallInputs();
+    calculate();
+}
 
-        if (resultPanel) {
-            resultPanel.style.display = 'none';
-        }
-        if (errorBox) {
-            errorBox.style.display = 'none';
-        }
+function onStallCountChange() {
+    buildStallInputs();
+    calculate();
+}
 
-        calculate();
+function buildStallInputs() {
+    const n = parseInt(document.getElementById('numStalls').value) || 1;
+    const type = document.getElementById('spacingType').value;
+    const box = document.getElementById('customStallGroup');
+    box.innerHTML = '';
+    if (type === 'equal') { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    for (let i = 1; i <= n; i++) {
+        let row = document.createElement('div');
+        row.className = 'stall-row';
+        row.innerHTML = `<label>Stall ${i}</label><input type="number" id="sw_${i}" value="800" oninput="calculate()">`;
+        box.appendChild(row);
     }
+}
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+function switchTab(t) {
+    activeTab = t;
+    document.getElementById('tFloor').classList.toggle('active', t === 'floor');
+    document.getElementById('tElev').classList.toggle('active', t === 'elev');
+    document.getElementById('cvFloor').style.display = t === 'floor' ? 'block' : 'none';
+    document.getElementById('cvElev').style.display = t === 'elev' ? 'block' : 'none';
+    if (result) draw();
+}
+
+function calculate() {
+    const n = parseInt(document.getElementById('numStalls').value) || 1;
+    const totalW = parseFloat(document.getElementById('totalwidth').value) || 2000;
+    const depth = parseFloat(document.getElementById('depth').value) || 1500;
+    const mPilW = parseFloat(document.getElementById('mPilW').value) || 100;
+    const wallType = document.getElementById('wall').value;
+     const doorW = parseFloat(document.getElementById('doorW').value) || 600;
+    const dH = 1800; // Fixed door height as requested
+    const pH = parseFloat(document.getElementById('pH').value) || 1950;
+
+    let epL, epR;
+    if (document.getElementById('epMode').value === 'equal') {
+        epL = epR = parseFloat(document.getElementById('epW').value) || 150;
     } else {
-        init();
+        epL = parseFloat(document.getElementById('epW_L').value) || 150;
+        epR = parseFloat(document.getElementById('epW_R').value) || 150;
     }
 
-    function showError(message) {
-        if (errorBox) {
-            errorBox.textContent = message;
-            errorBox.style.display = 'block';
-        }
-        if (resultPanel) {
-            resultPanel.style.display = 'none';
-        }
+    const midPilCount = n - 1;
+    const availableForStalls = totalW - (epL + epR + (midPilCount * mPilW));
+
+    if (availableForStalls < (n * 200)) {
+        document.getElementById('errBox').textContent = "Total width too small for these pilasters!";
+        document.getElementById('errBox').classList.add('show');
+        return;
+    } else {
+        document.getElementById('errBox').classList.remove('show');
     }
 
-    function hideError() {
-        if (errorBox) {
-            errorBox.style.display = 'none';
-            errorBox.textContent = '';
+    let stallWidths = [];
+    if (document.getElementById('spacingType').value === 'equal') {
+        const sw = availableForStalls / n;
+        for (let i = 0; i < n; i++) stallWidths.push(sw);
+    } else {
+        let sum = 0;
+        for (let i = 1; i <= n; i++) {
+            let v = parseFloat(document.getElementById('sw_' + i)?.value) || 800;
+            stallWidths.push(v);
+            sum += v;
         }
+        let ratio = availableForStalls / sum;
+        stallWidths = stallWidths.map(v => v * ratio);
     }
 
-    function calculate() {
-        if (!itemSelect || !wallSelect || !numStallsInput || !totalWidthInput || !dividerHeightInput || !depthInput || !doorHeightInput || !doorWidthInput || !pilasterHeightInput) {
-            return;
-        }
+    const sidePanels = (wallType === 's') ? 2 : (wallType === 'l' ? 1 : 0);
+    const netArea = ((n * depth * pH) + (totalW * pH)) / 1000000;
 
-        const item = itemSelect.value;
-        const wallType = wallSelect.value;
-        const numStalls = parseInt(numStallsInput.value, 10);
-        const totalWidth = parseFloat(totalWidthInput.value);
-        const dividerHeight = parseFloat(dividerHeightInput.value);
-        const depth = parseFloat(depthInput.value);
-        const doorHeight = parseFloat(doorHeightInput.value);
-        const doorWidth = parseFloat(doorWidthInput.value);
-        const pilasterHeight = parseFloat(pilasterHeightInput.value);
+   result = { n, totalW, depth, epL, epR, mPilW, pH, dH, doorW, wallType, stallWidths, sidePanels, netArea };
 
-        if (isNaN(numStalls) || isNaN(totalWidth) || isNaN(dividerHeight) || isNaN(depth) || isNaN(doorHeight) || isNaN(doorWidth) || isNaN(pilasterHeight)) {
-            showError('Please enter valid numeric values for all fields.');
-            return;
-        }
 
-        if (numStalls < 1 || totalWidth < 1000 || dividerHeight < 1000 || depth < 500 || doorHeight < 1000 || doorWidth < 400 || pilasterHeight < 1000) {
-            showError('Please ensure all values meet the minimum requirements.');
-            return;
-        }
+    document.getElementById('kStalls').textContent = n;
+    document.getElementById('kMP').textContent = midPilCount;
+    document.getElementById('kSP').textContent = sidePanels;
+    document.getElementById('kArea').textContent = netArea.toFixed(2);
+    document.getElementById('sEP').textContent = `${epL}L / ${epR}R mm`;
+    document.getElementById('sDiv').textContent = `${depth} x ${pH} mm`;
+    document.getElementById('sOpen').textContent = `${doorW} mm`;
+    draw();
 
-        hideError();
+    draw();
+}
 
-        const cubicleWidth = totalWidth / numStalls;
-        const countDividers = Math.max(0, numStalls - 1);
-        const countDoors = numStalls;
-        const countEndPanels = 2;
-        const countMidPanels = Math.max(0, numStalls - 1);
-        const endWalls = wallType === 'c' ? 0 : 1;
+function draw() {
+    if (activeTab === 'floor') drawFloor(result);
+    else drawElev(result);
+}
 
-        // Calculate end and mid panel widths with mid panels twice the width of end panels
-        const totalDoorsWidth = countDoors * doorWidth;
-        const panelUnitWidth = (totalWidth - totalDoorsWidth) / (2 * numStalls);
-        const endPanelWidth = panelUnitWidth;
-        const midPanelWidth = panelUnitWidth * 2;
+function drawFloor(r) {
+    const canvas = document.getElementById('cvFloor');
+    const ctx = canvas.getContext("2d");
+    const pad = 60;
+    const scale = Math.min((canvas.width - pad * 2) / r.totalW, (canvas.height - pad * 3) / r.depth);
+    const startX = (canvas.width - r.totalW * scale) / 2;
+    const startY = 50;
+    const drawD = r.depth * scale;
 
-        const dividerArea = countDividers * dividerHeight * depth;
-        const doorArea = countDoors * doorHeight * doorWidth;
-        const endPanelArea = countEndPanels * pilasterHeight * endPanelWidth;
-        const midPanelArea = countMidPanels * pilasterHeight * midPanelWidth;
-        const endwallArea = endWalls * dividerHeight * depth;
-        const netArea = (dividerArea + doorArea + endPanelArea + midPanelArea + endwallArea) / 1_000_000;
-        const wasteFactor = 1.10;
-        const grossArea = netArea * wasteFactor;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const sheetOptions = availablesheets.map(sheet => {
-            const sheetArea = (sheet.width * sheet.height) / 1_000_000;
-            return {
-                sheet,
-                boards: Math.ceil(grossArea / sheetArea),
-                sheetArea
-            };
-        });
+    // 1. Draw Masonry Boundary (Back and Sides)
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 10 * scale;
+    ctx.lineCap = "square";
+    ctx.beginPath();
+    if (r.wallType === "c") {
+        ctx.moveTo(startX, startY + drawD); ctx.lineTo(startX, startY);
+        ctx.lineTo(startX + r.totalW * scale, startY); ctx.lineTo(startX + r.totalW * scale, startY + drawD);
+    } else if (r.wallType === "l") {
+        ctx.moveTo(startX, startY + drawD); ctx.lineTo(startX, startY);
+        ctx.lineTo(startX + r.totalW * scale, startY);
+    } else {
+        ctx.moveTo(startX, startY); ctx.lineTo(startX + r.totalW * scale, startY);
+    }
+    ctx.stroke();
 
-        const bestSheet = sheetOptions.reduce((best, option) => {
-            if (!best || option.boards < best.boards || (option.boards === best.boards && option.sheetArea > best.sheetArea)) {
-                return option;
+    // 2. Draw Front Fascia, Pilasters, and Dividers
+    let curX = startX;
+    const frontY = startY + drawD;
+    const dimY = frontY + 45;
+
+    for (let i = 0; i < r.n; i++) {
+        let pW = (i === 0) ? r.epL : r.mPilW;
+        let pWpx = pW * scale;
+
+        // Draw Pilaster Rectangle
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(curX, frontY - 3, pWpx, 6);
+        drawDim(ctx, curX, curX + pWpx, dimY, Math.round(pW));
+
+        // Divider Partition Line
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Aligns to outer edge for first stall, center for others
+        let divX = (i === 0) ? curX : (curX + pWpx / 2);
+        ctx.moveTo(divX, startY);
+        ctx.lineTo(divX, frontY);
+        ctx.stroke();
+
+        curX += pWpx;
+
+        // Draw Door leaf and Swing Arc based on r.doorW
+        let stallWpx = r.stallWidths[i] * scale;
+        let doorWpx = r.doorW * scale; // User Input Door Width
+        
+        ctx.strokeStyle = "#8B4513";
+        ctx.lineWidth = 2;
+        // Swing Door Leaf (Inward)
+        ctx.beginPath(); 
+        ctx.moveTo(curX, frontY); 
+        ctx.lineTo(curX, frontY - doorWpx); 
+        ctx.stroke();
+
+        // Swing Arc
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); 
+        ctx.arc(curX, frontY, doorWpx, 1.5 * Math.PI, 2 * Math.PI); 
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Dimension for the total Stall Space (gap between pilasters)
+        drawDim(ctx, curX, curX + stallWpx, dimY, Math.round(r.stallWidths[i]));
+        curX += stallWpx;
+
+        // Draw Final Right-Side Pilaster
+        if (i === r.n - 1) {
+            let epRpx = r.epR * scale;
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(curX, frontY - 3, epRpx, 6);
+            drawDim(ctx, curX, curX + epRpx, dimY, Math.round(r.epR));
+            
+            // Right Side Divider (if Straight or L-Wall)
+            if (r.wallType !== "c") {
+                ctx.strokeStyle = "#000";
+                ctx.beginPath();
+                ctx.moveTo(curX + epRpx, startY);
+                ctx.lineTo(curX + epRpx, frontY);
+                ctx.stroke();
             }
-            return best;
-        }, null);
-
-        document.getElementById('countDividers').textContent = countDividers;
-        document.getElementById('countPilasters').textContent = countMidPanels;
-        document.getElementById('countEndPanels').textContent = countEndPanels;
-        document.getElementById('countDoors').textContent = countDoors;
-        document.getElementById('endwall').textContent = endWalls;
-
-        document.getElementById('sizeDividers').textContent = `Dividers: ${dividerHeight}mm x ${depth}mm`;
-        document.getElementById('sizeDoors').textContent = `Front Doors: ${doorHeight}mm x ${doorWidth}mm`;
-        document.getElementById('sizeEndPanel').textContent = `End Panel: ${pilasterHeight}mm x ${endPanelWidth.toFixed(0)}mm`;
-        document.getElementById('sizeMidPanel').textContent = `Mid Panel: ${pilasterHeight}mm x ${midPanelWidth.toFixed(0)}mm`;
-        document.getElementById('sizeEndwalls').textContent = `End Walls: ${dividerHeight}mm x ${depth}mm`;
-        document.getElementById('sizeCubicleWidth').textContent = `Each Cubicle Width: ${cubicleWidth.toFixed(0)}mm`;
-        
-        // Validate total width constraint: all components must fit within totalWidth
-        const calculatedTotalWidth = countEndPanels * endPanelWidth + countDoors * doorWidth + countMidPanels * midPanelWidth;
-        const isValidLayout = Math.abs(calculatedTotalWidth - totalWidth) < 1; // Allow 1mm tolerance
-        
-        const constraintEl = document.getElementById('sizeConstraint');
-        const constraintText = `Layout Width: ${countEndPanels}×${endPanelWidth.toFixed(0)}mm + ${countDoors}×${doorWidth}mm + ${countMidPanels}×${midPanelWidth.toFixed(0)}mm = ${calculatedTotalWidth.toFixed(0)}mm (target: ${totalWidth}mm)`;
-        constraintEl.textContent = constraintText;
-        constraintEl.style.color = isValidLayout ? '#5cb85c' : '#d9534f';
-
-        if (netAreaEl) netAreaEl.textContent = netArea.toFixed(2);
-        if (grossAreaEl) grossAreaEl.textContent = grossArea.toFixed(2);
-        if (rawSheetsEl) rawSheetsEl.textContent = bestSheet ? `${bestSheet.boards}` : '0.00';
-        if (finalOrderEl) {
-            finalOrderEl.textContent = bestSheet ? 
-            `${bestSheet.boards} sheets of ${bestSheet.sheet.name}` : '0 Boards';
-        }
-
-        if (resultPanel) {
-            resultPanel.style.display = 'block';
         }
     }
+}
 
-    document.addEventListener('DOMContentLoaded', init);
-    function drawResults() {
-        const canvas = document.getElementById('resultsCanvas');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Placeholder for future visualizations
+function drawElev(r) {
+    const canvas = document.getElementById('cvElev');
+    const ctx = canvas.getContext('2d');
+    const pad = 60;
+    const scale = Math.min(700 / r.totalW, 320 / r.pH);
+    const ox = (canvas.width - r.totalW * scale) / 2;
+    const oy = 380;
+    const pHpx = r.pH * scale;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Ground
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(20, oy); ctx.lineTo(760, oy); ctx.stroke();
+
+    let curX = ox;
+    for (let i = 0; i <= r.n; i++) {
+        let pW = (i === 0) ? r.epL : (i === r.n ? r.epR : r.mPilW);
+        let pWpx = pW * scale;
+
+        // Draw Pilasters
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(curX, oy - pHpx, pWpx, pHpx);
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+        ctx.strokeRect(curX, oy - pHpx, pWpx, pHpx);
+
+        if (i < r.n) {
+            let sWpx = r.stallWidths[i] * scale;
+            let dHpx = r.dH * scale;
+            
+            // Stall Background/Filler
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(curX + pWpx, oy - pHpx, sWpx, pHpx);
+            ctx.strokeRect(curX + pWpx, oy - pHpx, sWpx, pHpx);
+
+            // Door
+            let dWpx = sWpx * 0.85;
+            let doorX = curX + pWpx + (sWpx - dWpx) / 2;
+            let doorY = oy - dHpx - 15; // 15mm floor clearance
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(doorX, doorY, dWpx, dHpx);
+            ctx.strokeStyle = '#1560c8'; ctx.strokeRect(doorX, doorY, dWpx, dHpx);
+
+            // 3 Hinges
+            ctx.fillStyle = '#64748b';
+            const hW = 3, hH = 10;
+            ctx.fillRect(doorX - 1, doorY + 20, hW, hH);
+            ctx.fillRect(doorX - 1, doorY + (dHpx/2) - 5, hW, hH);
+            ctx.fillRect(doorX - 1, doorY + dHpx - 30, hW, hH);
+
+            // Knob
+            ctx.beginPath(); ctx.arc(doorX + dWpx - 10, doorY + dHpx/2, 4, 0, Math.PI*2); ctx.fill();
+
+            curX += pWpx + sWpx;
         }
     }
+}
+
+function drawDim(ctx, x1, x2, y, text) {
+    ctx.strokeStyle = "#1560c8";
+    ctx.fillStyle = "#1560c8";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x1, y); ctx.lineTo(x2, y);
+    ctx.moveTo(x1, y - 5); ctx.lineTo(x1, y + 5);
+    ctx.moveTo(x2, y - 5); ctx.lineTo(x2, y + 5);
+    ctx.stroke();
+    ctx.font = "bold 9px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(text + "mm", (x1 + x2) / 2, y + 15);
+}
+
+// Init
+buildStallInputs();
+toggleEpMode();
 </script>
-<script src="jq.js"></script>
 </body>
 </html>
