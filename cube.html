@@ -352,16 +352,14 @@ function leader(ctx,x1,y1,x2,y2,text,color){
   ctx.fillText(text,x2+(x2>x1?3:-3),y2);
   ctx.restore();
 }
-
-//* ── Floor Plan ──────────────────────────────────── */
-/* ── Floor Plan ──────────────────────────────────── */
+/* /* ── Floor Plan ──────────────────────────────────── */
 function drawFloor(r){
   var cv=document.getElementById('cvFloor');
   var ctx=cv.getContext('2d');
   var CW=cv.width,CH=cv.height;
   cadClear(ctx);
 
-  var mL=58,mR=55,mT=58,mB=90;
+  var mL=58,mR=55,mT=58,mB=100;
   var dW=CW-mL-mR, dH2=CH-mT-mB;
   var scale=Math.min(dW/r.W, dH2/r.D);
   var ox=mL+(dW-r.W*scale)/2, oy=mT;
@@ -372,110 +370,187 @@ function drawFloor(r){
   var divTpx=r.divT*scale;
   var doorWpx=r.doorW*scale;
 
-  /* Draw Back Wall Line */
-  ctx.strokeStyle='#1c1c2e'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+pw,oy); ctx.stroke();
-
-  /* Draw Left End Panel (Orange Line, going from back wall to front) */
-  ctx.strokeStyle='#c2410c'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox,oy+ph); ctx.stroke();
-
-  /* Draw Right End Panel (Orange Line, going from back wall to front) */
-  ctx.strokeStyle='#c2410c'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(ox+pw,oy); ctx.lineTo(ox+pw,oy+ph); ctx.stroke();
-
   /* Calculate Cubicle Width / Partitions */
   var curX=ox, stallXs=[];
   for(var i=0;i<=r.n;i++){
-    // Draw Shared Mid Panel Dividers (Teal Lines, between cubicles)
-    if(i>0 && i<r.n){
-      ctx.strokeStyle='#0891b2'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(curX, oy); ctx.lineTo(curX, oy+ph); ctx.stroke();
-    }
-
     if(i<r.n){ 
       stallXs.push(curX); 
       curX+=r.stallWidths[i]*scale; 
     }
   }
 
-  /* Front Inline Fascias and Doors */
-   /* Doors (Swinging Inside) */
+  /* 0. CONDITIONAL CUBICLE BACKGROUND SHADING */
+  for(var i=0;i<stallXs.length;i++){
+    var sx=stallXs[i], sw=r.stallWidths[i]*scale;
+    
+    if(i === 0 && r.ewL > 0) {
+      ctx.fillStyle = '#eaeaea'; // Shade 1 for Left wall stall
+    } else if(i === stallXs.length - 1 && r.ewR > 0) {
+      ctx.fillStyle = '#dedede'; // Shade 2 for Right wall stall
+    } else {
+      ctx.fillStyle = '#f5f5f5'; // Shade 0 for Centre standard stall
+    }
+    ctx.fillRect(sx, oy, sw, ph);
+  }
+
+  /* 1. BACK WALL LINE (Dark Slate Gray) */
+  ctx.strokeStyle='#2a2e45'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+pw,oy); ctx.stroke();
+
+  /* 2. SIDE END PANELS (Medium Architectural Gray) */
+  ctx.strokeStyle='#7a7a7a'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox,oy+ph); ctx.stroke(); // Left
+  ctx.beginPath(); ctx.moveTo(ox+pw,oy); ctx.lineTo(ox+pw,oy+ph); ctx.stroke(); // Right
+
+  /* 3. MID PANEL DIVIDERS (Clean Gray Outlines) */
+  for(var i=1; i<r.n; i++){
+    var mx = stallXs[i];
+    ctx.strokeStyle='#a0a0a0'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(mx, oy); ctx.lineTo(mx, oy+ph); ctx.stroke();
+  }
+
+    /* 4. TOILET POT FIXTURES (Filleted Tank & Half-Ellipse Centred on Wall) */
+  var tankWpx = 400 * scale;
+  var tankHpx = 50 * scale;
+  var tankRadius = 8 * scale; // Corner roundness radius
+
+  var radX = 200 * scale; // Horizontal small radius (400mm total width)
+  var radY = 500 * scale; // Vertical radius (500mm total depth)
+  
+  for(var i=0; i<stallXs.length; i++){
+    var sx = stallXs[i], sw = r.stallWidths[i]*scale;
+    var centerX = sx + sw / 2;
+
+    ctx.strokeStyle = '#9e9e9e'; 
+    ctx.lineWidth = 1.5; 
+    ctx.fillStyle = '#ffffff';
+
+    // A. DRAW HALF-ELLIPSE (Centred directly on the back wall line 'oy')
+    // 0 to Math.PI draws only the bottom half inside the stall
+    ctx.beginPath();
+    ctx.ellipse(centerX, oy, radX, radY, 0, 0, Math.PI);
+    ctx.fill(); 
+    ctx.stroke();
+
+    // B. DRAW FILLETED TANK (200mm Wide x 50mm Deep, sitting against back wall)
+    var tx = centerX - tankWpx / 2;
+    var ty = oy; // Sitting directly flush downward from back wall
+
+    ctx.beginPath();
+    ctx.moveTo(tx + tankRadius, ty);
+    // Top right edge
+    ctx.lineTo(tx + tankWpx - tankRadius, ty);
+    ctx.arcTo(tx + tankWpx, ty, tx + tankWpx, ty + tankHpx, tankRadius);
+    // Bottom right edge
+    ctx.lineTo(tx + tankWpx, ty + tankHpx - tankRadius);
+    ctx.arcTo(tx + tankWpx, ty + tankHpx, tx + tankWpx - tankRadius, ty + tankHpx, tankRadius);
+    // Bottom left edge
+    ctx.lineTo(tx + tankRadius, ty + tankHpx);
+    ctx.arcTo(tx, ty + tankHpx, tx, ty + tankHpx - tankRadius, tankRadius);
+    // Top left edge
+    ctx.lineTo(tx, ty + tankRadius);
+    ctx.arcTo(tx, ty, tx + tankRadius, ty, tankRadius);
+    
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  /* 5. FRONT INLINE FASCIAS AND ACTIVE DOORS */
   for(var i=0;i<stallXs.length;i++){
     var sx=stallXs[i], sw=r.stallWidths[i]*scale;
     var dxL=sx+(sw-doorWpx)/2;
 
-    // Draw Front Static Fascia Lines (Grey Line)
-    ctx.strokeStyle='#6a7090'; ctx.lineWidth=2;
+    // Front Static Fascias (Dark Charcoal Accent Profiles)
+    ctx.strokeStyle='#4a4a4a'; ctx.lineWidth=3;
     ctx.beginPath(); ctx.moveTo(sx,oy+ph); ctx.lineTo(dxL,oy+ph); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(dxL+doorWpx,oy+ph); ctx.lineTo(sx+sw,oy+ph); ctx.stroke();
 
-    // Active Doors (Purple Line, rendered open 90-degrees INSIDE the stall)
-    ctx.strokeStyle='#7c3aed'; ctx.lineWidth=2.5;
+    // Active Swinging Doors (Rendered open 90-degrees inward)
+    ctx.strokeStyle='#5a5a5a'; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.moveTo(dxL,oy+ph); ctx.lineTo(dxL,oy+ph-doorWpx); ctx.stroke();
-    // ctx.beginPath(); ctx.strokeStyle='#7c3aed'; ctx.lineWidth=0.6; ctx.setLineDash([2,2]);
-    // ctx.arc(dxL,oy+ph,doorWpx,-Math.PI/2,-Math.PI,true); ctx.stroke(); ctx.setLineDash([]);
-        // Door Swing Trajectory Arc (Drawn curving inside toward the right side)
-    ctx.beginPath(); ctx.strokeStyle='#7c3aed'; ctx.lineWidth=0.6; ctx.setLineDash([2,2]);
+    
+    // Trajectory Swing Arc 
+    ctx.beginPath(); ctx.strokeStyle='#9e9e9e'; ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
     ctx.arc(dxL, oy+ph, doorWpx, -Math.PI/2, 0, false); ctx.stroke(); ctx.setLineDash([]);
-
   }
 
-
-  /* Stall Layout Labels */
+   /* 6. LABELS AND TEXT ANNOTATIONS (Shifted lower down to clear the toilet bowl space) */
   for(var i=0;i<stallXs.length;i++){
     var sx=stallXs[i], sw=r.stallWidths[i]*scale;
-    ctx.font='bold 9px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#2a2e45';
-    ctx.fillText('S'+(i+1),sx+sw/2,oy+ph/2);
-    ctx.font='8px monospace'; ctx.fillStyle='#6a7090';
-    ctx.fillText(Math.round(r.stallWidths[i])+'mm',sx+sw/2,oy+ph/2+14);
+    var labelY = oy + ph - (doorWpx + 25); // Safely clear both the pot at the top and open doors at the bottom
+    
+    ctx.font='bold 10px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#2a2e45';
+    ctx.fillText('S'+(i+1), sx+sw/2, labelY);
+    ctx.font='10px monospace'; ctx.fillStyle='#6a7090';
+    ctx.fillText(Math.round(r.stallWidths[i])+'mm', sx+sw/2, labelY + 14);
   }
 
   /* === DIMENSION LINES === */
-  /* Top Row 1: Overreaching Room Width */
-  dimLine(ctx,ox,oy-20,ox+pw,oy-20,Math.round(r.W)+'mm','#1560c8',-1);
-  
-  /* Top Row 2: Per-stall distribution sizes */
+  dimLine(ctx,ox,oy-20,ox+pw,oy-20,Math.round(r.W)+'mm','#5a5a5a',-1);
   for(var i=0;i<stallXs.length;i++){
     var sx=stallXs[i], sw=r.stallWidths[i]*scale;
-    dimLine(ctx,sx,oy-38,sx+sw,oy-38,Math.round(r.stallWidths[i])+'mm','#2a9d3a',-1);
+    dimLine(ctx,sx,oy-38,sx+sw,oy-38,Math.round(r.stallWidths[i])+'mm','#7a7a7a',-1);
   }
+  dimLine(ctx,ox+pw+18,oy,ox+pw+18,oy+ph,Math.round(r.D)+'mm','#5a5a5a',1);
+  dimLine(ctx,ox,oy+ph+20,ox+ewLpx,oy+ph+20,Math.round(r.ewL)+'mm','#7a7a7a',1);
+  dimLine(ctx,ox+pw-ewRpx,oy+ph+20,ox+pw,oy+ph+20,Math.round(r.ewR)+'mm','#7a7a7a',1);
 
-  /* Right Side Elevation: Global Depth */
-  dimLine(ctx,ox+pw+18,oy,ox+pw+18,oy+ph,Math.round(r.D)+'mm','#1560c8',1);
-
-  /* Bottom Row 1: End Panel Sizing */
-  dimLine(ctx,ox,oy+ph+20,ox+ewLpx,oy+ph+20,Math.round(r.ewL)+'mm','#c2410c',1);
-  dimLine(ctx,ox+pw-ewRpx,oy+ph+20,ox+pw,oy+ph+20,Math.round(r.ewR)+'mm','#c2410c',1);
-
-  /* Bottom Row 2: Individual Unit Door Opening Width */
   if(stallXs.length>0){
     var sx=stallXs[0], sw=r.stallWidths[0]*scale;
     var dxL=sx+(sw-doorWpx)/2;
-    dimLine(ctx,dxL,oy+ph+40,dxL+doorWpx,oy+ph+40,Math.round(r.doorW)+'mm','#7c3aed',1);
+    dimLine(ctx,dxL,oy+ph+40,dxL+doorWpx,oy+ph+40,Math.round(r.doorW)+'mm','#4a4a4a',1);
   }
-
-  /* Bottom Row 3: Single Shared Mid Panel Reference Dimension */
   if(stallXs.length>1){
     var sx=stallXs[0], sw=r.stallWidths[0]*scale;
-    dimLine(ctx,sx+sw-(midPanelWpx/2),oy+ph+60,sx+sw+(midPanelWpx/2),oy+ph+60,Math.round(r.midPanelW)+'mm','#0891b2',1);
+    dimLine(ctx,sx+sw-(midPanelWpx/2),oy+ph+60,sx+sw+(midPanelWpx/2),oy+ph+60,Math.round(r.midPanelW)+'mm','#7a7a7a',1);
   }
 
-  /* Title + legend metadata descriptions */
-  ctx.font='bold 10px monospace'; ctx.fillStyle='#1c1c2e'; ctx.textAlign='left';
+  /* Footer Layout Blocks & Monochromatic Legend */
+  ctx.font='bold 15px monospace'; ctx.fillStyle='#1c1c2e'; ctx.textAlign='left';
   ctx.fillText('FLOOR PLAN - CUBICLE PARTITION', ox, CH-22);
   ctx.font='9px monospace'; ctx.fillStyle='#7a7d8c'; ctx.textAlign='right';
   ctx.fillText('SCALE 1:'+Math.round(1/scale*10)+'  |  '+r.n+' STALLS', ox+pw, CH-22);
 
-  var sw2=[{c:'#1c1c2e',t:'Back Wall'},{c:'#c2410c',t:'End Panel'},{c:'#0891b2',t:'Mid Panel'},{c:'#7c3aed',t:'Door'}];
+  var sw2=[{c:'#eaeaea',t:'Left Side Wall'},{c:'#f5f5f5',t:'Centre Area'},{c:'#dedede',t:'Right Side Wall'}];
   for(var i=0;i<sw2.length;i++){
-    ctx.fillStyle=sw2[i].c; ctx.fillRect(ox+i*110,CH-11,8,8);
+    ctx.fillStyle=sw2[i].c; ctx.fillRect(ox+i*135,CH-11,8,8);
+    ctx.strokeStyle='#7a7a7a'; ctx.lineWidth=0.5; ctx.strokeRect(ox+i*135,CH-11,8,8);
     ctx.font='7px monospace'; ctx.fillStyle='#555'; ctx.textAlign='left';
-    ctx.fillText(sw2[i].t,ox+i*110+11,CH-4);
+    ctx.fillText(sw2[i].t,ox+i*135+11,CH-4);
   }
+    /* === DOWNLOAD BUTTON INTERFACE === */
+  var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
+  
+  // 1. Draw Button Graphic Layout Background
+  ctx.fillStyle = '#2a2e45';
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 4);
+  ctx.fill();
+
+  // 2. Draw Button Label Text
+  ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('⬇ DOWNLOAD PLAN', btnX + btnW/2, btnY + btnH/2);
+
+  // 3. Click Event Handling Handler Logic
+  cv.onclick = function(e) {
+    var rect = cv.getBoundingClientRect();
+    var clickX = e.clientX - rect.left;
+    var clickY = e.clientY - rect.top;
+
+    // Check if user clicked within the button boundaries
+    if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+      var link = document.createElement('a');
+      link.download = 'cubicle-floor-plan.png';
+      link.href = cv.toDataURL('image/png');
+      link.click();
+    }
+  };
+
 }
+
 /* ── Elevation ───────────────────────────────────── */
-function drawElev(r){
+          function drawElev(r){
   var cv=document.getElementById('cvElev');
   var ctx=cv.getContext('2d');
   var CW=cv.width,CH=cv.height;
@@ -509,34 +584,37 @@ function drawElev(r){
     if(i<r.n){ curX+=pilTpx+r.stallWidths[i]*scale; }
   }
 
-  /* 2. End Panels (Shaded Medium Gray, Sitting Inside Boundaries) */
+  /* 2. End Panels (Shaded Medium Gray, Sitting Inside Outer Frame Boundaries) */
   ctx.fillStyle='#b5b5b5';
-  ctx.fillRect(ox+pilTpx, oy+ph-pilHpx, ewLpx, pilHpx);
+  ctx.fillRect(ox, oy+ph-pilHpx, ewLpx, pilHpx); // Left side flush from zero edge
   ctx.strokeStyle='#7a7a7a'; ctx.lineWidth=2; 
-  ctx.strokeRect(ox+pilTpx, oy+ph-pilHpx, ewLpx, pilHpx);
+  ctx.strokeRect(ox, oy+ph-pilHpx, ewLpx, pilHpx);
 
   ctx.fillStyle='#b5b5b5';
-  ctx.fillRect(ox+pw-pilTpx-ewRpx, oy+ph-pilHpx, ewRpx, pilHpx);
-  ctx.strokeRect(ox+pw-pilTpx-ewRpx, oy+ph-pilHpx, ewRpx, pilHpx);
+  ctx.fillRect(ox+pw-ewRpx, oy+ph-pilHpx, ewRpx, pilHpx); // FIXED: Right side flush to edge
+  ctx.strokeRect(ox+pw-ewRpx, oy+ph-pilHpx, ewRpx, pilHpx);
 
   /* 3. Front Pilasters (Light Architectural Gray Shading) */
   curX=ox;
   var stallXs=[];
   for(var i=0;i<=r.n;i++){
-    ctx.fillStyle='#f0f0f0'; 
+    ctx.fillStyle='#b5b5b5'; 
     ctx.fillRect(curX, oy+ph-pilHpx, pilTpx, pilHpx);
     ctx.strokeStyle='#7a7a7a'; ctx.lineWidth=1.5;
     ctx.strokeRect(curX, oy+ph-pilHpx, pilTpx, pilHpx);
     
-    // 4. Shared Front Mid Panels (Darker Charcoal Gray Accent Line)
+    // 4. Shared Front Mid Panels (FIXED: Fills the entire structural divider pillar block profile)
     if(i>0 && i<r.n){
-      ctx.strokeStyle='#4a4a4a'; ctx.lineWidth=3;
+      ctx.fillStyle = '#b5b5b5';
+      ctx.fillRect(curX, oy+ph-pilHpx, pilTpx, pilHpx); // FIXED: Draw full pilaster height block inside the partition matrix
+
+      ctx.strokeStyle = '#4a4a4a'; 
+      ctx.lineWidth = 3;
       ctx.beginPath(); 
-      ctx.moveTo(curX+(pilTpx/2), oy+ph-divHpx); 
+      ctx.moveTo(curX+(pilTpx/2), oy+ph-pilHpx); // FIXED: Line drawn structural top down to floor
       ctx.lineTo(curX+(pilTpx/2), oy+ph); 
       ctx.stroke();
     }
-
     if(i<r.n){ stallXs.push(curX+pilTpx); curX+=pilTpx+r.stallWidths[i]*scale; }
   }
 
@@ -575,7 +653,7 @@ function drawElev(r){
 
     // === HARDWARE: DOOR KNOB (Right Open Handle Edge Seam) ===
     var knobX = dxL + doorWpx - Math.max(8, 15 * scale);
-    var knobY = dTop + (doorHpx * 0.55); // Comfort grabbing height alignment
+    var knobY = dTop + (doorHpx * 0.55); 
     var knobR = Math.max(3, 5 * scale);
     
     // Knob Shadow Ring
@@ -610,9 +688,9 @@ function drawElev(r){
   /* Horizontal Baseline Footprint Dimensions */
   var bY1=oy+ph+18, bY2=oy+ph+36, bY3=oy+ph+54, bY4=oy+ph+72;
 
-  /* End Panel Width Dims */
-  dimLine(ctx,ox+pilTpx,bY1,ox+pilTpx+ewLpx,bY1,Math.round(r.ewL)+'mm','#7a7a7a',1);
-  dimLine(ctx,ox+pw-pilTpx-ewRpx,bY1,ox+pw-pilTpx,bY1,Math.round(r.ewR)+'mm','#7a7a7a',1);
+  /* End Panel Width Dims (FIXED: Dimension lines tracking updated layout coordinates) */
+  dimLine(ctx,ox,bY1,ox+ewLpx,bY1,Math.round(r.ewL)+'mm','#7a7a7a',1);
+  dimLine(ctx,ox+pw-ewRpx,bY1,ox+pw,bY1,Math.round(r.ewR)+'mm','#7a7a7a',1);
 
   /* Segmented Stall Width Array Dims */
   for(var i=0;i<stallXs.length;i++){
@@ -640,7 +718,7 @@ function drawElev(r){
     var dxL=sx+(sw-doorWpx)/2, dTop=oy+ph-doorHpx;
     leader(ctx,dxL+doorWpx/2,dTop+20,dxL-18,dTop-14,'DOOR FRAME','#4a4a4a');
   }
-  leader(ctx,ox+pilTpx+ewLpx/2,oy+ph-pilHpx/2,ox-5,oy+ph-pilHpx/2,'END PANEL PIECE','#7a7a7a');
+  leader(ctx,ox+ewLpx/2,oy+ph-pilHpx/2,ox-5,oy+ph-pilHpx/2,'END PANEL PIECE','#7a7a7a');
 
   /* Title Footer Layout blocks */
   ctx.font='bold 10px monospace'; ctx.fillStyle='#1c1c2e'; ctx.textAlign='left';
@@ -661,8 +739,36 @@ function drawElev(r){
     ctx.font='7px monospace'; ctx.fillStyle='#555'; ctx.textAlign='left';
     ctx.fillText(sw2[i].t,ox+i*125+11,CH-4);
   }
+   var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
+  
+  // 1. Draw Button Graphic Layout Background
+  ctx.fillStyle = '#2a2e45';
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 4);
+  ctx.fill();
+
+  // 2. Draw Button Label Text
+  ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('⬇ DOWNLOAD PLAN', btnX + btnW/2, btnY + btnH/2);
+
+  // 3. Click Event Handling Handler Logic
+  cv.onclick = function(e) {
+    var rect = cv.getBoundingClientRect();
+    var clickX = e.clientX - rect.left;
+    var clickY = e.clientY - rect.top;
+
+    // Check if user clicked within the button boundaries
+    if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+      var link = document.createElement('a');
+      link.download = 'cubicle-elevation.png';
+      link.href = cv.toDataURL('image/png');
+      link.click();
+    }
+  };
 }
 
+buildStallInputs();
+calculate();
 </script>
 </body>
 </html>
