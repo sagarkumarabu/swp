@@ -1034,236 +1034,7 @@ let code = wallMap[document.getElementById('wall').value];
       });
     }
     /* ── Elevation ───────────────────────────────────── */
-    function drawElev(r) {
-      var cv = document.getElementById('cvElev');
-      var ctx = cv.getContext('2d');
-      var CW = cv.width, CH = cv.height;
-      cadClear(ctx);
-
-      var mL = 50, mR = 50, mT = 50, mB = 80;
-      var dW = CW - mL - mR, dH2 = CH - mT - mB;
-      var scale = Math.min(dW / r.W, dH2 / r.pilH);
-      var ox = mL + (dW - r.W * scale) / 2, oy = mT;
-      var pw = r.W * scale, ph = r.pilH * scale;
-
-      var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
-      var pilTpx = r.pilT * scale;
-      var pilHpx = r.pilH * scale, divHpx = r.dH * scale;
-      var doorHpx = r.doorH * scale, doorWpx = r.doorW * scale;
-
-      /* Ground Line (Baseline) */
-      ctx.strokeStyle = '#1c1c2e'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(ox - 15, oy + ph); ctx.lineTo(ox + pw + 15, oy + ph); ctx.stroke();
-
-      /* 1. BACKGROUND ELEVATION: Internal Dividers (Slate Gray Side Walls) */
-      var curX = ox;
-      for (var i = 0; i <= r.n; i++) {
-    if (i > 0 && i < r.n) {
-  // Full shaded mid panel body
-  ctx.fillStyle = '#9e9e9e';
-  ctx.fillRect(curX - (r.midPanelW * scale / 2), oy + ph - pilHpx, r.midPanelW * scale, pilHpx);
-
-  // Outer border
-  ctx.strokeStyle = '#4a4a4a';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(curX - (r.midPanelW * scale / 2), oy + ph - pilHpx, r.midPanelW * scale, pilHpx);
-
-  // Center divider line
-  ctx.beginPath();
-  ctx.moveTo(curX, oy + ph - pilHpx);
-  ctx.lineTo(curX, oy + ph);
-  ctx.stroke();
-}
-        if (i < r.n) { curX += pilTpx + r.stallWidths[i] * scale; }
-      }
-
-      /* 2. End Panels (Shaded Medium Gray, Sitting Inside Outer Frame Boundaries) */
-      ctx.fillStyle = '#b5b5b5';
-      ctx.fillRect(ox, oy + ph - pilHpx, ewLpx, pilHpx); // Left side flush from zero edge
-      ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 2;
-      ctx.strokeRect(ox, oy + ph - pilHpx, ewLpx, pilHpx);
-
-    // Right End Panel (consistent with left)
-    //ctx.fillRect(ox + pw - (ewRpx + pilTpx), oy + ph - pilHpx, ewRpx + pilTpx, pilHpx);
-//ctx.strokeRect(ox + pw - (ewRpx + pilTpx), oy + ph - pilHpx, ewRpx + pilTpx, pilHpx);
-
-
-
-      /* 3. Front Pilasters (Light Architectural Gray Shading) */
-      curX = ox;
-      var stallXs = [];
-      for (var i = 0; i <= r.n; i++) {
-        ctx.fillStyle = '#b5b5b5';
-        ctx.fillRect(curX, oy + ph - pilHpx, pilTpx, pilHpx);
-        ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 1.5;
-        ctx.strokeRect(curX, oy + ph - pilHpx, pilTpx, pilHpx);
-
-        // 4. Shared Front Mid Panels (FIXED: Fills the entire structural divider pillar block profile)
-        if (i > 0 && i < r.n) {
-          ctx.fillStyle = '#b5b5b5';
-          ctx.fillRect(curX, oy + ph - pilHpx, pilTpx, pilHpx); // FIXED: Draw full pilaster height block inside the partition matrix
-
-          ctx.strokeStyle = '#4a4a4a';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(curX + (pilTpx / 2), oy + ph - pilHpx); // FIXED: Line drawn structural top down to floor
-          ctx.lineTo(curX + (pilTpx / 2), oy + ph);
-          ctx.stroke();
-        }
-        if (i < r.n) { stallXs.push(curX + pilTpx); curX += pilTpx + r.stallWidths[i] * scale; }
-      }
-
-      /* 5. Inline Fascia Panels & Active Doors with Hardware */
-      for (var i = 0; i < stallXs.length; i++) {
-        var sx = stallXs[i], sw = r.stallWidths[i] * scale;
-        var dxL = sx + (sw - doorWpx) / 2;
-
-        // Static Front Inline Panels (Medium-Light Gray Lines)
-        ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(sx, oy + ph - divHpx); ctx.lineTo(dxL, oy + ph - divHpx); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(dxL + doorWpx, oy + ph - divHpx); ctx.lineTo(sx + sw, oy + ph - divHpx); ctx.stroke();
-
-        // Active Door Panels (Soft Clean Off-White/Gray Fill Profile)
-        var dTop = oy + ph - doorHpx;
-        ctx.fillStyle = '#dedede';
-        ctx.fillRect(dxL, dTop, doorWpx, doorHpx);
-        ctx.strokeStyle = '#5a5a5a'; ctx.lineWidth = 2.5;
-        ctx.strokeRect(dxL, dTop, doorWpx, doorHpx);
-
-        // Architectural Center Line Detail
-        ctx.beginPath(); ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 0.5;
-        ctx.moveTo(dxL + doorWpx / 2, dTop); ctx.lineTo(dxL + doorWpx / 2, dTop + doorHpx);
-        ctx.stroke();
-
-        // === HARDWARE: 3 DOOR HINGES (Left Hinge Edge Seam) ===
-        ctx.fillStyle = '#3a3a3a';
-        var hingeW = Math.max(3, 4 * scale);
-        var hingeH = Math.max(6, 15 * scale);
-        // Top Hinge
-        ctx.fillRect(dxL - hingeW / 2, dTop + (doorHpx * 0.15), hingeW, hingeH);
-        // Center Hinge
-        ctx.fillRect(dxL - hingeW / 2, dTop + (doorHpx * 0.50) - hingeH / 2, hingeW, hingeH);
-        // Bottom Hinge
-        ctx.fillRect(dxL - hingeW / 2, dTop + (doorHpx * 0.85) - hingeH, hingeW, hingeH);
-
-        // === HARDWARE: DOOR KNOB (Right Open Handle Edge Seam) ===
-        var knobX = dxL + doorWpx - Math.max(8, 15 * scale);
-        var knobY = dTop + (doorHpx * 0.55);
-        var knobR = Math.max(3, 5 * scale);
-
-        // Knob Shadow Ring
-        ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.arc(knobX + 1, knobY + 1, knobR, 0, Math.PI * 2); ctx.fill();
-        // Metal Knob Face
-        ctx.beginPath(); ctx.fillStyle = '#4a4a4a'; ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 0.8;
-        ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-        /* Stall Label String */
-        ctx.font = '8px monospace'; ctx.fillStyle = '#5a5a5a'; ctx.textAlign = 'center';
-        ctx.fillText('S' + (i + 1), sx + sw / 2, oy + ph - divHpx - 10);
-      }
-
-      /* === DIMENSION LINES === */
-      var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
-
-      /* Vertical Height Dimensions */
-      dimLine(ctx, vx1, oy + ph - pilHpx, vx1, oy + ph, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
-      dimLine(ctx, vx2, oy + ph - divHpx, vx2, oy + ph, Math.round(r.dH) + 'mm', '#7a7a7a', 1);
-      if (stallXs.length > 0) {
-        var dTop = oy + ph - doorHpx;
-        dimLine(ctx, vx3, dTop, vx3, oy + ph, Math.round(r.doorH) + 'mm', '#4a4a4a', 1);
-
-        var topGapVal = Math.round(r.pilH - r.doorH);
-        if (topGapVal > 2) dimLine(ctx, vx3, oy + ph - pilHpx, vx3, dTop, topGapVal + 'mm', '#9e9e9e', 1);
-      }
-
-      /* Top Border: Combined Structural Width */
-      dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
-
-      /* Horizontal Baseline Footprint Dimensions */
-      var bY1 = oy + ph + 18, bY2 = oy + ph + 36, bY3 = oy + ph + 54, bY4 = oy + ph + 72;
-
-      /* End Panel Width Dims (FIXED: Dimension lines tracking updated layout coordinates) */
-      dimLine(ctx, ox, bY1, ox + ewLpx, bY1, Math.round(r.ewL) + 'mm', '#7a7a7a', 1);
-      dimLine(ctx, ox + pw - ewRpx, bY1, ox + pw, bY1, Math.round(r.ewR) + 'mm', '#7a7a7a', 1);
-
-      /* Segmented Stall Width Array Dims */
-      for (var i = 0; i < stallXs.length; i++) {
-        var sx = stallXs[i], sw = r.stallWidths[i] * scale;
-        dimLine(ctx, sx, bY2, sx + sw, bY2, Math.round(r.stallWidths[i]) + 'mm', '#7a7a7a', 1);
-      }
-
-      /* Primary Door Frame Width Dim */
-      if (stallXs.length > 0) {
-        var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        var dxL = sx + (sw - doorWpx) / 2;
-        dimLine(ctx, dxL, bY3, dxL + doorWpx, bY3, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
-      }
-
-      /* Shared Mid Panel Reference Dimension Line */
-      if (stallXs.length > 1) {
-        var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        var midPanelWpx = r.midPanelW * scale;
-        dimLine(ctx, sx + sw - (midPanelWpx / 2), bY4, sx + sw + (midPanelWpx / 2), bY4, Math.round(r.midPanelW) + 'mm', '#4a4a4a', 1);
-      }
-
-      /* Leader Callout Pointers */
-      if (stallXs.length > 0) {
-        var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        var dxL = sx + (sw - doorWpx) / 2, dTop = oy + ph - doorHpx;
-        leader(ctx, dxL + doorWpx / 2, dTop + 20, dxL - 18, dTop - 14, 'DOOR FRAME', '#4a4a4a');
-      }
-      leader(ctx, ox + ewLpx / 2, oy + ph - pilHpx / 2, ox - 5, oy + ph - pilHpx / 2, 'END PANEL PIECE', '#7a7a7a');
-
-      /* Title Footer Layout blocks */
-      ctx.font = 'bold 10px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
-      ctx.fillText('ELEVATION - FRONT VIEW', ox, CH - 22);
-      ctx.font = '9px monospace'; ctx.fillStyle = '#7a7d8c'; ctx.textAlign = 'right';
-      ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
-
-      /* Clean Professional Legend */
-      var sw2 = [
-        { c: '#f0f0f0', t: 'Pilaster Profile' },
-        { c: '#dedede', t: 'Door Unit' },
-        { c: '#b5b5b5', t: 'End Panel Segment' },
-        { c: '#4a4a4a', t: 'Shared Mid Panel' }
-      ];
-      for (var i = 0; i < sw2.length; i++) {
-        ctx.fillStyle = sw2[i].c; ctx.fillRect(ox + i * 125, CH - 11, 8, 8);
-        ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 0.5; ctx.strokeRect(ox + i * 125, CH - 11, 8, 8);
-        ctx.font = '7px monospace'; ctx.fillStyle = '#555'; ctx.textAlign = 'left';
-        ctx.fillText(sw2[i].t, ox + i * 125 + 11, CH - 4);
-      }
-      //-------------button layout and click handler logic for elevation canvas
-    //  Draw Button 
-      var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
-      ctx.fillStyle = '#2a2e45';
-      ctx.beginPath();
-      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
-      ctx.fill();
-
-      // 2. Draw Button Label Text
-      ctx.font = 'bold 10px monospace';
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⬇ DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
-
-      // 3. Click Event Handling Handler Logic
-      cv.onclick = function (e) {
-        var rect = cv.getBoundingClientRect();
-        var clickX = e.clientX - rect.left;
-        var clickY = e.clientY - rect.top;
-
-        // Check if user clicked within the button boundaries
-        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
-          var link = document.createElement('a');
-          link.download = 'cubicle-elevation.png';
-          link.href = cv.toDataURL('image/png');
-          link.click();
-        }
-      };
-    }
+//  
     function drawElev(r) {
       var cv = document.getElementById('cvElev');
       var ctx = cv.getContext('2d');
@@ -1347,14 +1118,14 @@ let code = wallMap[document.getElementById('wall').value];
         ctx.moveTo(d.x + d.w / 2, dTop);
         ctx.lineTo(d.x + d.w / 2, dTop + doorHpx);
         ctx.stroke();
-
+  // hinge===========================
         ctx.fillStyle = '#3a3a3a';
-        var hingeW = Math.max(3, 4 * scale);
-        var hingeH = Math.max(6, 15 * scale);
+        var hingeW = Math.max(6, 4 * scale);
+        var hingeH = Math.max(12, 15 * scale);
         ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.15), hingeW, hingeH);
         ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.50) - hingeH / 2, hingeW, hingeH);
         ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.85) - hingeH, hingeW, hingeH);
-
+//===========knob
         var knobX = d.x + d.w - Math.max(8, 15 * scale);
         var knobY = dTop + (doorHpx * 0.55);
         var knobR = Math.max(3, 5 * scale);
@@ -1369,12 +1140,29 @@ let code = wallMap[document.getElementById('wall').value];
         ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+        ctx.beginPath();
 
-        ctx.font = '8px monospace';
+        ctx.font = '15px monospace';
         ctx.fillStyle = '#5a5a5a';
         ctx.textAlign = 'center';
         ctx.fillText(d.label, d.x + d.w / 2, floorY - divHpx - 10);
       }
+      ctx.moveTo(knobX, knobY);
+ctx.lineTo(knobX + 200, knobY - 20);
+ctx.stroke();
+ctx.fillText("Knob", knobX + 200, knobY - 22);//===========
+// Middle hinge coordinates
+var hingeX = d.x - hingeW / 2;
+var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
+
+// Draw label line
+ctx.moveTo(hingeX + hingeW / 2, hingeY + hingeH / 2); // center of hinge
+ctx.lineTo(hingeX + 200, hingeY - 20); // offset line
+ctx.stroke();
+
+// Add text label
+ctx.fillText("Hinge", hingeX + 200, hingeY - 22);
+
 
       var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
       dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
