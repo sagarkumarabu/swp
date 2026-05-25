@@ -4,281 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cubicle Calculator</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-      font-size: 13px;
-      background: #eef0f4;
-      color: #1c1c2e;
-      padding: 16px;
-      min-height: 100vh
-    }
-    .wrap {
-      display: grid;
-      grid-template-columns: 330px 1fr;
-      gap: 0;
-      border: 1px solid #c8cad4;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: 0 3px 16px rgba(0, 0, 0, .10);
-      max-width: 1200px;
-      margin: 0 auto
-    }
-
-    .sidebar {
-      background: #f4f5f8;
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      border-right: 1px solid #c8cad4
-    }
-
-    .main {
-      background: #fff;
-      display: flex;
-      flex-direction: column
-    }
-
-    h2 {
-      font-size: 14px;
-      font-weight: 700;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #c8cad4;
-      color: #1c1c2e
-    }
-
-    .section-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: #7a7d8c;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-top: 4px
-    }
-
-    .fg {
-      display: flex;
-      flex-direction: column;
-      gap: 3px
-    }
-
-    .fg label {
-      font-size: 11px;
-      color: #55586a;
-      font-weight: 500
-    }
-
-    .fg input,
-    .fg select {
-      width: 100%;
-      padding: 5px 8px;
-      border: 1px solid #c8cad4;
-      border-radius: 5px;
-      background: #fff;
-      color: #1c1c2e;
-      font-size: 12px;
-      outline: none;
-      transition: border-color .15s
-    }
-
-    .fg input:focus,
-    .fg select:focus {
-      border-color: #1560c8
-    }
-
-    .stall-inputs {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      padding: 8px;
-      background: #fff;
-      border: 1px solid #c8cad4;
-      border-radius: 6px;
-      margin-top: 2px;
-      max-height: 180px;
-      overflow-y: auto
-    }
-
-    .stall-inputs.hidden {
-      display: none
-    }
-
-    .stall-row {
-      display: grid;
-      grid-template-columns: 72px 1fr;
-      align-items: center;
-      gap: 6px
-    }
-
-    .stall-row label {
-      font-size: 11px;
-      color: #55586a;
-      white-space: nowrap
-    }
-
-    .sub-fields {
-      padding: 8px;
-      background: #fff;
-      border: 1px solid #c8cad4;
-      border-radius: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 2px
-    }
-
-    .sub-fields.hidden {
-      display: none
-    }
-
-    .row2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px
-    }
-
-    .calcbtn {
-      width: 100%;
-      padding: 9px;
-      border: none;
-      border-radius: 6px;
-      background: #1560c8;
-      color: #fff;
-      font-size: 13px;
-      cursor: pointer;
-      font-weight: 700;
-      margin-top: 6px;
-      transition: background .15s
-    }
-
-    .calcbtn:hover {
-      background: #0d4fa8
-    }
-
-    .err {
-      color: #b91c1c;
-      font-size: 11px;
-      padding: 6px 10px;
-      background: #fee2e2;
-      border: 1px solid #fca5a5;
-      border-radius: 5px;
-      display: none
-    }
-
-    .err.show {
-      display: block
-    }
-
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      padding: 12px 14px;
-      border-bottom: 1px solid #e8eaef;
-      background: #f9fafc
-    }
-
-    .kpi {
-      background: #eef2ff;
-      border-radius: 6px;
-      padding: 8px 4px;
-      text-align: center
-    }
-
-    .kpi .val {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1560c8
-    }
-
-    .kpi .lbl {
-      font-size: 10px;
-      color: #55586a;
-      margin-top: 2px
-    }
-
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid #e8eaef;
-      padding: 0 12px;
-      background: #f9fafc
-    }
-    .tab {
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      color: #7a7d8c;
-      transition: all .15s
-    }
-
-    .tab.active {
-      color: #1560c8;
-      border-bottom-color: #1560c8
-    }
-
-    .drawing-area {
-      flex: 1;
-      padding: 12px;
-      background: #fff;
-      overflow: auto
-    }
-    canvas {
-      display: block;
-      border: 1px solid #c8cad4;
-      border-radius: 6px;
-      background: #fff
-    }
-    .sizing-box {
-      padding: 10px 14px;
-      border-top: 1px solid #e8eaef;
-      background: #f9fafc;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 5px 12px
-    }
-
-    .sz {
-      font-size: 11px;
-      color: #7a7d8c
-    }
-    .sz span {
-      color: #1c1c2e;
-      font-weight: 600
-    }
-    @media(max-width:760px) {
-      .wrap {
-        grid-template-columns: 1fr
-      }
-
-      .sidebar {
-        border-right: none;
-        border-bottom: 1px solid #c8cad4
-      }
-
-      .kpi-row {
-        grid-template-columns: repeat(3, 1fr)
-      }
-
-      .sizing-box {
-        grid-template-columns: 1fr 1fr
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="wrap">
     <div class="sidebar">
-              <button><a href="calculator.html">Calculate</a></button>
+        <button><a href="calculator.html">Calculate</a></button>
       <h2>Cubicle Partition Calculator</h2>
       <div class="err" id="errBox"></div>
       <div class="fg">
@@ -369,7 +100,13 @@
           <div class="val" id="kDoors">-</div>
           <div class="lbl">Doors</div>
         </div>
+        <div class="kpi">
+          <div class="val" id="kendwall">-</div>
+          <div class="lbl">End Walls</div>
+        </div>
       </div>
+
+
       <div class="tabs">
         <div class="tab active" id="tab-floor" onclick="switchTab('floor')">Floor Plan</div>
         <div class="tab" id="tab-elev" onclick="switchTab('elev')">Elevation</div>
@@ -860,13 +597,17 @@ function insertPart(
         n, W, D, dH, doorH, doorW, pilH, pilT, divT, ewL, ewR, ewEqual, stallWidths,
         countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea
       };
+      //===============================
+const wallMap = { l: 1, c: 0, s: 2 };
+let code = wallMap[document.getElementById('wall').value];
+
 
       // Update UI DOM dashboard readouts
       document.getElementById('kDividers').textContent = countDividers;
       document.getElementById('kMid').textContent = countMid;
       document.getElementById('kEnd').textContent = countEnd;
       document.getElementById('kDoors').textContent = countDoors;
-
+      document.getElementById('kendwall').textContent = code;
       var minW = Math.min.apply(null, stallWidths), maxW = Math.max.apply(null, stallWidths);
       document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
       document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';
@@ -885,8 +626,6 @@ function insertPart(
   generateNestingPlan(result);
 }
     }
-
-
     /* ── Drawing helpers ─────────────────────────────── */
     function cadClear(ctx) {
       ctx.fillStyle = '#ffffff';
@@ -1294,7 +1033,6 @@ function insertPart(
         drawSheetDiagram(canvas, sheet, scale, 2);
       });
     }
-
     /* ── Elevation ───────────────────────────────────── */
     function drawElev(r) {
       var cv = document.getElementById('cvElev');
@@ -1345,13 +1083,11 @@ function insertPart(
       ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 2;
       ctx.strokeRect(ox, oy + ph - pilHpx, ewLpx, pilHpx);
 
-     ctx.fillStyle = '#b5b5b5';
-ctx.beginPath();
-ctx.rect(ox + pw - ewRpx, oy + ph - pilHpx, ewRpx, pilHpx);
-ctx.fill();
-ctx.strokeStyle = '#7a7a7a';
-ctx.lineWidth = 2;
-ctx.stroke();
+    // Right End Panel (consistent with left)
+    //ctx.fillRect(ox + pw - (ewRpx + pilTpx), oy + ph - pilHpx, ewRpx + pilTpx, pilHpx);
+//ctx.strokeRect(ox + pw - (ewRpx + pilTpx), oy + ph - pilHpx, ewRpx + pilTpx, pilHpx);
+
+
 
       /* 3. Front Pilasters (Light Architectural Gray Shading) */
       curX = ox;
@@ -1499,7 +1235,7 @@ ctx.stroke();
         ctx.fillText(sw2[i].t, ox + i * 125 + 11, CH - 4);
       }
       //-------------button layout and click handler logic for elevation canvas
-      // 1. Draw Button Graphic Layout Background
+    //  Draw Button 
       var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
       ctx.fillStyle = '#2a2e45';
       ctx.beginPath();
@@ -1528,10 +1264,202 @@ ctx.stroke();
         }
       };
     }
+    function drawElev(r) {
+      var cv = document.getElementById('cvElev');
+      var ctx = cv.getContext('2d');
+      var CW = cv.width, CH = cv.height;
+      cadClear(ctx);
+
+      var mL = 50, mR = 70, mT = 50, mB = 85;
+      var dW = CW - mL - mR, dH2 = CH - mT - mB;
+      var scale = Math.min(dW / r.W, dH2 / r.pilH);
+      var ox = mL + (dW - r.W * scale) / 2, oy = mT;
+      var pw = r.W * scale, ph = r.pilH * scale;
+      var floorY = oy + ph;
+
+      var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
+      var displayMidPanelW = r.n > 1 ? Math.max(0, (r.W - r.ewL - r.ewR - (r.n * r.doorW)) / (r.n - 1)) : 0;
+      var midPanelWpx = displayMidPanelW * scale;
+      var pilHpx = r.pilH * scale, divHpx = r.dH * scale;
+      var doorHpx = r.doorH * scale, doorWpx = r.doorW * scale;
+
+      var frontX = ox;
+      var doorRects = [];
+      var midRects = [];
+      var leftEndRect = { x: frontX, w: ewLpx };
+      frontX += ewLpx;
+
+      for (var i = 0; i < r.n; i++) {
+        doorRects.push({ x: frontX, w: doorWpx, label: 'S' + (i + 1) });
+        frontX += doorWpx;
+
+        if (i < r.n - 1) {
+          midRects.push({ x: frontX, w: midPanelWpx });
+          frontX += midPanelWpx;
+        }
+      }
+
+      var rightEndRect = { x: ox + pw - ewRpx, w: ewRpx };
+
+      ctx.strokeStyle = '#1c1c2e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ox - 15, floorY);
+      ctx.lineTo(ox + pw + 15, floorY);
+      ctx.stroke();
+
+      function drawPanel(rect, fill, stroke, lineWidth) {
+        if (rect.w <= 0) return;
+        ctx.fillStyle = fill;
+        ctx.fillRect(rect.x, floorY - pilHpx, rect.w, pilHpx);
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = lineWidth || 1.5;
+        ctx.strokeRect(rect.x, floorY - pilHpx, rect.w, pilHpx);
+      }
+
+      drawPanel(leftEndRect, '#b5b5b5', '#7a7a7a', 2);
+
+      for (var i = 0; i < midRects.length; i++) {
+        drawPanel(midRects[i], '#9e9e9e', '#4a4a4a', 2);
+        ctx.strokeStyle = '#4a4a4a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - pilHpx);
+        ctx.lineTo(midRects[i].x + midRects[i].w / 2, floorY);
+        ctx.stroke();
+      }
+
+      drawPanel(rightEndRect, '#b5b5b5', '#7a7a7a', 2);
+
+      for (var i = 0; i < doorRects.length; i++) {
+        var d = doorRects[i];
+        var dTop = floorY - doorHpx;
+
+        ctx.fillStyle = '#dedede';
+        ctx.fillRect(d.x, dTop, d.w, doorHpx);
+        ctx.strokeStyle = '#5a5a5a';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(d.x, dTop, d.w, doorHpx);
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#7a7a7a';
+        ctx.lineWidth = 0.5;
+        ctx.moveTo(d.x + d.w / 2, dTop);
+        ctx.lineTo(d.x + d.w / 2, dTop + doorHpx);
+        ctx.stroke();
+
+        ctx.fillStyle = '#3a3a3a';
+        var hingeW = Math.max(3, 4 * scale);
+        var hingeH = Math.max(6, 15 * scale);
+        ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.15), hingeW, hingeH);
+        ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.50) - hingeH / 2, hingeW, hingeH);
+        ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.85) - hingeH, hingeW, hingeH);
+
+        var knobX = d.x + d.w - Math.max(8, 15 * scale);
+        var knobY = dTop + (doorHpx * 0.55);
+        var knobR = Math.max(3, 5 * scale);
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.arc(knobX + 1, knobY + 1, knobR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = '#4a4a4a';
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 0.8;
+        ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = '8px monospace';
+        ctx.fillStyle = '#5a5a5a';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.label, d.x + d.w / 2, floorY - divHpx - 10);
+      }
+
+      var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
+      dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
+      dimLine(ctx, vx2, floorY - divHpx, vx2, floorY, Math.round(r.dH) + 'mm', '#7a7a7a', 1);
+      if (doorRects.length > 0) {
+        var dTop = floorY - doorHpx;
+        dimLine(ctx, vx3, dTop, vx3, floorY, Math.round(r.doorH) + 'mm', '#4a4a4a', 1);
+
+        var topGapVal = Math.round(r.pilH - r.doorH);
+        if (topGapVal > 2) dimLine(ctx, vx3, floorY - pilHpx, vx3, dTop, topGapVal + 'mm', '#9e9e9e', 1);
+      }
+
+      dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
+
+      var bY1 = floorY + 18, bY2 = floorY + 36, bY4 = floorY + 72;
+      dimLine(ctx, leftEndRect.x, bY1, leftEndRect.x + leftEndRect.w, bY1, Math.round(r.ewL) + 'mm', '#7a7a7a', 1);
+      dimLine(ctx, rightEndRect.x, bY1, rightEndRect.x + rightEndRect.w, bY1, Math.round(r.ewR) + 'mm', '#7a7a7a', 1);
+
+      for (var i = 0; i < doorRects.length; i++) {
+        dimLine(ctx, doorRects[i].x, bY2, doorRects[i].x + doorRects[i].w, bY2, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
+      }
+
+      if (midRects.length > 0) {
+        dimLine(ctx, midRects[0].x, bY4, midRects[0].x + midRects[0].w, bY4, Math.round(displayMidPanelW) + 'mm', '#4a4a4a', 1);
+      }
+
+      if (doorRects.length > 0) {
+        leader(ctx, doorRects[0].x + doorRects[0].w / 2, floorY - doorHpx + 20, doorRects[0].x - 18, floorY - doorHpx - 14, 'DOOR FRAME', '#4a4a4a');
+      }
+      leader(ctx, leftEndRect.x + leftEndRect.w / 2, floorY - pilHpx / 2, leftEndRect.x - 5, floorY - pilHpx / 2, 'END PANEL PIECE', '#7a7a7a');
+
+      ctx.font = 'bold 10px monospace';
+      ctx.fillStyle = '#1c1c2e';
+      ctx.textAlign = 'left';
+      ctx.fillText('ELEVATION - FRONT VIEW', ox, CH - 22);
+      ctx.font = '9px monospace';
+      ctx.fillStyle = '#7a7d8c';
+      ctx.textAlign = 'right';
+      ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
+
+      var sw2 = [
+        { c: '#dedede', t: 'Door Unit' },
+        { c: '#b5b5b5', t: 'End Panel Segment' },
+        { c: '#9e9e9e', t: 'Shared Mid Panel' }
+      ];
+      for (var i = 0; i < sw2.length; i++) {
+        ctx.fillStyle = sw2[i].c;
+        ctx.fillRect(ox + i * 145, CH - 11, 8, 8);
+        ctx.strokeStyle = '#7a7a7a';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(ox + i * 145, CH - 11, 8, 8);
+        ctx.font = '7px monospace';
+        ctx.fillStyle = '#555';
+        ctx.textAlign = 'left';
+        ctx.fillText(sw2[i].t, ox + i * 145 + 11, CH - 4);
+      }
+
+      var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
+      ctx.fillStyle = '#2a2e45';
+      ctx.beginPath();
+      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
+      ctx.fill();
+
+      ctx.font = 'bold 10px monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
+
+      cv.onclick = function (e) {
+        var rect = cv.getBoundingClientRect();
+        var clickX = e.clientX - rect.left;
+        var clickY = e.clientY - rect.top;
+
+        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+          var link = document.createElement('a');
+          link.download = 'cubicle-elevation.png';
+          link.href = cv.toDataURL('image/png');
+          link.click();
+        }
+      };
+    }
 
     buildStallInputs();
     calculate();
   </script>
 </body>
-
 </html>
