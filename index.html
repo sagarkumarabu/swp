@@ -107,8 +107,6 @@
           <div class="lbl">End Walls</div>
         </div>
       </div>
-
-
       <div class="tabs">
         <div class="tab active" id="tab-floor" onclick="switchTab('floor')">Floor Plan</div>
         <div class="tab" id="tab-elev" onclick="switchTab('elev')">Elevation</div>
@@ -122,7 +120,7 @@
       </div>
       <div class="sizing-box">
         <div class="sz">Cubicle width: <span id="szCW">-</span></div>
-        <div class="sz">Divider (D x H): <span id="szDiv">-</span></div>
+        <div class="sz">Divider (W x H): <span id="szDiv">-</span></div>
         <div class="sz">Door (W x H): <span id="szDoor">-</span></div>
         <div class="sz">End panel (W x H): <span id="szEP">-</span></div>
         <div class="sz">Mid panel (W x H): <span id="szMP">-</span></div>
@@ -147,21 +145,15 @@
     function onStallCountChange() { buildStallInputs(); }
 // sheet layout
 function generateNestingPlan(r) {
-
     const availableSheets = [
         { name: "12 x 6 feet", width: 3670, height: 1860 },
         { name: "14 x 6 feet", width: 4300, height: 1860 }
     ];
-
-    // =========================
-    // BUILD PARTS
-    // =========================
-
+    //  labelPARTS
     const originalParts = [];
-
     for (let i = 0; i < r.countDividers; i++) {
         originalParts.push({
-            label: 'DIV-' + (i + 1),
+            label: 'DIV' + (i + 1),
             finalW: r.D,
             finalH: r.dH
         });
@@ -304,26 +296,19 @@ function generateNestingPlan(r) {
                     item.finalH;
             });
         });
-
         const sheetArea =
             sheetType.width *
             sheetType.height;
-
         const totalArea =
             sheets.length * sheetArea;
-
         const wasteArea =
             totalArea - usedArea;
-
         const yieldPercent =
             (usedArea / totalArea) * 100;
-
         // =========================
         // SELECT BEST SOLUTION
         // =========================
-
         if (!bestSolution) {
-
             bestSolution = {
                 sheetType,
                 sheets,
@@ -332,7 +317,6 @@ function generateNestingPlan(r) {
                 sheetCount: sheets.length,
                 sheetArea
             };
-
             return;
         }
 
@@ -350,8 +334,6 @@ function generateNestingPlan(r) {
 
         // RULE 1:
         // Prefer smaller sheet
-        // if sheet count same
-
         if (
             sameSheetCount &&
             smallerSheet
@@ -414,7 +396,6 @@ function generateNestingPlan(r) {
 }
 //=============================================================================
 function createSheet(stockSheet) {
-
     return {
         stock: stockSheet,
         placedItems: [],
@@ -428,7 +409,6 @@ function createSheet(stockSheet) {
         ]
     };
 }
-
 function insertPart(
     part,
     rect,
@@ -455,7 +435,6 @@ function insertPart(
         width: rect.width - part.finalW,
         height: part.finalH
     });
-
     // BOTTOM SPACE
     sheet.freeRects.push({
         x: rect.x,
@@ -463,14 +442,12 @@ function insertPart(
         width: rect.width,
         height: rect.height - part.finalH
     });
-
     // CLEAN INVALID RECTS
     sheet.freeRects = sheet.freeRects.filter(r =>
         r.width > 40 &&
         r.height > 40
     );
 }
-
     function buildStallInputs() {
       var n = parseInt(document.getElementById('numStalls').value) || 1;
       var eq = document.getElementById('equal').value;
@@ -494,7 +471,6 @@ function insertPart(
   document.getElementById('tab-floor').classList.toggle('active', tab === 'floor');
   document.getElementById('tab-elev').classList.toggle('active', tab === 'elev');
   document.getElementById('tab-nesting').classList.toggle('active', tab === 'nesting');
-
   document.getElementById('cvFloor').style.display = tab === 'floor' ? 'block' : 'none';
   document.getElementById('cvElev').style.display = tab === 'elev' ? 'block' : 'none';
   document.getElementById('sheetLayouts').style.display = tab === 'nesting' ? 'block' : 'none';
@@ -525,11 +501,9 @@ function insertPart(
 
       var ewEqual = document.getElementById('endpanelEqual').value === 'equal';
       var ewL, ewR, midPanelW;
-
       if (ewEqual) {
         // 1. Calculate space allocated per single cubicle basket
         var cubicleSpace = W / n;
-
         // 2. Subtract door width from that space to find total facing panel allowance
         var panelAllowancePerCubicle = cubicleSpace - doorW;
 
@@ -571,7 +545,6 @@ function insertPart(
           return;
         }
       }
-
       // Count matrices for material takeoffs
       var countDoors = n;
       var countDividers = n - 1;
@@ -601,8 +574,8 @@ let code = wallMap[document.getElementById('wall').value];
       document.getElementById('szDoor').textContent = doorW + ' x ' + doorH + ' mm';
       document.getElementById('szEP').textContent = Math.round(endPanelW) + ' x ' + pilH+ ' mm';
       document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
-      document.getElementById('szEQL').textContent = Math.round(ewL) + ' mm';
-      document.getElementById('szEQR').textContent = Math.round(ewR) + ' mm';
+      document.getElementById('szEQL').textContent = Math.round(ewL) + 'x'+pilH+' mm';
+      document.getElementById('szEQR').textContent = Math.round(ewR) +'x'+pilH+ ' mm';
       document.getElementById('szNet').textContent = netArea.toFixed(2);
 
       if (activeTab === 'floor') {
@@ -1181,10 +1154,43 @@ let code = wallMap[document.getElementById('wall').value];
         ctx.stroke();
         ctx.beginPath();
 
+//===========coat hook
+        var hookX = d.x + d.w / 2;
+        var hookY = dTop + 10 ;
+        var hookR = Math.max(5, 11 * scale);
+        var hookStem = Math.max(10, 28 * scale);
+        ctx.strokeStyle = '#30343c';
+        ctx.fillStyle = '#30343c';
+        ctx.lineWidth = Math.max(2, 2.5 * scale);
+        ctx.beginPath();
+        ctx.arc(hookX, hookY, hookR * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(hookX, hookY + hookR * 0.35);
+        ctx.lineTo(hookX, hookY + hookStem);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(hookX + hookR * 0.45, hookY + hookStem, hookR * 0.75, Math.PI * 0.15, Math.PI * 1.1, false);
+        ctx.stroke();
+        ctx.beginPath();
+
         ctx.font = '12px monospace';
         ctx.fillStyle = '#4a4a4a';
         ctx.textAlign = 'center';
         ctx.fillText(d.label, d.x + d.w / 2, floorY - divHpx/2);
+      }
+      // hook
+      if (doorRects.length > 0) {
+  var firstDoor = doorRects[0];
+  var hookLeadX = firstDoor.x + firstDoor.w / 2;
+  var hookLeadY = dTop + 10 ;
+  leader(ctx, hookLeadX, hookLeadY, hookLeadX - 120, dTop + 10 , "COAT HOOK", "#444");
+}
+// door
+      if (doorRects.length > 0) {
+        leader(ctx, doorRects[0].x +
+         doorRects[0].w / 3, floorY - doorHpx +30, doorRects[0].x - 80, floorY - doorHpx +30 ,
+          'DOOR', '#4a4a4a');
       }
 //      // Start at knob position
 const kx = knobX;
@@ -1201,6 +1207,7 @@ const cx = hingeX + hingeW / 2;
 const cy = hingeY + hingeH / 2;
 // Use leader function to draw line + arrow + text
 leader(ctx, cx, cy, hingeX + 150, hingeY - 90, "HINGE", "#444");
+
       var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
     //  dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
      // dimLine(ctx, vx2, floorY - divHpx, vx2, floorY, Math.round(r.dH) + 'mm', '#7a7a7a', 1);
@@ -1228,11 +1235,6 @@ leader(ctx, cx, cy, hingeX + 150, hingeY - 90, "HINGE", "#444");
         midRects[0].w, bY4-15, Math.round(displayMidPanelW) + 'mm', '#4a4a4a', 1);
       }
 
-      if (doorRects.length > 0) {
-        leader(ctx, doorRects[0].x +
-         doorRects[0].w / 2, floorY - doorHpx + 20, doorRects[0].x - 18, floorY - doorHpx - 40,
-          'DOOR', '#4a4a4a');
-      }
       leader(ctx, leftEndRect.x + leftEndRect.w / 2, floorY - pilHpx / 2,
        leftEndRect.x -40, floorY - pilHpx / 2-50, 'END PANEL', '#4a4a4a');
       var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
