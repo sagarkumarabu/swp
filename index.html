@@ -577,9 +577,7 @@ function insertPart(
       var countDividers = n - 1;
       var countMid = n > 1 ? n - 1 : 0;
       var countEnd = 2;
-
       var endPanelW = ewL;
-
       // Structural square meter accounting equations
       var netArea = ((countDividers * D * dH) + (countDoors * doorW * doorH) + (countEnd * endPanelW * dH) + (countMid * midPanelW * dH)) / 1e6;
       var grossArea = netArea * 1.12;
@@ -591,8 +589,6 @@ function insertPart(
       //===============================
 const wallMap = { l: 1, c: 0, s: 2 };
 let code = wallMap[document.getElementById('wall').value];
-
-
       // Update UI DOM dashboard readouts
       document.getElementById('kDividers').textContent = countDividers;
       document.getElementById('kMid').textContent = countMid;
@@ -603,8 +599,8 @@ let code = wallMap[document.getElementById('wall').value];
       document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
       document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';
       document.getElementById('szDoor').textContent = doorW + ' x ' + doorH + ' mm';
-      document.getElementById('szEP').textContent = Math.round(endPanelW) + ' x ' + dH + ' mm';
-      document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + dH + ' mm';
+      document.getElementById('szEP').textContent = Math.round(endPanelW) + ' x ' + pilH+ ' mm';
+      document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
       document.getElementById('szEQL').textContent = Math.round(ewL) + ' mm';
       document.getElementById('szEQR').textContent = Math.round(ewR) + ' mm';
       document.getElementById('szNet').textContent = netArea.toFixed(2);
@@ -856,8 +852,8 @@ let code = wallMap[document.getElementById('wall').value];
       }
 
       /* Footer Layout Blocks & Monochromatic Legend */
-      ctx.font = 'bold 15px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
-      ctx.fillText('FLOOR PLAN - CUBICLE PARTITION', ox, CH - 22);
+      ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
+      ctx.fillText('FLOOR PLAN', ox, CH - 22);
       ctx.font = '9px monospace'; ctx.fillStyle = '#7a7d8c'; ctx.textAlign = 'right';
       ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
 
