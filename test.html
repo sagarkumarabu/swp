@@ -1,410 +1,1410 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro Cubicle Partition Calculator</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:13px;background:#f0f2f5;color:#1c1c2e;padding:16px;min-height:100vh}
-.wrap{display:grid;grid-template-columns:330px 1fr;gap:0;border:1px solid #c8cad4;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.10);max-width:1200px;margin:0 auto}
-.sidebar{background:#f8f9fa;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;border-right:1px solid #c8cad4;height: 88vh;}
-.main{background:#fff;display:flex;flex-direction:column}
-h2{font-size:15px;font-weight:700;padding-bottom:10px;border-bottom:1px solid #c8cad4;color:#1560c8}
-.section-title{font-size:10px;font-weight:700;color:#7a7d8c;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
-.fg{display:flex;flex-direction:column;gap:3px}
-.fg label{font-size:11px;color:#55586a;font-weight:600}
-.fg input,.fg select{width:100%;padding:6px 10px;border:1px solid #c8cad4;border-radius:5px;background:#fff;color:#1c1c2e;font-size:12px;outline:none}
-.fg input:focus,.fg select:focus{border-color:#1560c8;box-shadow: 0 0 0 2px rgba(21,96,200,0.1)}
-.stall-inputs{display:flex;flex-direction:column;gap:5px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:2px}
-.hidden{display:none}
-.stall-row{display:grid;grid-template-columns:100px 1fr;align-items:center;gap:8px}
-.calcbtn{width:100%;padding:12px;border:none;border-radius:6px;background:#1560c8;color:#fff;font-size:13px;cursor:pointer;font-weight:700;margin-top:10px;transition: background 0.2s}
-.calcbtn:hover{background:#0d4fa8}
-.err{color:#b91c1c;font-size:11px;padding:8px;background:#fee2e2;border:1px solid #fca5a5;border-radius:5px;display:none}
-.err.show{display:block}
-.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:15px;border-bottom:1px solid #e8eaef;background:#f9fafc}
-.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 5px;text-align:center}
-.kpi .val{font-size:20px;font-weight:700;color:#1560c8}
-.kpi .lbl{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin-top:4px}
-.tabs{display:flex;border-bottom:1px solid #e8eaef;padding:0 15px;background:#f9fafc}
-.tab{padding:12px 20px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b}
-.tab.active{color:#1560c8;border-bottom-color:#1560c8;background: #fff}
-.drawing-area{flex:1;padding:20px;background:#fff;overflow:auto;display:flex;justify-content:center;align-items:center}
-canvas{border:1px solid #e2e8f0;border-radius:8px;box-shadow: 0 2px 10px rgba(0,0,0,0.05)}
-.sizing-box{padding:15px;border-top:1px solid #e8eaef;background:#f9fafc;display:grid;grid-template-columns:repeat(3,1fr);gap:10px 20px}
-.sz{font-size:11px;color:#64748b;border-left:3px solid #1560c8;padding-left:10px}
-.sz b{color:#1e293b;display:block;font-size:12px;margin-bottom:2px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cubicle Calculator</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-  <div class="sidebar">
-    <h2>Layout Designer</h2>
-    <div class="err" id="errBox"></div>
-    
-    <div class="section-title">Global Settings</div>
-    <div class="fg"><label>Wall Configuration</label>
-      <select id="wall" onchange="calculate()">
-        <option value="s">Straight Wall (2 Sides)</option>
-        <option value="l">L-Wall (1 Side)</option>
-        <option value="c">C-Wall (No Sides)</option>
-      </select>
-    </div>
-    <div class="fg"><label>Number of Cubicles</label>
-      <input type="number" id="numStalls" value="2" min="1" max="15" oninput="onStallCountChange()"></div>
-    
-    <div class="section-title">Dimensions</div>
-    <div class="fg"><label>Total Run Width (mm)</label>
-      <input type="number" id="totalwidth" value="2000" oninput="calculate()"></div>
-    <div class="fg"><label>Cubicle Depth (mm)</label>
-      <input type="number" id="depth" value="1500" oninput="calculate()"></div>
-    
-    <div class="section-title">Pilaster Specs</div>
-    <div class="fg"><label>End Plaster Mode</label>
-      <select id="epMode" onchange="toggleEpMode()">
-        <option value="equal">Equal</option>
-        <option value="unequal">Unequal</option>
-      </select>
-    </div>
-    <div id="epEqualGroup" class="fg">
-      <label>End Plaster Width (mm)</label>
-      <input type="number" id="epW" value="200" oninput="calculate()">
-    </div>
-    <div id="epUnequalGroup" class="stall-inputs hidden">
-      <div class="stall-row"><label>Left (mm)</label><input type="number" id="epW_L" value="150" oninput="calculate()"></div>
-      <div class="stall-row"><label>Right (mm)</label><input type="number" id="epW_R" value="150" oninput="calculate()"></div>
-    </div>
-    <div class="fg"><label>Mid Pilaster Width (mm)</label>
-      <input type="number" id="mPilW" value="400" oninput="calculate()"></div>
+  <div class="wrap">
+    <div class="sidebar">
+        <button><a href="calculator.html">Calculate</a></button>
+      <h2>Cubicle Partition Calculator</h2>
+      <div class="err" id="errBox"></div>
+      <div class="fg">
+        <label>Item</label>
+        <select id="item">
+          <option value="cubicle">Cubicle</option>
+          <option value="urinal">Urinal</option>
+          <option value="locker">Locker</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Wall type</label>
+        <select id="wall">
+          <option value="l">L wall</option>
+          <option value="c">C wall</option>
+          <option value="s">Straight wall</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Number of cubicles</label>
+        <input type="number" id="numStalls" value="2" min="1" max="15" oninput="onStallCountChange()">
+      </div>
+      <div class="fg">
+        <label>Cubicle spacing</label>
+        <select id="equal" onchange="onSpacingChange()">
+          <option value="equal">Equal</option>
+          <option value="unequal">Unequal</option>
+        </select>
+      </div>
+      <div class="stall-inputs hidden" id="stallWidthFields"></div>
+      <div class="section-title">Area Dimensions</div>
+      <div class="row2">
+        <div class="fg"><label>Total width (mm)</label><input type="number" id="totalwidth" value="2000" min="1000">
+        </div>
+        <div class="fg"><label>Depth (mm)</label><input type="number" id="depth" value="1500" min="500"></div>
+      </div>
 
-    <div class="section-title">Stall Spacing</div>
-    <div class="fg"><select id="spacingType" onchange="onSpacingTypeChange()">
-        <option value="equal">Equal Stalls</option>
-        <option value="unequal">Custom Widths</option>
-    </select></div>
-    <div id="customStallGroup" class="stall-inputs hidden"></div>
-    
-    <div class="fg"><label>Door Height (mm)</label><input type="number" id="dH" value="1800" oninput="calculate()"></div>
-    <div class="fg"><label>Full Height (mm)</label><input type="number" id="pH" value="1950" oninput="calculate()"></div>
-    <div class="fg">
-  <label>Door Width (mm)</label>
-  <input type="number" id="doorW" value="600" oninput="calculate()">
-</div>
+      <div class="section-title">End Panel Settings</div>
+      <div class="fg">
+        <label>End panel distribution</label>
+        <select id="endpanelEqual" onchange="toggleEndpanel()">
+          <option value="equal">Equal both sides</option>
+          <option value="unequal">Unequal</option>
+        </select>
+      </div>
+      <div class="fg" id="endpanelEqualField">
+        <label>End panel width (mm)</label>
+        <input type="number" id="endpanelSize" value="150" min="50">
+      </div>
+      <div class="sub-fields hidden" id="endpanelFields">
+        <div class="fg"><label>Left end panel (mm)</label>
+          <input type="number" id="endpanelLeft" value="150" min="50">
+        </div>
+        <div class="fg"><label>Right end panel (mm)</label>
+          <input type="number" id="endpanelRight" value="200" min="50">
+        </div>
+      </div>
+
+      <div class="section-title">Component Heights / Widths</div>
+      <div class="row2">
+        <div class="fg"><label>Divider ht (mm)</label>
+          <input type="number" id="dividerHeight" value="1790" min="1000">
+        </div>
+        <div class="fg"><label>Door ht (mm)</label><input type="number" id="doorHeight" value="1790" min="1000"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Door width (mm)</label><input type="number" id="doorWidth" value="600" min="400"></div>
+        <div class="fg"><label>Pilaster ht (mm)</label>
+          <input type="number" id="pilasterHeight" value="1830" min="1000">
+        </div>
+      </div>
+      <button class="calcbtn" onclick="calculate()">Calculate</button>
+    </div>
+
+    <div class="main">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="val" id="kDividers">-</div>
+          <div class="lbl">Dividers</div>
+        </div>
+        <div class="kpi">
+          <div class="val" id="kMid">-</div>
+          <div class="lbl">Mid panels</div>
+        </div>
+        <div class="kpi">
+          <div class="val" id="kEnd">-</div>
+          <div class="lbl">End panels</div>
+        </div>
+        <div class="kpi">
+          <div class="val" id="kDoors">-</div>
+          <div class="lbl">Doors</div>
+        </div>
+        <div class="kpi">
+          <div class="val" id="kendwall">-</div>
+          <div class="lbl">End Walls</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" id="tab-floor" onclick="switchTab('floor')">Floor Plan</div>
+        <div class="tab" id="tab-elev" onclick="switchTab('elev')">Elevation</div>
+        <div class="tab" id="tab-3d" onclick="switchTab('3d')">3D View</div>
+        <div class="tab" id="tab-nesting" onclick="switchTab('nesting')">Nesting Plan</div> <!-- Added Tab -->
+      </div>
+      <div class="drawing-area">
+        <canvas id="cvFloor" width="750" height="400"></canvas>
+        <canvas id="cvElev" width="750" height="400" style="display:none"></canvas>
+        <canvas id="cv3d" width="750" height="430" style="display:none"></canvas>
+        <!-- Dynamic nested layouts will append here inside #sheetLayouts container -->
+        <div id="sheetLayouts" style="max-height:800px; overflow-y:auto; padding:10px;"></div>
+      </div>
+      <div class="sizing-box">
+        <div class="sz">Cubicle width: <span id="szCW">-</span></div>
+        <div class="sz">Divider (W x H): <span id="szDiv">-</span></div>
+        <div class="sz">Door (W x H): <span id="szDoor">-</span></div>
+        <div class="sz">End panel (W x H): <span id="szEP">-</span></div>
+        <div class="sz">Mid panel (W x H): <span id="szMP">-</span></div>
+        <div class="sz">End panel L: <span id="szEQL">-</span></div>
+        <div class="sz">End panel R: <span id="szEQR">-</span></div>
+        <div class="sz">Net surface area: <span id="szNet">-</span> m2</div>
+      </div>
+    </div>
   </div>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script>
+    var result = null;
+    var activeTab = 'floor';
+    var threeView = null;
 
-  <div class="main">
-    <div class="kpi-row">
-      <div class="kpi"><div class="val" id="kStalls">0</div><div class="lbl">Stalls</div></div>
-      <div class="kpi"><div class="val" id="kEP">2</div><div class="lbl">End Pilasters</div></div>
-      <div class="kpi"><div class="val" id="kMP">0</div><div class="lbl">Mid Pilasters</div></div>
-      <div class="kpi"><div class="val" id="kSP">0</div><div class="lbl">Side Panels</div></div>
-      <div class="kpi"><div class="val" id="kArea">0</div><div class="lbl">Total m²</div></div>
-    </div>
-    
-    <div class="tabs">
-      <div class="tab active" id="tFloor" onclick="switchTab('floor')">Floor Plan (CAD)</div>
-      <div class="tab" id="tElev" onclick="switchTab('elev')">Front Elevation</div>
-    </div>
-
-    <div class="drawing-area">
-      <canvas id="cvFloor" width="780" height="450"></canvas>
-      <canvas id="cvElev"  width="780" height="450" style="display:none"></canvas>
-    </div>
-
-    <div class="sizing-box">
-      <div class="sz"><b>End Pilasters</b> <span id="sEP">-</span></div>
-      <div class="sz"><b>Mid Pilaster</b> <span id="sMP">-</span></div>
-      <div class="sz"><b>Clear Opening</b> <span id="sOpen">-</span></div>
-      <div class="sz"><b>Divider Panel</b> <span id="sDiv">-</span></div>
-      <div class="sz"><b>Wall Type</b> <span id="sWall">-</span></div>
-      <div class="sz"><b>Surface Area</b> <span id="sArea">-</span></div>
-    </div>
-  </div>
-</div>
-
-<script>
-let result = null;
-let activeTab = 'floor';
-
-function toggleEpMode() {
-    const mode = document.getElementById('epMode').value;
-    document.getElementById('epEqualGroup').classList.toggle('hidden', mode !== 'equal');
-    document.getElementById('epUnequalGroup').classList.toggle('hidden', mode === 'equal');
-    calculate();
-}
-
-function onSpacingTypeChange() {
-    buildStallInputs();
-    calculate();
-}
-
-function onStallCountChange() {
-    buildStallInputs();
-    calculate();
-}
-
-function buildStallInputs() {
-    const n = parseInt(document.getElementById('numStalls').value) || 1;
-    const type = document.getElementById('spacingType').value;
-    const box = document.getElementById('customStallGroup');
-    box.innerHTML = '';
-    if (type === 'equal') { box.classList.add('hidden'); return; }
-    box.classList.remove('hidden');
-    for (let i = 1; i <= n; i++) {
-        let row = document.createElement('div');
-        row.className = 'stall-row';
-        row.innerHTML = `<label>Stall ${i}</label><input type="number" id="sw_${i}" value="800" oninput="calculate()">`;
-        box.appendChild(row);
-    }
-}
-
-function switchTab(t) {
-    activeTab = t;
-    document.getElementById('tFloor').classList.toggle('active', t === 'floor');
-    document.getElementById('tElev').classList.toggle('active', t === 'elev');
-    document.getElementById('cvFloor').style.display = t === 'floor' ? 'block' : 'none';
-    document.getElementById('cvElev').style.display = t === 'elev' ? 'block' : 'none';
-    if (result) draw();
-}
-
-function calculate() {
-    const n = parseInt(document.getElementById('numStalls').value) || 1;
-    const totalW = parseFloat(document.getElementById('totalwidth').value) || 2000;
-    const depth = parseFloat(document.getElementById('depth').value) || 1500;
-    const mPilW = parseFloat(document.getElementById('mPilW').value) || 100;
-    const wallType = document.getElementById('wall').value;
-     const doorW = parseFloat(document.getElementById('doorW').value) || 600;
-    const dH = 1800; // Fixed door height as requested
-    const pH = parseFloat(document.getElementById('pH').value) || 1950;
-
-    let epL, epR;
-    if (document.getElementById('epMode').value === 'equal') {
-        epL = epR = parseFloat(document.getElementById('epW').value) || 150;
-    } else {
-        epL = parseFloat(document.getElementById('epW_L').value) || 150;
-        epR = parseFloat(document.getElementById('epW_R').value) || 150;
+    function toggleEndpanel() {
+      var v = document.getElementById('endpanelEqual').value;
+      var isU = v === 'unequal';
+      document.getElementById('endpanelFields').classList.toggle('hidden', !isU);
+      document.getElementById('endpanelEqualField').style.display = isU ? 'none' : '';
     }
 
-    const midPilCount = n - 1;
-    const availableForStalls = totalW - (epL + epR + (midPilCount * mPilW));
-
-    if (availableForStalls < (n * 200)) {
-        document.getElementById('errBox').textContent = "Total width too small for these pilasters!";
-        document.getElementById('errBox').classList.add('show');
-        return;
-    } else {
-        document.getElementById('errBox').classList.remove('show');
+    function onSpacingChange() { buildStallInputs(); }
+    function onStallCountChange() { buildStallInputs(); }
+// sheet layout
+function generateNestingPlan(r) {
+    const availableSheets = [
+        { name: "12 x 6 feet", width: 3670, height: 1860 },
+        { name: "14 x 6 feet", width: 4300, height: 1860 }
+    ];
+    //  labelPARTS
+    const originalParts = [];
+    for (let i = 0; i < r.countDividers; i++) {
+        originalParts.push({
+            label: 'DIV' + (i + 1),
+            finalW: r.D,
+            finalH: r.dH
+        });
     }
 
-    let stallWidths = [];
-    if (document.getElementById('spacingType').value === 'equal') {
-        const sw = availableForStalls / n;
-        for (let i = 0; i < n; i++) stallWidths.push(sw);
-    } else {
-        let sum = 0;
-        for (let i = 1; i <= n; i++) {
-            let v = parseFloat(document.getElementById('sw_' + i)?.value) || 800;
-            stallWidths.push(v);
-            sum += v;
+    for (let i = 0; i < r.countDoors; i++) {
+        originalParts.push({
+            label: 'DOOR-' + (i + 1),
+            finalW: r.doorW,
+            finalH: r.doorH
+        });
+    }
+
+    for (let i = 0; i < r.countEnd; i++) {
+        originalParts.push({
+            label: 'EP-' + (i + 1),
+            finalW: r.endPanelW,
+            finalH: r.dH
+        });
+    }
+
+    for (let i = 0; i < r.countMid; i++) {
+        originalParts.push({
+            label: 'MID-' + (i + 1),
+            finalW: r.midPanelW,
+            finalH: r.dH
+        });
+    }
+
+    // =========================
+    // SORT LARGE TO SMALL
+    // =========================
+
+    originalParts.sort((a, b) =>
+        (b.finalW * b.finalH) -
+        (a.finalW * a.finalH)
+    );
+
+    // =========================
+    // TEST ALL SHEETS
+    // =========================
+
+    let bestSolution = null;
+
+    availableSheets.forEach(sheetType => {
+
+        const parts =
+            JSON.parse(JSON.stringify(originalParts));
+
+        const sheets = [];
+
+        let currentSheet =
+            createSheet(sheetType);
+
+        parts.forEach(part => {
+
+            let placed = false;
+
+            for (
+                let i = 0;
+                i < currentSheet.freeRects.length;
+                i++
+            ) {
+
+                const rect =
+                    currentSheet.freeRects[i];
+
+                // NORMAL FIT
+                if (
+                    part.finalW <= rect.width &&
+                    part.finalH <= rect.height
+                ) {
+
+                    insertPart(
+                        part,
+                        rect,
+                        currentSheet,
+                        i,
+                        false
+                    );
+
+                    placed = true;
+                    break;
+                }
+
+                // ROTATED FIT
+                if (
+                    part.finalH <= rect.width &&
+                    part.finalW <= rect.height
+                ) {
+
+                    [part.finalW, part.finalH] =
+                    [part.finalH, part.finalW];
+
+                    insertPart(
+                        part,
+                        rect,
+                        currentSheet,
+                        i,
+                        true
+                    );
+
+                    placed = true;
+                    break;
+                }
+            }
+
+            // CREATE NEW SHEET
+            if (!placed) {
+
+                sheets.push(currentSheet);
+
+                currentSheet =
+                    createSheet(sheetType);
+
+                insertPart(
+                    part,
+                    currentSheet.freeRects[0],
+                    currentSheet,
+                    0,
+                    false
+                );
+            }
+        });
+
+        sheets.push(currentSheet);
+
+        // =========================
+        // CALCULATE AREA
+        // =========================
+
+        let usedArea = 0;
+
+        sheets.forEach(sheet => {
+
+            sheet.placedItems.forEach(item => {
+
+                usedArea +=
+                    item.finalW *
+                    item.finalH;
+            });
+        });
+        const sheetArea =
+            sheetType.width *
+            sheetType.height;
+        const totalArea =
+            sheets.length * sheetArea;
+        const wasteArea =
+            totalArea - usedArea;
+        const yieldPercent =
+            (usedArea / totalArea) * 100;
+        // =========================
+        // SELECT BEST SOLUTION
+        // =========================
+        if (!bestSolution) {
+            bestSolution = {
+                sheetType,
+                sheets,
+                waste: wasteArea,
+                yield: yieldPercent,
+                sheetCount: sheets.length,
+                sheetArea
+            };
+            return;
         }
-        let ratio = availableForStalls / sum;
-        stallWidths = stallWidths.map(v => v * ratio);
+
+        const sameSheetCount =
+            sheets.length ===
+            bestSolution.sheetCount;
+
+        const smallerSheet =
+            sheetArea <
+            bestSolution.sheetArea;
+
+        const lessWaste =
+            wasteArea <
+            bestSolution.waste;
+
+        // RULE 1:
+        // Prefer smaller sheet
+        if (
+            sameSheetCount &&
+            smallerSheet
+        ) {
+
+            bestSolution = {
+                sheetType,
+                sheets,
+                waste: wasteArea,
+                yield: yieldPercent,
+                sheetCount: sheets.length,
+                sheetArea
+            };
+        }
+
+        // RULE 2:
+        // Bigger sheet only if
+        // sheet count reduced
+
+        else if (
+            sheets.length <
+            bestSolution.sheetCount
+        ) {
+
+            bestSolution = {
+                sheetType,
+                sheets,
+                waste: wasteArea,
+                yield: yieldPercent,
+                sheetCount: sheets.length,
+                sheetArea
+            };
+        }
+
+        // RULE 3:
+        // Same sheet size
+        // choose lower waste
+
+        else if (
+            sameSheetCount &&
+            sheetArea ===
+            bestSolution.sheetArea &&
+            lessWaste
+        ) {
+
+            bestSolution = {
+                sheetType,
+                sheets,
+                waste: wasteArea,
+                yield: yieldPercent,
+                sheetCount: sheets.length,
+                sheetArea
+            };
+        }
+    });
+    // =========================
+    // DISPLAY BEST RESULT
+    // =========================
+    renderSheetLayouts(bestSolution.sheets);
+}
+//=============================================================================
+function createSheet(stockSheet) {
+    return {
+        stock: stockSheet,
+        placedItems: [],
+        freeRects: [
+            {
+                x: 0,
+                y: 0,
+                width: stockSheet.width,
+                height: stockSheet.height
+            }
+        ]
+    };
+}
+function insertPart(
+    part,
+    rect,
+    sheet,
+    rectIndex,
+    rotated
+) {
+
+    const placedPart = {
+        ...part,
+        x: rect.x,
+        y: rect.y,
+        rotated
+    };
+
+    sheet.placedItems.push(placedPart);
+
+    sheet.freeRects.splice(rectIndex, 1);
+
+    // RIGHT SPACE
+    sheet.freeRects.push({
+        x: rect.x + part.finalW,
+        y: rect.y,
+        width: rect.width - part.finalW,
+        height: part.finalH
+    });
+    // BOTTOM SPACE
+    sheet.freeRects.push({
+        x: rect.x,
+        y: rect.y + part.finalH,
+        width: rect.width,
+        height: rect.height - part.finalH
+    });
+    // CLEAN INVALID RECTS
+    sheet.freeRects = sheet.freeRects.filter(r =>
+        r.width > 40 &&
+        r.height > 40
+    );
+}
+    function buildStallInputs() {
+      var n = parseInt(document.getElementById('numStalls').value) || 1;
+      var eq = document.getElementById('equal').value;
+      var box = document.getElementById('stallWidthFields');
+      box.innerHTML = '';
+      if (eq !== 'unequal') { box.classList.add('hidden'); return; }
+      box.classList.remove('hidden');
+      for (var i = 1; i <= n; i++) {
+        var row = document.createElement('div');
+        row.className = 'stall-row';
+        row.innerHTML = '<label>Stall ' + i + ' (mm)</label>'
+          + '<input type="number" id="sw_' + i + '" value="800" min="600" '
+          + 'style="padding:4px 8px;border:1px solid #c8cad4;border-radius:5px;font-size:12px;width:100%">';
+        box.appendChild(row);
+      }
     }
 
-    const sidePanels = (wallType === 's') ? 2 : (wallType === 'l' ? 1 : 0);
-    const netArea = ((n * depth * pH) + (totalW * pH)) / 1000000;
+  function switchTab(tab) {
+  activeTab = tab;
 
-   result = { n, totalW, depth, epL, epR, mPilW, pH, dH, doorW, wallType, stallWidths, sidePanels, netArea };
-
-
-    document.getElementById('kStalls').textContent = n;
-    document.getElementById('kMP').textContent = midPilCount;
-    document.getElementById('kSP').textContent = sidePanels;
-    document.getElementById('kArea').textContent = netArea.toFixed(2);
-    document.getElementById('sEP').textContent = `${epL}L / ${epR}R mm`;
-    document.getElementById('sDiv').textContent = `${depth} x ${pH} mm`;
-    document.getElementById('sOpen').textContent = `${doorW} mm`;
-    draw();
-
-    draw();
+  document.getElementById('tab-floor').classList.toggle('active', tab === 'floor');
+  document.getElementById('tab-elev').classList.toggle('active', tab === 'elev');
+  document.getElementById('tab-3d').classList.toggle('active', tab === '3d');
+  document.getElementById('tab-nesting').classList.toggle('active', tab === 'nesting');
+  document.getElementById('cvFloor').style.display = tab === 'floor' ? 'block' : 'none';
+  document.getElementById('cvElev').style.display = tab === 'elev' ? 'block' : 'none';
+  document.getElementById('cv3d').style.display = tab === '3d' ? 'block' : 'none';
+  document.getElementById('sheetLayouts').style.display = tab === 'nesting' ? 'block' : 'none';
+  if (tab !== 'nesting') {
+    document.getElementById('sheetLayouts').innerHTML = '';
+  }
+  calculate();
 }
-
-function draw() {
-    if (activeTab === 'floor') drawFloor(result);
-    else drawElev(result);
-}
-
-function drawFloor(r) {
-    const canvas = document.getElementById('cvFloor');
-    const ctx = canvas.getContext("2d");
-    const pad = 60;
-    const scale = Math.min((canvas.width - pad * 2) / r.totalW, (canvas.height - pad * 3) / r.depth);
-    const startX = (canvas.width - r.totalW * scale) / 2;
-    const startY = 50;
-    const drawD = r.depth * scale;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 1. Draw Masonry Boundary (Back and Sides)
-    ctx.strokeStyle = "#94a3b8";
-    ctx.lineWidth = 10 * scale;
-    ctx.lineCap = "square";
-    ctx.beginPath();
-    if (r.wallType === "c") {
-        ctx.moveTo(startX, startY + drawD); ctx.lineTo(startX, startY);
-        ctx.lineTo(startX + r.totalW * scale, startY); ctx.lineTo(startX + r.totalW * scale, startY + drawD);
-    } else if (r.wallType === "l") {
-        ctx.moveTo(startX, startY + drawD); ctx.lineTo(startX, startY);
-        ctx.lineTo(startX + r.totalW * scale, startY);
-    } else {
-        ctx.moveTo(startX, startY); ctx.lineTo(startX + r.totalW * scale, startY);
+    function showErr(msg) {
+      var b = document.getElementById('errBox');
+      b.textContent = msg;
+      b.className = msg ? 'err show' : 'err';
     }
-    ctx.stroke();
+    ////end=============================================================================
+    function calculate() {
+      showErr('');
+      var n = Math.max(1, parseInt(document.getElementById('numStalls').value) || 1);
+      var W = parseFloat(document.getElementById('totalwidth').value) || 2000;
+      var D = parseFloat(document.getElementById('depth').value) || 1500;
+      var dH = parseFloat(document.getElementById('dividerHeight').value) || 1790;
+      var doorH = parseFloat(document.getElementById('doorHeight').value) || 1790;
+      var doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
+      var pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
 
-    // 2. Draw Front Fascia, Pilasters, and Dividers
-    let curX = startX;
-    const frontY = startY + drawD;
-    const dimY = frontY + 45;
+      // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
+      var pilT = 40;
+      var divT = 25;
 
-    for (let i = 0; i < r.n; i++) {
-        let pW = (i === 0) ? r.epL : r.mPilW;
-        let pWpx = pW * scale;
+      var ewEqual = document.getElementById('endpanelEqual').value === 'equal';
+      var ewL, ewR, midPanelW;
+      if (ewEqual) {
+        // 1. Calculate space allocated per single cubicle basket
+        var cubicleSpace = W / n;
+        // 2. Subtract door width from that space to find total facing panel allowance
+        var panelAllowancePerCubicle = cubicleSpace - doorW;
 
-        // Draw Pilaster Rectangle
-        ctx.fillStyle = "#334155";
-        ctx.fillRect(curX, frontY - 3, pWpx, 6);
-        drawDim(ctx, curX, curX + pWpx, dimY, Math.round(pW));
+        // 3. End panel takes exactly half of a single cubicle's remaining facing allowance
+        var derivedEndPanel = panelAllowancePerCubicle / 2;
 
-        // Divider Partition Line
-        ctx.strokeStyle = "#000";
+        ewL = ewR = Math.max(0, derivedEndPanel);
+
+        // 4. The shared mid panel is the combination of two adjacent cubicle allowances
+        midPanelW = derivedEndPanel * 2;
+
+        // Sync calculated value out to the UI text box safely
+        var uiField = document.getElementById('endpanelSize');
+        if (uiField) uiField.value = Math.round(ewL);
+      } else {
+        ewL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
+        ewR = parseFloat(document.getElementById('endpanelRight').value) || 200;
+        midPanelW = ewL + ewR; // Fallback calculation for unequal mixtures
+      }
+
+      // The true physical open space span per stall for the canvas loop to map positions
+      var availableW = W - ewL - ewR;
+      var spacing = document.getElementById('equal').value;
+      var stallWidths = [];
+
+      if (spacing === 'equal') {
+        var sw = W / n; // Each stall spans exactly W / n (e.g., 1000mm)
+        for (var i = 0; i < n; i++) stallWidths.push(sw);
+      } else {
+        var sum = 0;
+        for (var i = 1; i <= n; i++) {
+          var el = document.getElementById('sw_' + i);
+          var v = parseFloat(el ? el.value : 1000) || 1000;
+          stallWidths.push(v);
+          sum += v;
+        }
+        if (Math.abs(sum - W) > 5) {
+          showErr('Stall widths sum (' + Math.round(sum) + 'mm) must equal total room width (' + Math.round(W) + 'mm).');
+          return;
+        }
+      }
+      // Count matrices for material takeoffs
+      var countDoors = n;
+      var countDividers = n - 1;
+      var countMid = n > 1 ? n - 1 : 0;
+      var countEnd = 2;
+      var endPanelW = ewL;
+      // Structural square meter accounting equations
+      var netArea = ((countDividers * D * dH) + (countDoors * doorW * doorH) + (countEnd * endPanelW * dH) + (countMid * midPanelW * dH)) / 1e6;
+      var grossArea = netArea * 1.12;
+
+      result = {
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, ewL, ewR, ewEqual, stallWidths,
+        countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea
+      };
+      //===============================
+const wallMap = { l: 1, c: 0, s: 2 };
+let code = wallMap[document.getElementById('wall').value];
+      // Update UI DOM dashboard readouts
+      document.getElementById('kDividers').textContent = countDividers;
+      document.getElementById('kMid').textContent = countMid;
+      document.getElementById('kEnd').textContent = countEnd;
+      document.getElementById('kDoors').textContent = countDoors;
+      document.getElementById('kendwall').textContent = code;
+      var minW = Math.min.apply(null, stallWidths), maxW = Math.max.apply(null, stallWidths);
+      document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
+      document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';
+      document.getElementById('szDoor').textContent = doorW + ' x ' + doorH + ' mm';
+      document.getElementById('szEP').textContent = Math.round(endPanelW) + ' x ' + pilH+ ' mm';
+      document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
+      document.getElementById('szEQL').textContent = Math.round(ewL) + 'x'+pilH+' mm';
+      document.getElementById('szEQR').textContent = Math.round(ewR) +'x'+pilH+ ' mm';
+      document.getElementById('szNet').textContent = netArea.toFixed(2);
+
+      if (activeTab === 'floor') {
+  drawFloor(result);
+} else if (activeTab === 'elev') {
+  drawElev(result);
+} else if (activeTab === '3d') {
+  draw3D(result);
+} else if (activeTab === 'nesting') {
+  generateNestingPlan(result);
+}
+    }
+    /* ── Drawing helpers ─────────────────────────────── */
+    function cadClear(ctx) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+
+    function hatch(ctx, x, y, w, h, color) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+      ctx.strokeStyle = color || '#999'; ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      for (var i = -h; i < w + h; i += 7) {
+        ctx.moveTo(x + i, y);
+        ctx.lineTo(x + i + h, y + h);
+      }
+      ctx.stroke(); ctx.restore();
+    }
+
+    function dimLine(ctx, x1, y1, x2, y2, label, color, side) {
+      color = color || '#1560c8'; side = (side !== undefined) ? side : -1;
+      ctx.save();
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+      var isH = (Math.abs(y1 - y2) < 0.5);
+      var tk = 5;
+      ctx.setLineDash([]);
+      if (isH) {
+        ctx.beginPath(); ctx.moveTo(x1, y1 - tk); ctx.lineTo(x1, y1 + tk); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2, y2 - tk); ctx.lineTo(x2, y2 + tk); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(x1 - tk, y1); ctx.lineTo(x1 + tk, y1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2 - tk, y2); ctx.lineTo(x2 + tk, y2); ctx.stroke();
+      }
+      ctx.setLineDash([4, 2]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.setLineDash([]);
+      var ang = Math.atan2(y2 - y1, x2 - x1);
+      [[x1, y1, ang + Math.PI], [x2, y2, ang]].forEach(function (pt) {
+        ctx.beginPath();
+        ctx.moveTo(pt[0], pt[1]);
+        ctx.lineTo(pt[0] + 7 * Math.cos(pt[2] - 0.3), pt[1] + 7 * Math.sin(pt[2] - 0.3));
+        ctx.lineTo(pt[0] + 7 * Math.cos(pt[2] + 0.3), pt[1] + 7 * Math.sin(pt[2] + 0.3));
+        ctx.closePath(); ctx.fill();
+      });
+      var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      ctx.font = '13px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      var tw = ctx.measureText(label).width;
+      var lx = isH ? mx : mx + side * 14, ly = isH ? my + side * 11 : my;
+      ctx.fillStyle = '#fff'; ctx.fillRect(lx - tw / 2 - 2, ly - 6, tw + 4, 12);
+      ctx.fillStyle = color; ctx.fillText(label, lx, ly);
+      ctx.restore();
+    }
+
+    function leader(ctx, x1, y1, x2, y2, text, color) {
+  color = color || '#444';
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  // Draw the line
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  // Draw arrowhead at the start
+  const headlen = 8; // length of arrowhead
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6),
+             y1 + headlen * Math.sin(angle + Math.PI / 6));
+  ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6),
+             y1 + headlen * Math.sin(angle - Math.PI / 6));
+  ctx.closePath();
+  ctx.fillStyle = 'green';
+  ctx.fill();
+
+  // Draw the text
+  ctx.font = '12px monospace';
+  ctx.fillStyle = color;
+  ctx.textAlign = x2 > x1 ? 'left' : 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(text, x2 , y2);
+  ctx.restore();
+}
+
+    /* /* ── Floor Plan ──────────────────────────────────── */
+    function drawFloor(r) {
+      var cv = document.getElementById('cvFloor');
+      var ctx = cv.getContext('2d');
+      var CW = cv.width, CH = cv.height;
+      cadClear(ctx);
+
+      var mL = 58, mR = 55, mT = 58, mB = 100;
+      var dW = CW - mL - mR, dH2 = CH - mT - mB;
+      var scale = Math.min(dW / r.W, dH2 / r.D);
+      var ox = mL + (dW - r.W * scale) / 2, oy = mT;
+      var pw = r.W * scale, ph = r.D * scale;
+
+      var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
+      var midPanelWpx = r.midPanelW * scale;
+      var divTpx = r.divT * scale;
+      var doorWpx = r.doorW * scale;
+
+      /* Calculate Cubicle Width / Partitions */
+      var curX = ox, stallXs = [];
+      for (var i = 0; i <= r.n; i++) {
+        if (i < r.n) {
+          stallXs.push(curX);
+          curX += r.stallWidths[i] * scale;
+        }
+      }
+
+      /* 0. CONDITIONAL CUBICLE BACKGROUND SHADING */
+      for (var i = 0; i < stallXs.length; i++) {
+        var sx = stallXs[i], sw = r.stallWidths[i] * scale;
+
+        if (i === 0 && r.ewL > 0) {
+          ctx.fillStyle = '#eaeaea'; // Shade 1 for Left wall stall
+        } else if (i === stallXs.length - 1 && r.ewR > 0) {
+          ctx.fillStyle = '#dedede'; // Shade 2 for Right wall stall
+        } else {
+          ctx.fillStyle = '#f5f5f5'; // Shade 0 for Centre standard stall
+        }
+        ctx.fillRect(sx, oy, sw, ph);
+      }
+
+      /* 1. BACK WALL LINE (Dark Slate Gray) */
+      ctx.strokeStyle = '#2a2e45'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + pw, oy); ctx.stroke();
+
+      /* 2. SIDE END PANELS (Medium Architectural Gray) */
+      ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox, oy + ph); ctx.stroke(); // Left
+      ctx.beginPath(); ctx.moveTo(ox + pw, oy); ctx.lineTo(ox + pw, oy + ph); ctx.stroke(); // Right
+
+      /* 3. MID PANEL DIVIDERS (Clean Gray Outlines) */
+      for (var i = 1; i < r.n; i++) {
+        var mx = stallXs[i];
+        ctx.strokeStyle = '#a0a0a0'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(mx, oy); ctx.lineTo(mx, oy + ph); ctx.stroke();
+      }
+
+      /* 4. TOILET POT FIXTURES (Filleted Tank & Half-Ellipse Centred on Wall) */
+      var tankWpx = 400 * scale;
+      var tankHpx = 50 * scale;
+      var tankRadius = 8 * scale; // Corner roundness radius
+
+      var radX = 200 * scale; // Horizontal small radius (400mm total width)
+      var radY = 500 * scale; // Vertical radius (500mm total depth)
+
+      for (var i = 0; i < stallXs.length; i++) {
+        var sx = stallXs[i], sw = r.stallWidths[i] * scale;
+        var centerX = sx + sw / 2;
+
+        ctx.strokeStyle = '#9e9e9e';
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = '#ffffff';
+
+        // A. DRAW HALF-ELLIPSE (Centred directly on the back wall line 'oy')
+        // 0 to Math.PI draws only the bottom half inside the stall
+        ctx.beginPath();
+        ctx.ellipse(centerX, oy, radX, radY, 0, 0, Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // B. DRAW FILLETED TANK (200mm Wide x 50mm Deep, sitting against back wall)
+        var tx = centerX - tankWpx / 2;
+        var ty = oy; // Sitting directly flush downward from back wall
+
+        ctx.beginPath();
+        ctx.moveTo(tx + tankRadius, ty);
+        // Top right edge
+        ctx.lineTo(tx + tankWpx - tankRadius, ty);
+        ctx.arcTo(tx + tankWpx, ty, tx + tankWpx, ty + tankHpx, tankRadius);
+        // Bottom right edge
+        ctx.lineTo(tx + tankWpx, ty + tankHpx - tankRadius);
+        ctx.arcTo(tx + tankWpx, ty + tankHpx, tx + tankWpx - tankRadius, ty + tankHpx, tankRadius);
+        // Bottom left edge
+        ctx.lineTo(tx + tankRadius, ty + tankHpx);
+        ctx.arcTo(tx, ty + tankHpx, tx, ty + tankHpx - tankRadius, tankRadius);
+        // Top left edge
+        ctx.lineTo(tx, ty + tankRadius);
+        ctx.arcTo(tx, ty, tx + tankRadius, ty, tankRadius);
+
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      /* 5. FRONT INLINE FASCIAS AND ACTIVE DOORS */
+      for (var i = 0; i < stallXs.length; i++) {
+        var sx = stallXs[i], sw = r.stallWidths[i] * scale;
+        var dxL = sx + (sw - doorWpx) / 2;
+
+        // Front Static Fascias (Dark Charcoal Accent Profiles)
+        ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(sx, oy + ph); ctx.lineTo(dxL, oy + ph); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(dxL + doorWpx, oy + ph); ctx.lineTo(sx + sw, oy + ph); ctx.stroke();
+
+        // Active Swinging Doors (Rendered open 90-degrees inward)
+        ctx.strokeStyle = '#5a5a5a'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(dxL, oy + ph); ctx.lineTo(dxL, oy + ph - doorWpx); ctx.stroke();
+
+        // Trajectory Swing Arc 
+        ctx.beginPath(); ctx.strokeStyle = '#9e9e9e'; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3]);
+        ctx.arc(dxL, oy + ph, doorWpx, -Math.PI / 2, 0, false); ctx.stroke(); ctx.setLineDash([]);
+      }
+
+      /* 6. LABELS AND TEXT ANNOTATIONS (Shifted lower down to clear the toilet bowl space) */
+      for (var i = 0; i < stallXs.length; i++) {
+        var sx = stallXs[i], sw = r.stallWidths[i] * scale;
+        var labelY = oy + ph - (doorWpx + 25); // Safely clear both the pot at the top and open doors at the bottom
+
+        ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#2a2e45';
+        ctx.fillText('S' + (i + 1), sx + sw / 2, labelY);
+        ctx.font = '10px monospace'; ctx.fillStyle = '#6a7090';
+        ctx.fillText(Math.round(r.stallWidths[i]) + 'mm', sx + sw / 2, labelY + 14);
+      }
+
+      /* === DIMENSION LINES === */
+      // dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
+      // for (var i = 0; i < stallXs.length; i++) {
+      //   var sx = stallXs[i], sw = r.stallWidths[i] * scale;
+      //   dimLine(ctx, sx, oy - 38, sx + sw, oy - 38, Math.round(r.stallWidths[i]) + 'mm', '#7a7a7a', -1);
+      // }
+      dimLine(ctx, ox + pw + 18, oy, ox + pw + 18, oy + ph, Math.round(r.D) + 'mm', '#5a5a5a', 1);
+      dimLine(ctx, ox, oy + ph + 20, ox + ewLpx, oy + ph + 20, Math.round(r.ewL) + 'mm', '#7a7a7a', 1);
+      dimLine(ctx, ox + pw - ewRpx, oy + ph + 20, ox + pw, oy + ph + 20, Math.round(r.ewR) + 'mm', '#7a7a7a', 1);
+
+      if (stallXs.length > 0) {
+        var sx = stallXs[0], sw = r.stallWidths[0] * scale;
+        var dxL = sx + (sw - doorWpx) / 2;
+        dimLine(ctx, dxL, oy + ph + 40, dxL + doorWpx, oy + ph + 40, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
+      }
+      if (stallXs.length > 1) {
+        var sx = stallXs[0], sw = r.stallWidths[0] * scale;
+        dimLine(ctx, sx + sw - (midPanelWpx / 2), oy + ph + 60, sx + sw + (midPanelWpx / 2), oy + ph + 60, Math.round(r.midPanelW) + 'mm', '#7a7a7a', 1);
+      }
+
+      /* Footer Layout Blocks & Monochromatic Legend */
+      ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
+      ctx.fillText('FLOOR PLAN', ox, CH - 22);
+      ctx.font = '9px monospace'; ctx.fillStyle = '#7a7d8c'; ctx.textAlign = 'right';
+      ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
+
+      var sw2 = [{ c: '#eaeaea', t: 'Left Side Wall' }, 
+      { c: '#f5f5f5', t: 'Centre Area' }, 
+      { c: '#dedede', t: 'Right Side Wall' }];
+      for (var i = 0; i < sw2.length; i++) {
+        ctx.fillStyle = sw2[i].c; ctx.fillRect(ox + i * 135, CH - 11, 8, 8);
+        ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 0.5; ctx.strokeRect(ox + i * 135, CH - 11, 8, 8);
+        ctx.font = '7px monospace'; ctx.fillStyle = '#555'; ctx.textAlign = 'left';
+        ctx.fillText(sw2[i].t, ox + i * 135 + 11, CH - 4);
+      }
+      /* === DOWNLOAD BUTTON INTERFACE === */
+      var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
+
+      // 1. Draw Button Graphic Layout Background
+      ctx.fillStyle = '#2a2e45';
+      ctx.beginPath();
+      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
+      ctx.fill();
+
+      // 2. Draw Button Label Text
+      ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('⬇ DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
+
+      // 3. Click Event Handling Handler Logic
+      cv.onclick = function (e) {
+        var rect = cv.getBoundingClientRect();
+        var clickX = e.clientX - rect.left;
+        var clickY = e.clientY - rect.top;
+
+        // Check if user clicked within the button boundaries
+        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+          var link = document.createElement('a');
+          link.download = 'cubicle-floor-plan.png';
+          link.href = cv.toDataURL('image/png');
+          link.click();
+        }
+      };
+
+    }
+    //-----------sheet
+    function draw3D(r) {
+      var cv = document.getElementById('cv3d');
+      if (!window.THREE) {
+        var ctx = cv.getContext('2d');
+        cadClear(ctx);
+        ctx.fillStyle = '#1c1c2e';
+        ctx.font = '13px monospace';
+        ctx.fillText('Three.js could not load. Check your internet connection.', 24, 42);
+        return;
+      }
+
+      if (!threeView) init3DView(cv);
+      render3DModel(r);
+    }
+
+    function init3DView(canvas) {
+      var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(canvas.width, canvas.height, false);
+      renderer.setClearColor(0xf8fafc, 1);
+      renderer.shadowMap.enabled = true;
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 20000);
+      var model = new THREE.Group();
+      scene.add(model);
+
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xaab1bd, 1.7));
+      var light = new THREE.DirectionalLight(0xffffff, 1.25);
+      light.position.set(2200, 3500, 2600);
+      light.castShadow = true;
+      scene.add(light);
+
+      threeView = {
+        canvas: canvas,
+        renderer: renderer,
+        scene: scene,
+        camera: camera,
+        model: model,
+        yaw: -0.75,
+        pitch: 0.42,
+        radius: 4200,
+        dragging: false,
+        lastX: 0,
+        lastY: 0,
+        target: new THREE.Vector3(0, 900, 0)
+      };
+
+      canvas.style.touchAction = 'none';
+      canvas.addEventListener('pointerdown', function (e) {
+        threeView.dragging = true;
+        threeView.lastX = e.clientX;
+        threeView.lastY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+      });
+      canvas.addEventListener('pointermove', function (e) {
+        if (!threeView.dragging) return;
+        var dx = e.clientX - threeView.lastX;
+        var dy = e.clientY - threeView.lastY;
+        threeView.lastX = e.clientX;
+        threeView.lastY = e.clientY;
+        threeView.yaw -= dx * 0.008;
+        threeView.pitch = Math.max(0.12, Math.min(1.2, threeView.pitch + dy * 0.006));
+        renderThreeFrame();
+      });
+      canvas.addEventListener('pointerup', function (e) {
+        threeView.dragging = false;
+        canvas.releasePointerCapture(e.pointerId);
+      });
+      canvas.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        threeView.radius *= e.deltaY > 0 ? 1.08 : 0.92;
+        threeView.radius = Math.max(900, Math.min(14000, threeView.radius));
+        renderThreeFrame();
+      }, { passive: false });
+    }
+
+    function render3DModel(r) {
+      var v = threeView;
+      var wallType = document.getElementById('wall').value;
+      var panelT = Math.max(25, Math.min(55, r.W * 0.018));
+      var wallH = r.dH;
+
+      while (v.model.children.length) {
+        var child = v.model.children.pop();
+        if (child.geometry) child.geometry.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach(function (mat) { if (mat && mat.dispose) mat.dispose(); });
+        } else if (child.material && child.material.dispose) {
+          child.material.dispose();
+        }
+      }
+
+      var matFloor = new THREE.MeshStandardMaterial({ color: 0xe8edf3, roughness: 0.8, metalness: 0.02 });
+      var matWall = new THREE.MeshStandardMaterial({ color: 0xc6cad3, roughness: 0.62 });
+      var matDivider = new THREE.MeshStandardMaterial({ color: 0xaeb5c1, roughness: 0.58 });
+      var matFront = new THREE.MeshStandardMaterial({ color: 0x8f98a7, roughness: 0.52 });
+      var matDoor = new THREE.MeshStandardMaterial({ color: 0xd8dce5, roughness: 0.48 });
+      var matHardware = new THREE.MeshStandardMaterial({ color: 0x2f3540, roughness: 0.35, metalness: 0.25 });
+      var matRail = new THREE.MeshStandardMaterial({ color: 0x737b88, roughness: 0.42, metalness: 0.08 });
+
+      function box(x0, z0, x1, z1, h, mat, y0) {
+        y0 = y0 || 0;
+        if (Math.abs(x1 - x0) < 1 || Math.abs(z1 - z0) < 1 || h <= 1) return null;
+        var mesh = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x1 - x0), h, Math.abs(z1 - z0)), mat);
+        mesh.position.set((x0 + x1) / 2 - r.W / 2, y0 + h / 2, (z0 + z1) / 2 - r.D / 2);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        v.model.add(mesh);
+        return mesh;
+      }
+
+      box(0, 0, r.W, r.D, 18, matFloor, -18);
+      box(0, -panelT, r.W, 0, wallH, matWall);
+      if (wallType === 'c' || wallType === 'l') box(-panelT, 0, 0, r.D, wallH, matWall);
+      if (wallType === 'c') box(r.W, 0, r.W + panelT, r.D, wallH, matWall);
+
+      var x = 0;
+      for (var i = 0; i < r.stallWidths.length - 1; i++) {
+        x += r.stallWidths[i];
+        box(x - panelT / 2, 0, x + panelT / 2, r.D, r.dH, matDivider);
+      }
+      if (wallType === 's') box(-panelT / 2, 0, panelT / 2, r.D, r.dH, matDivider);
+      if (wallType === 'l' || wallType === 's') box(r.W - panelT / 2, 0, r.W + panelT / 2, r.D, r.dH, matDivider);
+
+      var sx = 0;
+      for (var j = 0; j < r.stallWidths.length; j++) {
+        var sw = r.stallWidths[j];
+        var doorLeft = sx + (sw - r.doorW) / 2;
+        var doorRight = doorLeft + r.doorW;
+        var openDoorDepth = Math.min(r.doorW, r.D * 0.82);
+
+        if (doorLeft > sx) box(sx, r.D - panelT / 2, doorLeft, r.D + panelT / 2, r.pilH, matFront);
+        if (sx + sw > doorRight) box(doorRight, r.D - panelT / 2, sx + sw, r.D + panelT / 2, r.pilH, matFront);
+        box(doorLeft - panelT * 0.35, r.D - openDoorDepth, doorLeft + panelT * 0.35, r.D, r.doorH, matDoor);
+        box(doorLeft - panelT * 0.65, r.D - openDoorDepth * 0.55, doorLeft + panelT * 0.65, r.D - openDoorDepth * 0.55 + 28, 90, matHardware, r.doorH * 0.48);
+        sx += sw;
+      }
+
+      box(0, -panelT * 1.35, r.W, -panelT * 0.82, 42, matRail, r.pilH);
+      var grid = new THREE.GridHelper(Math.max(r.W, r.D) * 1.35, 12, 0xb6bfca, 0xd6dce4);
+      grid.position.y = -16;
+      v.model.add(grid);
+
+      v.target.set(0, Math.max(700, r.pilH * 0.48), 0);
+      v.radius = Math.max(v.radius, Math.max(r.W, r.D, r.pilH) * 1.45);
+      renderThreeFrame();
+    }
+
+    function renderThreeFrame() {
+      var v = threeView;
+      var cp = Math.cos(v.pitch);
+      v.camera.position.set(
+        v.target.x + Math.sin(v.yaw) * cp * v.radius,
+        v.target.y + Math.sin(v.pitch) * v.radius,
+        v.target.z + Math.cos(v.yaw) * cp * v.radius
+      );
+      v.camera.lookAt(v.target);
+      v.renderer.render(v.scene, v.camera);
+    }
+
+    function drawSheetDiagram(canvas, sheet, scale, kerf = 2) {
+      const ctx = canvas.getContext('2d');
+
+      // Clear canvas and draw sheet backdrop
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Render Unused / Waste Scrap Structural Offcuts
+      sheet.freeRects.forEach(rect => {
+        const rx = rect.x * scale;
+        const ry = rect.y * scale;
+        const rw = rect.width * scale;
+        const rh = rect.height * scale;
+
+        ctx.fillStyle = '#f1f5f9'; // Soft gray tone indicating offcut scrap
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx, ry, rw, rh);
+
+        // Print offcut dimension text if space permits
+        if (rw > 50 && rh > 20) {
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = 'italic 9px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${Math.round(rect.width)}×${Math.round(rect.height)}`, rx + rw / 2, ry + rh / 2);
+        }
+      });
+
+      // 2. Render Placed Parts & Clear Cut Instructions
+      sheet.placedItems.forEach(item => {
+        const rx = item.x * scale;
+        const ry = item.y * scale;
+        const rw = item.finalW * scale;
+        const rh = item.finalH * scale;
+
+        // Visual distinction for rotated grain patterns
+        ctx.fillStyle = item.rotated ? '#dbeafe' : '#eff6ff';
+        ctx.fillRect(rx, ry, rw, rh);
+
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(rx, ry, rw, rh);
+
+        const centerX = rx + rw / 2;
+        const centerY = ry + rh / 2;
+
+        // Configure universal canvas text layouts
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (rw > 50 && rh > 35) {
+          // Label Name Text
+          ctx.fillStyle = '#1e3a8a';
+          ctx.font = 'bold 11px Arial';
+          ctx.fillText(item.label, centerX, centerY - 10);
+
+          // Cut Dimensions Text String
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '15px monospace';
+          ctx.fillText(`${Math.round(item.finalW)} × ${Math.round(item.finalH)}`, centerX, centerY + 4);
+
+          // Rotation Flag Indicator
+          if (item.rotated) {
+            ctx.fillStyle = '#b45309';
+            ctx.font = '700 8px Arial';
+            ctx.fillText('🔄 ROTATED', centerX, centerY + 14);
+          }
+        } else if (rw > 40 && rh > 15) {
+          // Mini Compact layout presentation format for tiny narrow strip cuts (e.g. pilasters)
+          ctx.fillStyle = '#1e3a8a';
+          ctx.font = 'bold 9px Arial';
+          ctx.fillText(`${item.label} (${Math.round(item.finalW)}x${Math.round(item.finalH)})`, centerX, centerY);
+        }
+
+        // 3. Draw Cut Guideline Ticks at edges for manual saw operators
+        ctx.strokeStyle = '#dc2626';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        // Aligns to outer edge for first stall, center for others
-        let divX = (i === 0) ? curX : (curX + pWpx / 2);
-        ctx.moveTo(divX, startY);
-        ctx.lineTo(divX, frontY);
+        // Short tick marking cut line start points
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx + Math.min(6, rw * 0.2), ry);
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx, ry + Math.min(6, rh * 0.2));
         ctx.stroke();
-
-        curX += pWpx;
-
-        // Draw Door leaf and Swing Arc based on r.doorW
-        let stallWpx = r.stallWidths[i] * scale;
-        let doorWpx = r.doorW * scale; // User Input Door Width
-        
-        ctx.strokeStyle = "#8B4513";
-        ctx.lineWidth = 2;
-        // Swing Door Leaf (Inward)
-        ctx.beginPath(); 
-        ctx.moveTo(curX, frontY); 
-        ctx.lineTo(curX, frontY - doorWpx); 
-        ctx.stroke();
-
-        // Swing Arc
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath(); 
-        ctx.arc(curX, frontY, doorWpx, 1.5 * Math.PI, 2 * Math.PI); 
-        ctx.stroke();
-        ctx.setLineDash([]);
-        
-        // Dimension for the total Stall Space (gap between pilasters)
-        drawDim(ctx, curX, curX + stallWpx, dimY, Math.round(r.stallWidths[i]));
-        curX += stallWpx;
-
-        // Draw Final Right-Side Pilaster
-        if (i === r.n - 1) {
-            let epRpx = r.epR * scale;
-            ctx.fillStyle = "#334155";
-            ctx.fillRect(curX, frontY - 3, epRpx, 6);
-            drawDim(ctx, curX, curX + epRpx, dimY, Math.round(r.epR));
-            
-            // Right Side Divider (if Straight or L-Wall)
-            if (r.wallType !== "c") {
-                ctx.strokeStyle = "#000";
-                ctx.beginPath();
-                ctx.moveTo(curX + epRpx, startY);
-                ctx.lineTo(curX + epRpx, frontY);
-                ctx.stroke();
-            }
-        }
+      });
     }
-}
 
-function drawElev(r) {
-    const canvas = document.getElementById('cvElev');
-    const ctx = canvas.getContext('2d');
-    const pad = 60;
-    const scale = Math.min(700 / r.totalW, 320 / r.pH);
-    const ox = (canvas.width - r.totalW * scale) / 2;
-    const oy = 380;
-    const pHpx = r.pH * scale;
+    function renderSheetLayouts(sheets) {
+      // Sync quantitative indicators out to the dashboard if elements exist
+      const totalSheetsBadge = document.getElementById('layoutSheets');
+      if (totalSheetsBadge) totalSheetsBadge.textContent = sheets.length;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Ground
-    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(20, oy); ctx.lineTo(760, oy); ctx.stroke();
+      const container = document.getElementById('sheetLayouts');
+      if (!container) return;
+      container.innerHTML = ''; // Wipe older diagram loops clean
 
-    let curX = ox;
-    for (let i = 0; i <= r.n; i++) {
-        let pW = (i === 0) ? r.epL : (i === r.n ? r.epR : r.mPilW);
-        let pWpx = pW * scale;
+      sheets.forEach((sheet, index) => {
+        const sheetDiv = document.createElement('div');
+        sheetDiv.style.marginBottom = '28px';
+        sheetDiv.style.background = '#ffffff';
+        sheetDiv.style.padding = '14px';
+        sheetDiv.style.borderRadius = '6px';
+        sheetDiv.style.border = '1px solid #e2e8f0';
 
-        // Draw Pilasters
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(curX, oy - pHpx, pWpx, pHpx);
-        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
-        ctx.strokeRect(curX, oy - pHpx, pWpx, pHpx);
+        const title = document.createElement('h4');
+        title.style.margin = '0 0 4px 0';
+        title.style.color = '#0f172a';
+        title.textContent = `Sheet Layout Plan #${index + 1} (${sheet.stock.name})`;
 
-        if (i < r.n) {
-            let sWpx = r.stallWidths[i] * scale;
-            let dHpx = r.dH * scale;
-            
-            // Stall Background/Filler
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(curX + pWpx, oy - pHpx, sWpx, pHpx);
-            ctx.strokeRect(curX + pWpx, oy - pHpx, sWpx, pHpx);
+        const itemCount = sheet.placedItems.length;
+        const usedArea = sheet.placedItems.reduce((sum, item) => sum + item.finalW * item.finalH, 0);
+        const totalArea = sheet.stock.width * sheet.stock.height;
+        const yieldPercent = ((usedArea / totalArea) * 100).toFixed(1);
+        const scrapArea = totalArea - usedArea;
 
-            // Door
-            let dWpx = sWpx * 0.85;
-            let doorX = curX + pWpx + (sWpx - dWpx) / 2;
-            let doorY = oy - dHpx - 15; // 15mm floor clearance
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(doorX, doorY, dWpx, dHpx);
-            ctx.strokeStyle = '#1560c8'; ctx.strokeRect(doorX, doorY, dWpx, dHpx);
+        const info = document.createElement('div');
+        info.style.marginBottom = '12px';
+        info.style.color = '#475569';
+        info.style.fontSize = '12px';
+        info.style.fontFamily = 'monospace';
+        info.innerText = `Parts: ${itemCount} | Yield: ${yieldPercent}% | Used: ${(usedArea / 1e6).toFixed(3)} m² | Scrap: ${(scrapArea / 1e6).toFixed(3)} m²`;
 
-            // 3 Hinges
-            ctx.fillStyle = '#64748b';
-            const hW = 3, hH = 10;
-            ctx.fillRect(doorX - 1, doorY + 20, hW, hH);
-            ctx.fillRect(doorX - 1, doorY + (dHpx/2) - 5, hW, hH);
-            ctx.fillRect(doorX - 1, doorY + dHpx - 30, hW, hH);
+        const canvas = document.createElement('canvas');
+        canvas.style.width = '100%';
+        canvas.style.maxWidth = '720px';
+        canvas.style.display = 'block';
+        canvas.style.marginTop = '8px';
 
-            // Knob
-            ctx.beginPath(); ctx.arc(doorX + dWpx - 10, doorY + dHpx/2, 4, 0, Math.PI*2); ctx.fill();
+        // Proportional geometry scaler engine bounding metrics 
+        const scale = Math.min(720 / sheet.stock.width, 420 / sheet.stock.height);
+        canvas.width = sheet.stock.width * scale;
+        canvas.height = sheet.stock.height * scale;
 
-            curX += pWpx + sWpx;
-        }
+        sheetDiv.appendChild(title);
+        sheetDiv.appendChild(info);
+        sheetDiv.appendChild(canvas);
+        container.appendChild(sheetDiv);
+
+        // Map component cuts to graphics window context
+        drawSheetDiagram(canvas, sheet, scale, 2);
+      });
     }
-}
+    /* ── Elevation ───────────────────────────────────── */
+//  
+    function drawElev(r) {
+      var cv = document.getElementById('cvElev');
+      var ctx = cv.getContext('2d');
+      var CW = cv.width, CH = cv.height;
+      cadClear(ctx);
 
-function drawDim(ctx, x1, x2, y, text) {
-    ctx.strokeStyle = "#1560c8";
-    ctx.fillStyle = "#1560c8";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x1, y); ctx.lineTo(x2, y);
-    ctx.moveTo(x1, y - 5); ctx.lineTo(x1, y + 5);
-    ctx.moveTo(x2, y - 5); ctx.lineTo(x2, y + 5);
-    ctx.stroke();
-    ctx.font = "bold 9px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(text + "mm", (x1 + x2) / 2, y + 15);
-}
+      var mL = 50, mR = 70, mT = 50, mB = 85;
+      var dW = CW - mL - mR, dH2 = CH - mT - mB;
+      var scale = Math.min(dW / r.W, dH2 / r.pilH);
+      var ox = mL + (dW - r.W * scale) / 2, oy = mT;
+      var pw = r.W * scale, ph = r.pilH * scale;
+      var floorY = oy + ph;
 
-// Init
-buildStallInputs();
-toggleEpMode();
-</script>
+      var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
+      var displayMidPanelW = r.n > 1 ? Math.max(0, (r.W - r.ewL - r.ewR - (r.n * r.doorW)) / (r.n - 1)) : 0;
+      var midPanelWpx = displayMidPanelW * scale;
+      var pilHpx = r.pilH * scale, divHpx = r.dH * scale;
+      var doorHpx = r.doorH * scale, doorWpx = r.doorW * scale;
+
+      var frontX = ox;
+      var doorRects = [];
+      var midRects = [];
+      var leftEndRect = { x: frontX, w: ewLpx };
+      frontX += ewLpx;
+
+      for (var i = 0; i < r.n; i++) {
+        doorRects.push({ x: frontX, w: doorWpx, label: 'STALL ' + (i + 1) });
+        frontX += doorWpx;
+
+        if (i < r.n - 1) {
+          midRects.push({ x: frontX, w: midPanelWpx });
+          frontX += midPanelWpx;
+        }
+      }
+
+      var rightEndRect = { x: ox + pw - ewRpx, w: ewRpx };
+      ctx.strokeStyle = '#1c1c2e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ox - 15, floorY);
+      ctx.lineTo(ox + pw + 15, floorY);
+      ctx.stroke();
+
+      function drawPanel(rect, fill, stroke, lineWidth) {
+        if (rect.w <= 0) return;
+        ctx.fillStyle = fill;
+        ctx.fillRect(rect.x, floorY - pilHpx, rect.w, pilHpx);
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = lineWidth || 1.5;
+        ctx.strokeRect(rect.x, floorY - pilHpx, rect.w, pilHpx);
+      }
+
+      function drawPilasterLeg(x, align) {
+        var legW = Math.max(5, 10 * scale);
+        var legH = Math.max(18, 75 * scale);
+        var footW = legW * 2.2;
+        var footH = Math.max(3, 7 * scale);
+        var legX = align === 'right' ? x - legW -10 : x +10;
+        var legY = floorY;
+
+        ctx.fillStyle = '#3f3f3f';
+        ctx.fillRect(legX, legY, legW, legH);
+        ctx.strokeStyle = '#1f1f1f';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(legX, legY, legW, legH);
+
+        ctx.fillStyle = '#2f2f2f';
+        ctx.fillRect(legX + legW / 2 - footW / 2, legY + legH - footH, footW, footH);
+      }
+
+      drawPanel(leftEndRect, '#b5b5b5', '#7a7a7a', 2);
+// midpanel
+      for (var i = 0; i < midRects.length; i++) {
+        drawPanel(midRects[i], '#9e9e9e', '#4a4a4a', 2);
+        ctx.strokeStyle = '#4a4a4a';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+       ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - doorHpx);
+       ctx.lineTo(midRects[i].x + midRects[i].w / 2, floorY );
+        ctx.stroke();
+      }
+
+      drawPanel(rightEndRect, '#b5b5b5', '#7a7a7a', 2);
+// top rail
+      var topRailH = Math.max(6, 22 * scale);
+      var topRailX = leftEndRect.x;
+      var topRailY = floorY;
+      var topRailW = (rightEndRect.x + rightEndRect.w) - topRailX;
+      ctx.fillStyle = '#8f8f8f';
+      ctx.fillRect(ox, oy-topRailH, topRailW, topRailH);
+      ctx.strokeStyle = '#4a4a4a';
+      ctx.lineWidth = 2;
+     ctx.strokeRect(ox, oy-topRailH, topRailW, topRailH);
+//leg 
+      if (leftEndRect.w > 0) drawPilasterLeg(leftEndRect.x + leftEndRect.w, 'right');
+      for (var i = 0; i < midRects.length; i++) {
+        if (midRects[i].w > 0) {
+          drawPilasterLeg(midRects[i].x, 'left');
+          drawPilasterLeg(midRects[i].x + midRects[i].w, 'right');
+        }
+      }
+      if (rightEndRect.w > 0) drawPilasterLeg(rightEndRect.x, 'left');
+
+      for (var i = 0; i < doorRects.length; i++) {
+        var d = doorRects[i];
+        var dTop = floorY - doorHpx;
+
+        ctx.fillStyle = '#dedede';
+        ctx.fillRect(d.x, dTop, d.w, doorHpx);
+        ctx.strokeStyle = '#5a5a5a';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(d.x, dTop, d.w, doorHpx);
+  // hinge===========================
+        ctx.fillStyle = '#3a3a3a';
+        var hingeW = Math.max(6, 4 * scale);
+        var hingeH = Math.max(12, 15 * scale);
+        ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.15), hingeW, hingeH);
+        ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.50) - hingeH / 2, hingeW, hingeH);
+        ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.85) - hingeH, hingeW, hingeH);
+//===========knob
+        var knobX = d.x + d.w - Math.max(8, 15 * scale);
+        var knobY = dTop + (doorHpx * 0.55);
+        var knobR = Math.max(3, 5 * scale);
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.arc(knobX + 1, knobY + 1, knobR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = '#4a4a4a';
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 0.8;
+        ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+
+        ctx.font = '12px monospace';
+        ctx.fillStyle = '#4a4a4a';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.label, d.x + d.w / 2, floorY - divHpx/2);
+      }
+//      // Start at knob position
+const kx = knobX;
+const ky = knobY;
+
+// Use leader to draw line + arrow + text
+leader(ctx, kx, ky, knobX + 100, knobY - 90, "KNOB", "#444");
+// Middle hinge coordinates
+var hingeX = d.x - hingeW / 2;
+var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
+
+//  hinge
+const cx = hingeX + hingeW / 2;
+const cy = hingeY + hingeH / 2;
+// Use leader function to draw line + arrow + text
+leader(ctx, cx, cy, hingeX + 150, hingeY - 90, "HINGE", "#444");
+      var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
+    //  dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
+     // dimLine(ctx, vx2, floorY - divHpx, vx2, floorY, Math.round(r.dH) + 'mm', '#7a7a7a', 1);
+      if (doorRects.length > 0) {
+        var dTop = floorY - doorHpx;
+      // dimLine(ctx, vx3, dTop, vx3, floorY, Math.round(r.doorH) + 'mm', '#4a4a4a', 1);
+//GAP DIM
+        var topGapVal = Math.round(r.pilH - r.doorH);
+        if (topGapVal > 2) dimLine(ctx, vx3, floorY - pilHpx, vx3, dTop, topGapVal + 'mm', '#4a4a4a', 1);
+      }
+// top
+      dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
+//enpanel
+      var bY1 = floorY + 18, bY2 = floorY + 36, bY4 = floorY + 72;
+      var bY1 = bY1+5;
+      dimLine(ctx, leftEndRect.x, bY1, leftEndRect.x + leftEndRect.w, bY1, Math.round(r.ewL) + 'mm', '#4a4a4a', 1);
+      dimLine(ctx, rightEndRect.x, bY1, rightEndRect.x + rightEndRect.w, bY1, Math.round(r.ewR) + 'mm', '#4a4a4a', 1);
+//door
+      for (var i = 0; i < doorRects.length; i++) {
+        dimLine(ctx, doorRects[i].x, bY2+5, doorRects[i].x + doorRects[i].w, bY2+5, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
+      }
+//mid panel
+      if (midRects.length > 0) {
+       dimLine(ctx, midRects[0].x, bY4-15, midRects[0].x +
+        midRects[0].w, bY4-15, Math.round(displayMidPanelW) + 'mm', '#4a4a4a', 1);
+      }
+
+      if (doorRects.length > 0) {
+        leader(ctx, doorRects[0].x +
+         doorRects[0].w / 2, floorY - doorHpx + 20, doorRects[0].x - 18, floorY - doorHpx - 40,
+          'DOOR', '#4a4a4a');
+      }
+      leader(ctx, leftEndRect.x + leftEndRect.w / 2, floorY - pilHpx / 2,
+       leftEndRect.x -40, floorY - pilHpx / 2-50, 'END PANEL', '#4a4a4a');
+      var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
+      ctx.fillStyle = '#2a2e45';
+      ctx.beginPath();
+      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
+      ctx.fill();
+
+      ctx.font = 'bold 10px monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
+
+      cv.onclick = function (e) {
+        var rect = cv.getBoundingClientRect();
+        var clickX = e.clientX - rect.left;
+        var clickY = e.clientY - rect.top;
+
+        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+          var link = document.createElement('a');
+          link.download = 'cubicle-elevation.png';
+          link.href = cv.toDataURL('image/png');
+          link.click();
+        }
+      };
+    }
+
+    buildStallInputs();
+    calculate();
+  </script>
 </body>
 </html>
