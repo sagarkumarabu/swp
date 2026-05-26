@@ -1017,7 +1017,6 @@ let code = wallMap[document.getElementById('wall').value];
       });
     }
     /* ── Elevation ───────────────────────────────────── */
-//  
     function drawElev(r) {
       var cv = document.getElementById('cvElev');
       var ctx = cv.getContext('2d');
@@ -1095,7 +1094,7 @@ let code = wallMap[document.getElementById('wall').value];
         ctx.strokeStyle = '#4a4a4a';
         ctx.lineWidth = 3;
         ctx.beginPath();
-       ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - doorHpx);
+       ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - divHpx);
        ctx.lineTo(midRects[i].x + midRects[i].w / 2, floorY );
         ctx.stroke();
       }
