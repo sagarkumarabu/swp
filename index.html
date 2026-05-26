@@ -407,21 +407,10 @@ function generateNestingPlan(r) {
             };
         }
     });
-
     // =========================
     // DISPLAY BEST RESULT
     // =========================
-
     renderSheetLayouts(bestSolution.sheets);
-
-    console.log(
-        'OPTIMUM:',
-        bestSolution.sheetType.name,
-        '| Sheets:',
-        bestSolution.sheetCount,
-        '| Yield:',
-        bestSolution.yield.toFixed(1) + '%'
-    );
 }
 //=============================================================================
 function createSheet(stockSheet) {
@@ -685,13 +674,11 @@ let code = wallMap[document.getElementById('wall').value];
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = 1;
-
   // Draw the line
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
   ctx.stroke();
-
   // Draw arrowhead at the start
   const headlen = 8; // length of arrowhead
   const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -709,9 +696,8 @@ let code = wallMap[document.getElementById('wall').value];
   ctx.font = '15px monospace';
   ctx.fillStyle = color;
   ctx.textAlign = x2 > x1 ? 'left' : 'right';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, x2 + (x2 > x1 ? 3 : -3), y2);
-
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(text, x2 , y2);
   ctx.restore();
 }
 
@@ -1099,7 +1085,6 @@ let code = wallMap[document.getElementById('wall').value];
       }
 
       var rightEndRect = { x: ox + pw - ewRpx, w: ewRpx };
-
       ctx.strokeStyle = '#1c1c2e';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1135,14 +1120,14 @@ let code = wallMap[document.getElementById('wall').value];
       }
 
       drawPanel(leftEndRect, '#b5b5b5', '#7a7a7a', 2);
-
+// midpanel
       for (var i = 0; i < midRects.length; i++) {
         drawPanel(midRects[i], '#9e9e9e', '#4a4a4a', 2);
         ctx.strokeStyle = '#4a4a4a';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - pilHpx);
-        ctx.lineTo(midRects[i].x + midRects[i].w / 2, floorY);
+       ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - doorHpx);
+       ctx.lineTo(midRects[i].x + midRects[i].w / 2, floorY );
         ctx.stroke();
       }
 
@@ -1210,9 +1195,7 @@ const kx = knobX;
 const ky = knobY;
 
 // Use leader to draw line + arrow + text
-leader(ctx, kx, ky, knobX + 200, knobY - 20, "Knob", "#444");
-
-//===========
+leader(ctx, kx, ky, knobX + 100, knobY - 100, "Knob", "#444");
 // Middle hinge coordinates
 var hingeX = d.x - hingeW / 2;
 var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
@@ -1220,9 +1203,8 @@ var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
 // Center of hinge
 const cx = hingeX + hingeW / 2;
 const cy = hingeY + hingeH / 2;
-
 // Use leader function to draw line + arrow + text
-leader(ctx, cx, cy, hingeX + 200, hingeY - 20, "Hinge", "#444");
+leader(ctx, cx, cy, hingeX + 150, hingeY - 100, "Hinge", "#444");
 
       var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
     //  dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
@@ -1253,11 +1235,11 @@ leader(ctx, cx, cy, hingeX + 200, hingeY - 20, "Hinge", "#444");
 
       if (doorRects.length > 0) {
         leader(ctx, doorRects[0].x +
-         doorRects[0].w / 2, floorY - doorHpx + 20, doorRects[0].x - 18, floorY - doorHpx - 14, 'DOOR FRAME', '#4a4a4a');
+         doorRects[0].w / 2, floorY - doorHpx + 20, doorRects[0].x - 18, floorY - doorHpx - 40,
+          'DOOR FRAME', '#4a4a4a');
       }
       leader(ctx, leftEndRect.x + leftEndRect.w / 2, floorY - pilHpx / 2,
-       leftEndRect.x -40, floorY - pilHpx / 2, 'END PANEL ', '#4a4a4a');
-
+       leftEndRect.x -40, floorY - pilHpx / 2-50, 'END PANEL ', '#4a4a4a');
       var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
       ctx.fillStyle = '#2a2e45';
       ctx.beginPath();
