@@ -83,6 +83,14 @@
           <input type="number" id="pilasterHeight" value="1830" min="1000">
         </div>
       </div>
+      <div class="fg">
+        <label>Support type</label>
+        <select id="supportType">
+          <option value="legs">Leg</option>
+          <option value="shoebox">Shoebox</option>
+          <option value="none">none</option>
+        </select>
+      </div>
       <button class="calcbtn" onclick="calculate()">Calculate</button>
     </div>
 
@@ -483,6 +491,7 @@
       var doorH = parseFloat(document.getElementById('doorHeight').value) || 1790;
       var doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
       var pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
+      var supportType = document.getElementById('supportType').value;
 
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
@@ -544,7 +553,7 @@
       var grossArea = netArea * 1.12;
 
       result = {
-        n, W, D, dH, doorH, doorW, pilH, pilT, divT, ewL, ewR, ewEqual, stallWidths,
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, ewL, ewR, ewEqual, stallWidths,
         countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea
       };
       //===============================
@@ -1080,6 +1089,22 @@
         ctx.fillRect(legX + legW / 2 - footW / 2, legY + legH - footH, footW, footH);
       }
 
+      function drawPilasterShoebox(rect) {
+        if (rect.w <= 0) return;
+        var boxH = Math.max(18, 75 * scale);
+        var footH = Math.max(3, 7 * scale);
+        var boxY = floorY;
+
+        ctx.fillStyle = '#3f3f3f';
+        ctx.fillRect(rect.x, boxY, rect.w, boxH);
+        ctx.strokeStyle = '#1f1f1f';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(rect.x, boxY, rect.w, boxH);
+
+        ctx.fillStyle = '#2f2f2f';
+        ctx.fillRect(rect.x, boxY + boxH - footH, rect.w, footH);
+      }
+
       drawPanel(leftEndRect, '#b5b5b5', '#7a7a7a', 2);
       // midpanel
       for (var i = 0; i < midRects.length; i++) {
@@ -1103,15 +1128,26 @@
       ctx.strokeStyle = '#4a4a4a';
       ctx.lineWidth = 2;
       ctx.strokeRect(ox, oy - topRailH, topRailW, topRailH);
-      //leg 
-      if (leftEndRect.w > 0) drawPilasterLeg(leftEndRect.x + leftEndRect.w, 'right');
-      for (var i = 0; i < midRects.length; i++) {
-        if (midRects[i].w > 0) {
-          drawPilasterLeg(midRects[i].x, 'left');
-          drawPilasterLeg(midRects[i].x + midRects[i].w, 'right');
+      // leg / shoebox support
+      if (r.supportType === 'shoebox') {
+        drawPilasterShoebox(leftEndRect);
+        for (var i = 0; i < midRects.length; i++) {
+          drawPilasterShoebox(midRects[i]);
         }
+        drawPilasterShoebox(rightEndRect);
+      } else if (r.supportType === 'legs') {
+        if (leftEndRect.w > 0) drawPilasterLeg(leftEndRect.x + leftEndRect.w, 'right');
+        for (var i = 0; i < midRects.length; i++) {
+          if (midRects[i].w > 0) {
+            drawPilasterLeg(midRects[i].x, 'left');
+            drawPilasterLeg(midRects[i].x + midRects[i].w, 'right');
+          }
+        }
+        if (rightEndRect.w > 0) drawPilasterLeg(rightEndRect.x, 'left');
+      } else {
+        // No support - just draw the panels without legs or shoeboxes
       }
-      if (rightEndRect.w > 0) drawPilasterLeg(rightEndRect.x, 'left');
+     
 
       for (var i = 0; i < doorRects.length; i++) {
         var d = doorRects[i];
