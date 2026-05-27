@@ -83,13 +83,22 @@
           <input type="number" id="pilasterHeight" value="1830" min="1000">
         </div>
       </div>
-      <div class="fg">
-        <label>Support type</label>
-        <select id="supportType">
-          <option value="legs">Leg</option>
-          <option value="shoebox">Shoebox</option>
-          <option value="none">none</option>
-        </select>
+      <div class="row2">
+        <div class="fg">
+          <label>Support type</label>
+          <select id="supportType">
+            <option value="legs">Leg</option>
+            <option value="shoebox">Shoebox</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Top rail</label>
+          <select id="topRail">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
       </div>
       <button class="calcbtn" onclick="calculate()">Calculate</button>
     </div>
@@ -492,6 +501,7 @@
       var doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
       var pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
       var supportType = document.getElementById('supportType').value;
+      var topRail = document.getElementById('topRail').value;
 
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
@@ -553,7 +563,7 @@
       var grossArea = netArea * 1.12;
 
       result = {
-        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, ewL, ewR, ewEqual, stallWidths,
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, ewL, ewR, ewEqual, stallWidths,
         countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea
       };
       //===============================
@@ -1119,15 +1129,16 @@
 
       drawPanel(rightEndRect, '#b5b5b5', '#7a7a7a', 2);
       // top rail
-      var topRailH = Math.max(6, 22 * scale);
-      var topRailX = leftEndRect.x;
-      var topRailY = floorY;
-      var topRailW = (rightEndRect.x + rightEndRect.w) - topRailX;
-      ctx.fillStyle = '#8f8f8f';
-      ctx.fillRect(ox, oy - topRailH, topRailW, topRailH);
-      ctx.strokeStyle = '#4a4a4a';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(ox, oy - topRailH, topRailW, topRailH);
+      if (r.topRail === 'yes') {
+        var topRailH = Math.max(6, 22 * scale);
+        var topRailX = leftEndRect.x;
+        var topRailW = (rightEndRect.x + rightEndRect.w) - topRailX;
+        ctx.fillStyle = '#8f8f8f';
+        ctx.fillRect(topRailX, oy - topRailH, topRailW, topRailH);
+        ctx.strokeStyle = '#4a4a4a';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(topRailX, oy - topRailH, topRailW, topRailH);
+      }
       // leg / shoebox support
       if (r.supportType === 'shoebox') {
         drawPilasterShoebox(leftEndRect);
