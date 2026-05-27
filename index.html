@@ -86,7 +86,7 @@
       <div class="row2">
         <div class="fg">
           <label>Support type</label>
-          <select id="supportType">
+          <select id="supportType" onchange="calculate()">
             <option value="legs">Leg</option>
             <option value="shoebox">Shoebox</option>
             <option value="none">None</option>
@@ -94,12 +94,28 @@
         </div>
         <div class="fg">
           <label>Top rail</label>
-          <select id="topRail">
+          <select id="topRail" onchange="calculate()">
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
         </div>
       </div>
+      <div class="section-title">Elevation Shades</div>
+      <div class="row2">
+        <div class="fg">
+          <label>Door color</label>
+          <input type="color" id="doorShade" value="#dedede" oninput="calculate()" onchange="calculate()">
+        </div>
+        <div class="fg">
+          <label>Pilaster color</label>
+          <input type="color" id="pilasterShade" value="#b5b5b5" oninput="calculate()" onchange="calculate()">
+        </div>
+        <div class="fg">
+        <label>Top rail color</label>
+        <input type="color" id="topRailShade" value="#8f8f8f" oninput="calculate()" onchange="calculate()">
+      </div>
+      </div>
+      
       <button class="calcbtn" onclick="calculate()">Calculate</button>
     </div>
 
@@ -502,6 +518,9 @@
       var pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
       var supportType = document.getElementById('supportType').value;
       var topRail = document.getElementById('topRail').value;
+      var doorShade = document.getElementById('doorShade').value;
+      var pilasterShade = document.getElementById('pilasterShade').value;
+      var topRailShade = document.getElementById('topRailShade').value;
 
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
@@ -563,7 +582,7 @@
       var grossArea = netArea * 1.12;
 
       result = {
-        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, ewL, ewR, ewEqual, stallWidths,
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, doorShade, pilasterShade, topRailShade, ewL, ewR, ewEqual, stallWidths,
         countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea
       };
       //===============================
@@ -1047,6 +1066,9 @@
       var midPanelWpx = displayMidPanelW * scale;
       var pilHpx = r.pilH * scale, divHpx = r.dH * scale;
       var doorHpx = r.doorH * scale, doorWpx = r.doorW * scale;
+      var doorShade = r.doorShade || '#dedede';
+      var pilasterShade = r.pilasterShade || '#b5b5b5';
+      var topRailShade = r.topRailShade || '#8f8f8f';
 
       var frontX = ox;
       var doorRects = [];
@@ -1115,10 +1137,10 @@
         ctx.fillRect(rect.x, boxY + boxH - footH, rect.w, footH);
       }
 
-      drawPanel(leftEndRect, '#b5b5b5', '#7a7a7a', 2);
+      drawPanel(leftEndRect, pilasterShade, '#7a7a7a', 2);
       // midpanel
       for (var i = 0; i < midRects.length; i++) {
-        drawPanel(midRects[i], '#9e9e9e', '#4a4a4a', 2);
+        drawPanel(midRects[i], pilasterShade, '#4a4a4a', 2);
         ctx.strokeStyle = '#4a4a4a';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -1127,13 +1149,13 @@
         ctx.stroke();
       }
 
-      drawPanel(rightEndRect, '#b5b5b5', '#7a7a7a', 2);
+      drawPanel(rightEndRect, pilasterShade, '#7a7a7a', 2);
       // top rail
       if (r.topRail === 'yes') {
         var topRailH = Math.max(6, 22 * scale);
         var topRailX = leftEndRect.x;
         var topRailW = (rightEndRect.x + rightEndRect.w) - topRailX;
-        ctx.fillStyle = '#8f8f8f';
+        ctx.fillStyle = topRailShade;
         ctx.fillRect(topRailX, oy - topRailH, topRailW, topRailH);
         ctx.strokeStyle = '#4a4a4a';
         ctx.lineWidth = 2;
@@ -1164,7 +1186,7 @@
         var d = doorRects[i];
         var dTop = floorY - doorHpx;
 
-        ctx.fillStyle = '#dedede';
+        ctx.fillStyle = doorShade;
         ctx.fillRect(d.x, dTop, d.w, doorHpx);
         ctx.strokeStyle = '#5a5a5a';
         ctx.lineWidth = 2.5;
@@ -1236,7 +1258,7 @@
       const ky = knobY;
 
       // Use leader to draw line + arrow + text
-      leader(ctx, kx, ky, knobX + 100, knobY - 90, "KNOB", "#444");
+      leader(ctx, kx, ky, knobX + 90, knobY, "KNOB", "#444");
       // Middle hinge coordinates
       var hingeX = d.x - hingeW / 2;
       var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
@@ -1245,7 +1267,7 @@
       const cx = hingeX + hingeW / 2;
       const cy = hingeY + hingeH / 2;
       // Use leader function to draw line + arrow + text
-      leader(ctx, cx, cy, hingeX + 150, hingeY - 90, "HINGE", "#444");
+      leader(ctx, cx, cy, hingeX + 150, hingeY , "HINGE", "#444");
 
       var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
       //  dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
@@ -1275,7 +1297,7 @@
       }
 
       leader(ctx, leftEndRect.x + leftEndRect.w / 2, floorY - pilHpx / 2,
-        leftEndRect.x - 40, floorY - pilHpx / 2 - 50, 'END PANEL', '#4a4a4a');
+        leftEndRect.x - 40, floorY - pilHpx / 2 , 'END PANEL', '#4a4a4a');
       var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
       ctx.fillStyle = '#2a2e45';
       ctx.beginPath();
