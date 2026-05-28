@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cubicle Calculator</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
   <div class="wrap">
     <div class="sidebar">
@@ -172,40 +170,40 @@
   <script>
     var result = null;
     var activeTab = 'floor';
-
     const solids = [
-      { id: 'solid1', name: 'Q 13', color: '#fcf8f1', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-13xl.png' },
-      { id: 'solid5', name: 'RC 15', color: '#f7df37', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-15xl.png' },
-      { id: 'solid6', name: 'Q 17', color: '#f9f1e5', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-17xl.png' },
-      { id: 'solid7', name: 'Q 601', color: '#fdfdfd', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-601xl.png' },
-      { id: 'solid8', name: 'Q 603', color: '#232a2d', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-603xl.png' },
-      { id: 'solid9', name: 'RC 605', color: '#582730', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-605xl.png' },
-      { id: 'solid10', name: 'RC 606', color: '#4a4e4a', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-606xl.png' },
-      { id: 'solid11', name: 'RC 617', color: '#9baa72', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-617xl.png' },
-      { id: 'solid12', name: 'RC 720', color: '#ffffff', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-720xl.png' },
-      { id: 'solid13', name: 'Q 801', color: '#8b8d88', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-801xl.png' },
-      { id: 'solid14', name: 'Q 851', color: '#f8f6f4', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-851xl.png' },
-      { id: 'solid4', name: 'RC 853', color: '#1677b9', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-853xl.png' },
-      { id: 'solid15', name: 'Q 855', color: '#f9f0dd', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-855xl.png' },
-      { id: 'solid16', name: 'Q 856', color: '#fefef4', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-856xl.png' },
-      { id: 'solid17', name: 'RC 857', color: '#ec763f', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-857xl.png' },
-      { id: 'solid18', name: 'RC 859', color: '#f4e8d9', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-859xl.png' },
-      { id: 'solid19', name: 'Q 860', color: '#e8e8e6', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-860xl.png' },
-      { id: 'solid20', name: 'Q 861', color: '#a7a59d', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-861xl.png' },
-      { id: 'solid21', name: 'Q 862', color: '#6a665f', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-862xl.png' },
-      { id: 'solid2', name: 'RC 864', color: '#f4a832', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-864xl.png' },
-      { id: 'solid3', name: 'Q 865', color: '#c1cf69', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-865xl.png' },
-      { id: 'solid22', name: 'Q 867', color: '#b1c3d7', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-867xl.png' },
-      { id: 'solid23', name: 'RC 869', color: '#007b3e', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-869xl.png' },
-      { id: 'solid24', name: 'RC 872', color: '#e21a37', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-872xl.png' },
-      { id: 'solid25', name: 'Q 873', color: '#586061', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-873xl.png' },
-      { id: 'solid26', name: 'Q 879', color: '#b7a593', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-879xl.png' },
-      { id: 'solid27', name: 'RC 884', color: '#72adf5', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-884xl.png' },
-      { id: 'solid28', name: 'RC 885', color: '#c3c5be', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-885xl.png' },
-      { id: 'solid29', name: 'Q 886', color: '#e0dad7', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-886xl.png' },
-      { id: 'solid30', name: 'Q 887', color: '#989898', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-887xl.png' },
-      { id: 'solid31', name: 'Q 888', color: '#cbbeb3', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-888xl.png' },
-      { id: 'solid32', name: 'Q 889', color: '#474747', doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-889xl.png' }
+      { id: 'solid1', name: 'Q 13', color: '#fcf8f1', 
+      doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-13xl.png' },
+      { id: 'solid5', name: 'RC 15', color: '#f7df37' },
+      { id: 'solid6', name: 'Q 17', color: '#f9f1e5' },
+      { id: 'solid7', name: 'Q 601', color: '#fdfdfd' },
+      { id: 'solid8', name: 'Q 603', color: '#232a2d' },
+      { id: 'solid9', name: 'RC 605', color: '#582730' },
+      { id: 'solid10', name: 'RC 606', color: '#4a4e4a' },
+      { id: 'solid11', name: 'RC 617', color: '#9baa72' },
+      { id: 'solid12', name: 'RC 720', color: '#ffffff' },
+      { id: 'solid13', name: 'Q 801', color: '#8b8d88' },
+      { id: 'solid14', name: 'Q 851', color: '#f8f6f4' },
+      { id: 'solid4', name: 'RC 853', color: '#1677b9' },
+      { id: 'solid15', name: 'Q 855', color: '#f9f0dd' },
+      { id: 'solid16', name: 'Q 856', color: '#fefef4' },
+      { id: 'solid17', name: 'RC 857', color: '#ec763f' },
+      { id: 'solid18', name: 'RC 859', color: '#f4e8d9' },
+      { id: 'solid19', name: 'Q 860', color: '#e8e8e6' },
+      { id: 'solid20', name: 'Q 861', color: '#a7a59d' },
+      { id: 'solid21', name: 'Q 862', color: '#6a665f' },
+      { id: 'solid2', name: 'RC 864', color: '#f4a832' },
+      { id: 'solid3', name: 'Q 865', color: '#c1cf69' },
+      { id: 'solid22', name: 'Q 867', color: '#b1c3d7' },
+      { id: 'solid23', name: 'RC 869', color: '#007b3e' },
+      { id: 'solid24', name: 'RC 872', color: '#e21a37' },
+      { id: 'solid25', name: 'Q 873', color: '#586061' },
+      { id: 'solid26', name: 'Q 879', color: '#b7a593' },
+      { id: 'solid27', name: 'RC 884', color: '#72adf5' },
+      { id: 'solid28', name: 'RC 885', color: '#c3c5be' },
+      { id: 'solid29', name: 'Q 886', color: '#e0dad7' },
+      { id: 'solid30', name: 'Q 887', color: '#989898' },
+      { id: 'solid31', name: 'Q 888', color: '#cbbeb3' },
+      { id: 'solid32', name: 'Q 889', color: '#474747' }
     ];
 
     function buildPalette() {
@@ -754,7 +752,7 @@
       ctx.font = '12px monospace';
       ctx.fillStyle = color;
       ctx.textAlign = x2 > x1 ? 'left' : 'right';
-      ctx.textBaseline = 'bottom';
+      ctx.textBaseline = 'middle';
       ctx.fillText(text, x2, y2);
       ctx.restore();
     }
@@ -1223,6 +1221,7 @@
         ctx.strokeStyle = '#4a4a4a';
         ctx.lineWidth = 2;
         ctx.strokeRect(topRailX, oy - topRailH, topRailW, topRailH);
+        leader(ctx, topRailX , oy - topRailH / 2, topRailX - 60, oy - topRailH / 2, 'TOP RAIL', '#4a4a4a');
       }
       // leg / shoebox support
       if (r.supportType === 'shoebox') {
@@ -1231,6 +1230,11 @@
           drawPilasterShoebox(midRects[i]);
         }
         drawPilasterShoebox(rightEndRect);
+
+        var targetBox = leftEndRect.w > 0 ? leftEndRect : (midRects.length > 0 ? midRects[0] : rightEndRect);
+        if (targetBox && targetBox.w > 0) {
+          leader(ctx, targetBox.x + targetBox.w / 2, floorY + 15, targetBox.x - 50, floorY + 15, 'SHOEBOX', '#4a4a4a');
+        }
       } else if (r.supportType === 'legs') {
         if (leftEndRect.w > 0) drawPilasterLeg(leftEndRect.x + leftEndRect.w, 'right');
         for (var i = 0; i < midRects.length; i++) {
@@ -1240,6 +1244,19 @@
           }
         }
         if (rightEndRect.w > 0) drawPilasterLeg(rightEndRect.x, 'left');
+
+        var legW = Math.max(5, 10 * scale);
+        var legX = 0;
+        if (leftEndRect.w > 0) {
+          legX = leftEndRect.x + leftEndRect.w - legW - 10;
+        } else if (midRects.length > 0 && midRects[0].w > 0) {
+          legX = midRects[0].x + 10;
+        } else if (rightEndRect.w > 0) {
+          legX = rightEndRect.x + 10;
+        }
+        if (legX > 0) {
+          leader(ctx, legX + legW / 2, floorY + 15, legX - 50, floorY + 15, 'LEG', '#4a4a4a');
+        }
       } else {
         // No support - just draw the panels without legs or shoeboxes
       }
@@ -1277,7 +1294,25 @@
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-
+// lock
+        let lockx = midPanelWpx;
+        let locky = doorHpx;
+        var lockX = d.x + d.w + Math.max(8, 15 * scale);
+        var lockY = knobY;
+        var lockR = Math.max(4, 5 * scale);
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.arc(knobX + lockx, knobY + locky + 1, lockR, 0, Math.PI * 2);
+        ctx.arc(lockX, lockY + 1, lockR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = '#4a4a4a';
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 0.8;
+        ctx.arc(lockX, lockY, lockR, 0, Math.PI * 2); 
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
         //===========coat hook
         var hookX = d.x + d.w / 2;
         var hookY = dTop + 10;
@@ -1386,7 +1421,6 @@
         }
       };
     }
-
     buildStallInputs();
     buildPalette();
     calculate();
