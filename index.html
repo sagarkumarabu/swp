@@ -9,7 +9,7 @@
 <body>
   <div class="wrap">
     <div class="sidebar">
-      <button><a href="calculator.html">Calculate</a></button>
+      <button><a href="calculate.html">Calculate</a></button>
       <h2>Cubicle Partition Calculator</h2>
       <div class="err" id="errBox"></div>
       <div class="fg">
@@ -69,6 +69,11 @@
       </div>
 
       <div class="section-title">Component Heights / Widths</div>
+      <div class="row3"> 
+       <div class="fg">ump  height:<input type="number" value="900" id="umph"></div>
+       <div class="fg">ump  width:<input type="number" value="450" id="umpw"></div>  
+       <div class="fg">quantity:<input type="number" value="0" id="umpq"></div>       
+      </div>
       <div class="row2">
         <div class="fg"><label>Divider ht (mm)</label>
           <input type="number" id="dividerHeight" value="1790" min="1000">
@@ -143,6 +148,10 @@
           <div class="val" id="kendwall">-</div>
           <div class="lbl">End Walls</div>
         </div>
+          <DIV class="kpi">
+            <div class="val" id="kump">-</div>
+            <div class="lbl">Ump</div>
+          </DIV>
       </div>
       <div class="tabs">
         <div class="tab active" id="tab-floor" onclick="switchTab('floor')">Floor Plan</div>
@@ -157,7 +166,10 @@
         <div id="sheetLayouts" style="height:400px;  display:none;"></div>
         <div id="summaryArea" style="display:none; padding: 20px; overflow-y:auto; height: 100%; box-sizing: border-box;">
           <h3 style="margin-top: 0;">Hardware & Material Summary</h3>
-          <button onclick="exportExcel()" style="margin-bottom: 15px; padding: 6px 12px; cursor: pointer; background: #2e7d32; color: white; border: none; border-radius: 4px;">Download Excel (CSV)</button>
+          <button onclick="exportExcel()"
+           style="margin-bottom: 15px; padding: 6px 12px; cursor: pointer;
+            background: #2e7d32; color: white; border: none; border-radius: 4px;">
+            Download Excel (CSV)</button>
           <table id="summaryTable" style="width: 100%; border-collapse: collapse; text-align: left; background: #fff;">
             <thead>
               <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
@@ -290,7 +302,13 @@
           finalH: r.dH
         });
       }
-
+      for (let i = 0; i < r.umpq; i++) {
+        originalParts.push({
+          label: 'UMP' + (i + 1),
+          finalW: r.umpw,
+          finalH: r.umph
+        });
+      }
       // =========================
       // SORT LARGE TO SMALL
       // =========================
@@ -319,6 +337,7 @@
         parts.forEach(part => {
 
           let placed = false;
+          let bestPlacement = null;
 
           for (
             let i = 0;
@@ -330,43 +349,30 @@
               currentSheet.freeRects[i];
 
             // NORMAL FIT
-            if (
-              part.finalW <= rect.width &&
-              part.finalH <= rect.height
-            ) {
-
-              insertPart(
-                part,
-                rect,
-                currentSheet,
-                i,
-                false
-              );
-
-              placed = true;
-              break;
+            if (part.finalW <= rect.width && part.finalH <= rect.height) {
+              let waste = (rect.width * rect.height) - (part.finalW * part.finalH);
+              let score = waste + rect.width + rect.height;
+              if (!bestPlacement || score < bestPlacement.score) {
+                bestPlacement = { rect, rotated: false, score };
+              }
             }
 
             // ROTATED FIT
-            if (
-              part.finalH <= rect.width &&
-              part.finalW <= rect.height
-            ) {
-
-              [part.finalW, part.finalH] =
-                [part.finalH, part.finalW];
-
-              insertPart(
-                part,
-                rect,
-                currentSheet,
-                i,
-                true
-              );
-
-              placed = true;
-              break;
+            if (part.finalH <= rect.width && part.finalW <= rect.height) {
+              let waste = (rect.width * rect.height) - (part.finalW * part.finalH);
+              let score = waste + rect.width + rect.height;
+              if (!bestPlacement || score < bestPlacement.score) {
+                bestPlacement = { rect, rotated: true, score };
+              }
             }
+          }
+
+          if (bestPlacement) {
+             if (bestPlacement.rotated) {
+                [part.finalW, part.finalH] = [part.finalH, part.finalW];
+             }
+             insertPart(part, bestPlacement.rect, currentSheet, bestPlacement.rotated);
+             placed = true;
           }
 
           // CREATE NEW SHEET
@@ -374,13 +380,30 @@
             sheets.push(currentSheet);
             currentSheet =
               createSheet(sheetType);
-            insertPart(
-              part,
-              currentSheet.freeRects[0],
-              currentSheet,
-              0,
-              false
-            );
+            let bestNew = null;
+            for (let i = 0; i < currentSheet.freeRects.length; i++) {
+                const rect = currentSheet.freeRects[i];
+                if (part.finalW <= rect.width && part.finalH <= rect.height) {
+                    let waste = (rect.width * rect.height) - (part.finalW * part.finalH);
+                    let score = waste + rect.width + rect.height;
+                    if (!bestNew || score < bestNew.score) {
+                        bestNew = { rect, rotated: false, score };
+                    }
+                }
+                if (part.finalH <= rect.width && part.finalW <= rect.height) {
+                    let waste = (rect.width * rect.height) - (part.finalW * part.finalH);
+                    let score = waste + rect.width + rect.height;
+                    if (!bestNew || score < bestNew.score) {
+                        bestNew = { rect, rotated: true, score };
+                    }
+                }
+            }
+            if (bestNew) {
+                if (bestNew.rotated) {
+                    [part.finalW, part.finalH] = [part.finalH, part.finalW];
+                }
+                insertPart(part, bestNew.rect, currentSheet, bestNew.rotated);
+            }
           }
         });
         sheets.push(currentSheet);
@@ -511,44 +534,66 @@
         ]
       };
     }
+    function splitFreeRectangles(freeRect, usedRect) {
+      if (usedRect.x >= freeRect.x + freeRect.width || usedRect.x + usedRect.width <= freeRect.x || usedRect.y >= freeRect.y + freeRect.height || usedRect.y + usedRect.height <= freeRect.y) {
+          return [freeRect];
+      }
+      const rects = [];
+      if (usedRect.x > freeRect.x) {
+          rects.push({ x: freeRect.x, y: freeRect.y, width: usedRect.x - freeRect.x, height: freeRect.height });
+      }
+      if (usedRect.x + usedRect.width < freeRect.x + freeRect.width) {
+          rects.push({ x: usedRect.x + usedRect.width, y: freeRect.y, width: freeRect.x + freeRect.width - (usedRect.x + usedRect.width), height: freeRect.height });
+      }
+      if (usedRect.y > freeRect.y) {
+          rects.push({ x: freeRect.x, y: freeRect.y, width: freeRect.width, height: usedRect.y - freeRect.y });
+      }
+      if (usedRect.y + usedRect.height < freeRect.y + freeRect.height) {
+          rects.push({ x: freeRect.x, y: usedRect.y + usedRect.height, width: freeRect.width, height: freeRect.y + freeRect.height - (usedRect.y + usedRect.height) });
+      }
+      return rects.filter(r => r.width > 0 && r.height > 0);
+    }
+    function rectContains(a, b) {
+        return a.x <= b.x && a.y <= b.y && a.x + a.width >= b.x + b.width && a.y + a.height >= b.y + b.height;
+    }
+    function pruneFreeRectangles(rects) {
+        const result = [...rects];
+        for (let i = result.length - 1; i >= 0; i--) {
+            for (let j = 0; j < result.length; j++) {
+                if (i !== j && rectContains(result[j], result[i])) {
+                    result.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
     function insertPart(
       part,
       rect,
       sheet,
-      rectIndex,
       rotated
     ) {
-
       const placedPart = {
         ...part,
         x: rect.x,
         y: rect.y,
         rotated
       };
-
       sheet.placedItems.push(placedPart);
-
-      sheet.freeRects.splice(rectIndex, 1);
-
-      // RIGHT SPACE
-      sheet.freeRects.push({
-        x: rect.x + part.finalW,
-        y: rect.y,
-        width: rect.width - part.finalW,
-        height: part.finalH
-      });
-      // BOTTOM SPACE
-      sheet.freeRects.push({
+      const usedRect = {
         x: rect.x,
-        y: rect.y + part.finalH,
-        width: rect.width,
-        height: rect.height - part.finalH
+        y: rect.y,
+        width: part.finalW,
+        height: part.finalH
+      };
+
+      let newFreeRects = [];
+      sheet.freeRects.forEach(freeRect => {
+         newFreeRects.push(...splitFreeRectangles(freeRect, usedRect));
       });
-      // CLEAN INVALID RECTS
-      sheet.freeRects = sheet.freeRects.filter(r =>
-        r.width > 40 &&
-        r.height > 40
-      );
+      
+      sheet.freeRects = pruneFreeRectangles(newFreeRects).filter(r => r.width > 20 && r.height > 20);
     }
     function buildStallInputs() {
       var n = parseInt(document.getElementById('numStalls').value) || 1;
@@ -600,6 +645,7 @@
       var hingeCount = r.countDoors * 3;
       var lockCount = r.countDoors;
       var toprailLength = r.topRail === 'yes' ? Math.round(r.W) + ' mm' : '0 mm';
+      var umpCount = r.umpq;
 
       var sheetsReq = plan ? plan.sheetCount : 0;
       var usedArea = 0;
@@ -613,18 +659,18 @@
          });
       }
       var remainArea = totalArea - usedArea;
-
       var html = `
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">HPL Sheets Required</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${sheetsReq} (${plan ? plan.sheetType.name : ''})</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Used Area</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${(usedArea / 1e6).toFixed(3)} m²</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Remaining Area</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${(remainArea / 1e6).toFixed(3)} m²</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Legs</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${legCount}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Shoeboxes</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${shoeboxCount}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Knobs</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${knobCount}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Locks / Indicators</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${lockCount}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Hinges</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${hingeCount}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Coat Hooks</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${coatHookCount}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Top Rail Length</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${toprailLength}</td></tr>
+        <tr><td >HPL Sheets Required</td><td >${sheetsReq} (${plan ? plan.sheetType.name : ''})</td></tr>
+        <tr><td >Used Area</td><td >${(usedArea / 1e6).toFixed(3)} m²</td></tr>
+        <tr><td >Remaining Area</td><td >${(remainArea / 1e6).toFixed(3)} m²</td></tr>
+        <tr><td >Legs</td><td >${legCount}</td></tr>
+        <tr><td >Shoeboxes</td><td >${shoeboxCount}</td></tr>
+        <tr><td >Knobs</td><td >${knobCount}</td></tr>
+        <tr><td >Locks / Indicators</td><td >${lockCount}</td></tr>
+        <tr><td >Hinges</td><td >${hingeCount}</td></tr>
+        <tr><td >Coat Hooks</td><td >${coatHookCount}</td></tr>
+        <tr><td >Top Rail Length</td><td >${toprailLength}</td></tr>
+        <tr><td >Urinal Modesty Panels (UMP)</td><td >${umpCount}</td></tr>
       `;
       tbody.innerHTML = html;
     }
@@ -673,6 +719,9 @@
       var doorShade = document.getElementById('doorShade').value;
       var pilasterShade = document.getElementById('pilasterShade').value;
       var topRailShade = document.getElementById('topRailShade').value;
+      var umph = parseFloat(document.getElementById('umph').value) || 900;
+      var umpw = parseFloat(document.getElementById('umpw').value) || 450;
+      var umpq = parseInt(document.getElementById('umpq').value) || 0;
 
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
@@ -730,12 +779,12 @@
       var countEnd = 2;
       var endPanelW = ewL;
       // Structural square meter accounting equations
-      var netArea = ((countDividers * D * dH) + (countDoors * doorW * doorH) + (countEnd * endPanelW * dH) + (countMid * midPanelW * dH)) / 1e6;
+      var netArea = ((countDividers * D * dH) + (countDoors * doorW * doorH) + (countEnd * endPanelW * dH) + (countMid * midPanelW * dH) + (umpq * umpw * umph)) / 1e6;
       var grossArea = netArea * 1.12;
 
       result = {
         n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, doorShade, pilasterShade, topRailShade, ewL, ewR, ewEqual, stallWidths,
-        countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea
+        countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea, umph, umpw, umpq
       };
       //===============================
       const wallMap = { l: 1, c: 0, s: 2 };
@@ -746,6 +795,7 @@
       document.getElementById('kEnd').textContent = countEnd;
       document.getElementById('kDoors').textContent = countDoors;
       document.getElementById('kendwall').textContent = code;
+      document.getElementById('kump').textContent = umpq;
       var minW = Math.min.apply(null, stallWidths), maxW = Math.max.apply(null, stallWidths);
       document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
       document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';

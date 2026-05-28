@@ -1,7 +1,7 @@
         :root {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
-            --bg-main: #0a3764;
+            --bg-main: #b9bcc0;
             --bg-card: #dacccc;
             --text-dark: #1e293b;
             --border-color: #cbd5e1;
@@ -10,9 +10,12 @@
     body {
       font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
       font-size: 13px;
-      background: #eef0f4;
+      background: var(--bg-card);
       color: #1c1c2e;
       height: 90vh
+    }
+    table tr td {
+      padding: 8px; border-bottom: 1px solid #eee;
     }
     .wrap {
       display: grid;
@@ -21,14 +24,14 @@
       border: 1px solid #c8cad4;
       border-radius: 10px;
       overflow: hidden;
-      background: #fff;
+      background: var(--bg-main);
       box-shadow: 0 3px 16px rgba(0, 0, 0, .10);
       max-width: 1200px;
       margin: 0 auto
     }
 
     .sidebar {
-      background: #f4f5f8;
+      background:var(--bg-main);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -37,7 +40,8 @@
     }
 
     .main {
-      background: #fff;
+      background: var(--bg-card);
+      padding: 1vw;
       display: flex;
       flex-direction: column
     }
@@ -184,7 +188,7 @@
 
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 6px;
       padding: 12px 14px;
       border-bottom: 1px solid #e8eaef;
@@ -235,7 +239,7 @@
     .drawing-area {
       flex: 1;
       padding: 12px;
-      background: #fff;
+      background:var(--bg-main);
       overflow: auto
     }
 
@@ -243,7 +247,7 @@
       display: block;
       border: 1px solid #c8cad4;
       border-radius: 6px;
-      background: #fff
+      background: #fff;
     }
 
     .sizing-box {
