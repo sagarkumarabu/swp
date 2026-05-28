@@ -147,13 +147,28 @@
       <div class="tabs">
         <div class="tab active" id="tab-floor" onclick="switchTab('floor')">Floor Plan</div>
         <div class="tab" id="tab-elev" onclick="switchTab('elev')">Elevation</div>
-        <div class="tab" id="tab-nesting" onclick="switchTab('nesting')">Nesting Plan</div> <!-- Added Tab -->
+        <div class="tab" id="tab-nesting" onclick="switchTab('nesting')">Nesting Plan</div>
+        <div class="tab" id="tab-summary" onclick="switchTab('summary')">Summary</div><!-- Added Tab -->
       </div>
       <div class="drawing-area">
         <canvas id="cvFloor" width="750" height="400"></canvas>
         <canvas id="cvElev" width="750" height="400" style="display:none"></canvas>
         <!-- Dynamic nested layouts will append here container -->
         <div id="sheetLayouts" style="height:400px;  display:none;"></div>
+        <div id="summaryArea" style="display:none; padding: 20px; overflow-y:auto; height: 100%; box-sizing: border-box;">
+          <h3 style="margin-top: 0;">Hardware & Material Summary</h3>
+          <button onclick="exportExcel()" style="margin-bottom: 15px; padding: 6px 12px; cursor: pointer; background: #2e7d32; color: white; border: none; border-radius: 4px;">Download Excel (CSV)</button>
+          <table id="summaryTable" style="width: 100%; border-collapse: collapse; text-align: left; background: #fff;">
+            <thead>
+              <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
+                <th style="padding: 8px;">Item</th>
+                <th style="padding: 8px;">Quantity / Value</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTbody">
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="sizing-box">
         <div class="sz">Cubicle width: <span id="szCW">-</span></div>
@@ -240,7 +255,7 @@
     function onSpacingChange() { buildStallInputs(); }
     function onStallCountChange() { buildStallInputs(); }
     // sheet layout
-    function generateNestingPlan(r) {
+    function generateNestingPlan(r, render = true) {
       const availableSheets = [
         { name: "12 x 6 feet", width: 3670, height: 1860 },
         { name: "14 x 6 feet", width: 4300, height: 1860 }
@@ -476,7 +491,10 @@
       // =========================
       // DISPLAY BEST RESULT
       // =========================
-      renderSheetLayouts(bestSolution.sheets);
+      if (render && bestSolution) {
+        renderSheetLayouts(bestSolution.sheets);
+      }
+      return bestSolution;
     }
     //=============================================================================
     function createSheet(stockSheet) {
@@ -554,14 +572,87 @@
       document.getElementById('tab-floor').classList.toggle('active', tab === 'floor');
       document.getElementById('tab-elev').classList.toggle('active', tab === 'elev');
       document.getElementById('tab-nesting').classList.toggle('active', tab === 'nesting');
+      document.getElementById('tab-summary').classList.toggle('active', tab === 'summary');
       document.getElementById('cvFloor').style.display = tab === 'floor' ? 'block' : 'none';
       document.getElementById('cvElev').style.display = tab === 'elev' ? 'block' : 'none';
       document.getElementById('sheetLayouts').style.display = tab === 'nesting' ? 'block' : 'none';
+      document.getElementById('summaryArea').style.display = tab === 'summary' ? 'block' : 'none';
       if (tab !== 'nesting') {
         document.getElementById('sheetLayouts').innerHTML = '';
       }
       calculate();
     }
+
+    function renderSummary(r, plan) {
+      var tbody = document.getElementById('summaryTbody');
+      if (!tbody) return;
+
+      var legCount = 0;
+      var shoeboxCount = 0;
+      if (r.supportType === 'legs') {
+         legCount = (r.ewL > 0 ? 1 : 0) + (r.ewR > 0 ? 1 : 0) + (r.countMid > 0 ? r.countMid * 2 : 0);
+      } else if (r.supportType === 'shoebox') {
+         shoeboxCount = (r.ewL > 0 ? 1 : 0) + (r.ewR > 0 ? 1 : 0) + r.countMid;
+      }
+
+      var knobCount = r.countDoors;
+      var coatHookCount = r.countDoors;
+      var hingeCount = r.countDoors * 3;
+      var lockCount = r.countDoors;
+      var toprailLength = r.topRail === 'yes' ? Math.round(r.W) + ' mm' : '0 mm';
+
+      var sheetsReq = plan ? plan.sheetCount : 0;
+      var usedArea = 0;
+      var totalArea = 0;
+      if (plan) {
+         totalArea = plan.sheetArea * plan.sheetCount;
+         plan.sheets.forEach(s => {
+             s.placedItems.forEach(item => {
+                 usedArea += (item.finalW * item.finalH);
+             });
+         });
+      }
+      var remainArea = totalArea - usedArea;
+
+      var html = `
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">HPL Sheets Required</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${sheetsReq} (${plan ? plan.sheetType.name : ''})</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Used Area</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${(usedArea / 1e6).toFixed(3)} m²</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Remaining Area</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${(remainArea / 1e6).toFixed(3)} m²</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Legs</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${legCount}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Shoeboxes</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${shoeboxCount}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Knobs</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${knobCount}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Locks / Indicators</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${lockCount}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Hinges</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${hingeCount}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Coat Hooks</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${coatHookCount}</td></tr>
+        <tr><td style="padding: 8px; border-bottom: 1px solid #eee;">Top Rail Length</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${toprailLength}</td></tr>
+      `;
+      tbody.innerHTML = html;
+    }
+
+    function exportExcel() {
+      var table = document.getElementById("summaryTable");
+      var rows = table.querySelectorAll("tr");
+      var csv = [];
+      for (var i = 0; i < rows.length; i++) {
+        var row = [], cols = rows[i].querySelectorAll("td, th");
+        for (var j = 0; j < cols.length; j++) {
+          var data = cols[j].innerText.replace(/"/g, '""');
+          row.push('"' + data + '"');
+        }
+        csv.push(row.join(","));
+      }
+      var csvString = csv.join("\n");
+      var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      var link = document.createElement("a");
+      var url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "Material_Summary.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     function showErr(msg) {
       var b = document.getElementById('errBox');
       b.textContent = msg;
@@ -665,12 +756,16 @@
       document.getElementById('szEQR').textContent = Math.round(ewR) + 'x' + pilH + ' mm';
       document.getElementById('szNet').textContent = netArea.toFixed(2);
 
+      var bestPlan = generateNestingPlan(result, activeTab === 'nesting');
+
       if (activeTab === 'floor') {
         drawFloor(result);
       } else if (activeTab === 'elev') {
         drawElev(result);
       } else if (activeTab === 'nesting') {
         generateNestingPlan(result);
+      } else if (activeTab === 'summary') {
+        renderSummary(result, bestPlan);
       }
     }
     /* ── Drawing helpers ─────────────────────────────── */
