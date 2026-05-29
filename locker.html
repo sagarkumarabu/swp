@@ -16,6 +16,7 @@
         height:<input type="number" id="lh" value="1830" min="1000"><br>
         width:<input type="number" id="lw" value="1830" min="50"><br>
         columns:<input type="number" id="lc" value="2" min="1"><br>
+        z-shape:<input type="checkbox" id="zshape"> for col (0=All):<input type="number" id="zcol" value="1" min="0" style="width:40px"><br>
         rows:<input type="number" id="lr" value="2" min="1"><br>
         <button type="button" onclick="calculate()">Calculate</button>
     </form>
@@ -26,6 +27,8 @@
             var lw = parseFloat(document.getElementById('lw').value);
             var lc = parseInt(document.getElementById('lc').value);
             var lr = parseInt(document.getElementById('lr').value);
+            var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
+            var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
             
             var cv = document.getElementById('cv');
             var ctx = cv.getContext('2d');
@@ -46,44 +49,128 @@
                 ctx.lineWidth = 2;
 
                 for (var c = 0; c < lc; c++) {
-                    for (var r = 0; r < lr; r++) {
-                        var x = startX + c * rw * scale;
-                        var y = startY + r * rh * scale;
-                        var w = rw * scale;
-                        var h = rh * scale;
+                    var x = startX + c * rw * scale;
+                    var w = rw * scale;
+                    var fullH = lh * scale;
 
-                        // Draw locker frame
+                    if (zshape && (zcol === 0 || c === zcol - 1)) {
+                        // Draw entire column as a single Z-shape (2 doors)
+                        var y = startY;
                         ctx.fillStyle = '#e9ecef';
-                        ctx.fillRect(x, y, w, h);
-                        ctx.strokeRect(x, y, w, h);
+                        ctx.fillRect(x, y, w, fullH);
+                        ctx.strokeRect(x, y, w, fullH);
 
-                        // Draw door inset outline
+                        var cutX = x + w / 2;
+                        var cutY1 = y + fullH * 0.35;
+                        var cutY2 = y + fullH * 0.65;
                         var inset = Math.max(2, 5 * scale);
-                        ctx.strokeRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
 
-                        // Draw Lock / Handle
-                        var knobX = x + w - inset - Math.max(4, 15 * scale);
-                        var knobY = y + h / 2;
+                        // Draw Z cut line
+                        ctx.beginPath();
+                        ctx.moveTo(x, cutY1);
+                        ctx.lineTo(cutX, cutY1);
+                        ctx.lineTo(cutX, cutY2);
+                        ctx.lineTo(x + w, cutY2);
+                        ctx.stroke();
+
+                        // Door 1 Inset
+                        ctx.beginPath();
+                        ctx.moveTo(x + inset, y + inset);
+                        ctx.lineTo(x + w - inset, y + inset);
+                        ctx.lineTo(x + w - inset, cutY2 - inset);
+                        ctx.lineTo(cutX + inset, cutY2 - inset);
+                        ctx.lineTo(cutX + inset, cutY1 - inset);
+                        ctx.lineTo(x + inset, cutY1 - inset);
+                        ctx.closePath();
+                        ctx.stroke();
+
+                        // Door 2 Inset
+                        ctx.beginPath();
+                        ctx.moveTo(x + inset, cutY1 + inset);
+                        ctx.lineTo(cutX - inset, cutY1 + inset);
+                        ctx.lineTo(cutX - inset, cutY2 + inset);
+                        ctx.lineTo(x + w - inset, cutY2 + inset);
+                        ctx.lineTo(x + w - inset, y + fullH - inset);
+                        ctx.lineTo(x + inset, y + fullH - inset);
+                        ctx.closePath();
+                        ctx.stroke();
+
+                        // Draw Lock / Handle for Door 1
                         var knobR = Math.max(2, 4 * scale);
-                        
+                        var knobX = x + w - inset - Math.max(4, 15 * scale);
+                        var knobY1 = y + fullH * 0.325; 
                         ctx.beginPath();
                         ctx.fillStyle = '#555';
-                        ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+                        ctx.arc(knobX, knobY1, knobR, 0, Math.PI * 2);
                         ctx.fill();
-                        
-                        // Draw vents at the top of the door
+
+                        // Draw Lock / Handle for Door 2
+                        var knobY2 = y + fullH * 0.825;
+                        ctx.beginPath();
+                        ctx.fillStyle = '#555';
+                        ctx.arc(knobX, knobY2, knobR, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Draw vents Door 1
                         var ventW = Math.min(w / 3, 30 * scale);
                         var ventX = x + w / 2 - ventW / 2;
-                        var ventY = y + inset + Math.max(5, 15 * scale);
-                        
+                        var ventY1 = y + inset + Math.max(5, 15 * scale);
                         ctx.lineWidth = 1;
                         for (var v = 0; v < 4; v++) {
                             ctx.beginPath();
-                            ctx.moveTo(ventX, ventY + (v * Math.max(3, 8 * scale)));
-                            ctx.lineTo(ventX + ventW, ventY + (v * Math.max(3, 8 * scale)));
+                            ctx.moveTo(ventX, ventY1 + (v * Math.max(3, 8 * scale)));
+                            ctx.lineTo(ventX + ventW, ventY1 + (v * Math.max(3, 8 * scale)));
                             ctx.stroke();
                         }
-                        ctx.lineWidth = 2; // Restore stroke width for next locker
+
+                        // Draw vents Door 2
+                        var ventY2 = y + fullH - inset - Math.max(5, 15 * scale) - (3 * Math.max(3, 8 * scale));
+                        for (var v = 0; v < 4; v++) {
+                            ctx.beginPath();
+                            ctx.moveTo(ventX, ventY2 + (v * Math.max(3, 8 * scale)));
+                            ctx.lineTo(ventX + ventW, ventY2 + (v * Math.max(3, 8 * scale)));
+                            ctx.stroke();
+                        }
+                        ctx.lineWidth = 2;
+                    } else {
+                        // Draw multiple rows for this column
+                        for (var r = 0; r < lr; r++) {
+                            var rowY = startY + r * rh * scale;
+                            var h = rh * scale;
+
+                            // Draw locker frame
+                            ctx.fillStyle = '#e9ecef';
+                            ctx.fillRect(x, rowY, w, h);
+                            ctx.strokeRect(x, rowY, w, h);
+
+                            // Draw door inset outline
+                            var inset = Math.max(2, 5 * scale);
+                            ctx.strokeRect(x + inset, rowY + inset, w - inset * 2, h - inset * 2);
+
+                            // Draw Lock / Handle
+                            var knobX = x + w - inset - Math.max(4, 15 * scale);
+                            var knobY = rowY + h / 2;
+                            var knobR = Math.max(2, 4 * scale);
+                            
+                            ctx.beginPath();
+                            ctx.fillStyle = '#555';
+                            ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Draw vents at the top of the door
+                            var ventW = Math.min(w / 3, 30 * scale);
+                            var ventX = x + w / 2 - ventW / 2;
+                            var ventY = rowY + inset + Math.max(5, 15 * scale);
+                            
+                            ctx.lineWidth = 1;
+                            for (var v = 0; v < 4; v++) {
+                                ctx.beginPath();
+                                ctx.moveTo(ventX, ventY + (v * Math.max(3, 8 * scale)));
+                                ctx.lineTo(ventX + ventW, ventY + (v * Math.max(3, 8 * scale)));
+                                ctx.stroke();
+                            }
+                            ctx.lineWidth = 2; // Restore stroke width for next locker
+                        }
                     }
                 }
             }
