@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Locker</title>
+</head>
+<body>
+    <style> 
+        canvas{border: 1px solid black;}
+    </style>
+    <form>
+        <label>
+           locker
+        </label>
+        height:<input type="number" id="lh" value="1830" min="1000"><br>
+        width:<input type="number" id="lw" value="1830" min="50"><br>
+        columns:<input type="number" id="lc" value="2" min="1"><br>
+        rows:<input type="number" id="lr" value="2" min="1"><br>
+        <button type="button" onclick="calculate()">Calculate</button>
+    </form>
+    <canvas id="cv" width="750" height="400">    </canvas>
+    <script>
+        function calculate() {
+            var lh = parseFloat(document.getElementById('lh').value);
+            var lw = parseFloat(document.getElementById('lw').value);
+            var lc = parseInt(document.getElementById('lc').value);
+            var lr = parseInt(document.getElementById('lr').value);
+            
+            var cv = document.getElementById('cv');
+            var ctx = cv.getContext('2d');
+            ctx.clearRect(0, 0, cv.width, cv.height);
+            
+            if (lh > 0 && lw > 0 && lc > 0 && lr > 0) {
+                var rh = lh / lr;
+                var rw = lw / lc;
+
+                // Calculate scale and padding to fit drawing into the canvas
+                var padding = 50;
+                var scale = Math.min((cv.width - padding * 2) / lw, (cv.height - padding * 2) / lh);
+
+                var startX = (cv.width - (lw * scale)) / 2;
+                var startY = (cv.height - (lh * scale)) / 2;
+
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+
+                for (var c = 0; c < lc; c++) {
+                    for (var r = 0; r < lr; r++) {
+                        var x = startX + c * rw * scale;
+                        var y = startY + r * rh * scale;
+                        var w = rw * scale;
+                        var h = rh * scale;
+
+                        // Draw locker frame
+                        ctx.fillStyle = '#e9ecef';
+                        ctx.fillRect(x, y, w, h);
+                        ctx.strokeRect(x, y, w, h);
+
+                        // Draw door inset outline
+                        var inset = Math.max(2, 5 * scale);
+                        ctx.strokeRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
+
+                        // Draw Lock / Handle
+                        var knobX = x + w - inset - Math.max(4, 15 * scale);
+                        var knobY = y + h / 2;
+                        var knobR = Math.max(2, 4 * scale);
+                        
+                        ctx.beginPath();
+                        ctx.fillStyle = '#555';
+                        ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw vents at the top of the door
+                        var ventW = Math.min(w / 3, 30 * scale);
+                        var ventX = x + w / 2 - ventW / 2;
+                        var ventY = y + inset + Math.max(5, 15 * scale);
+                        
+                        ctx.lineWidth = 1;
+                        for (var v = 0; v < 4; v++) {
+                            ctx.beginPath();
+                            ctx.moveTo(ventX, ventY + (v * Math.max(3, 8 * scale)));
+                            ctx.lineTo(ventX + ventW, ventY + (v * Math.max(3, 8 * scale)));
+                            ctx.stroke();
+                        }
+                        ctx.lineWidth = 2; // Restore stroke width for next locker
+                    }
+                }
+            }
+        }
+          const solids = [
+      { id: 'solid1', name: 'Q 13', color: '#fcf8f1', },
+      { id: 'solid5', name: 'RC 15', color: '#f7df37' },
+      { id: 'solid6', name: 'Q 17', color: '#f9f1e5' },
+      { id: 'solid7', name: 'Q 601', color: '#fdfdfd' },
+      { id: 'solid8', name: 'Q 603', color: '#232a2d' },
+      { id: 'solid9', name: 'RC 605', color: '#582730' },
+      { id: 'solid10', name: 'RC 606', color: '#4a4e4a' },
+      { id: 'solid11', name: 'RC 617', color: '#9baa72' },
+      { id: 'solid12', name: 'RC 720', color: '#ffffff' },
+      { id: 'solid13', name: 'Q 801', color: '#8b8d88' },
+      { id: 'solid14', name: 'Q 851', color: '#f8f6f4' },
+      { id: 'solid4', name: 'RC 853', color: '#1677b9' },
+      { id: 'solid15', name: 'Q 855', color: '#f9f0dd' },
+      { id: 'solid16', name: 'Q 856', color: '#fefef4' },
+      { id: 'solid17', name: 'RC 857', color: '#ec763f' },
+      { id: 'solid18', name: 'RC 859', color: '#f4e8d9' },
+      { id: 'solid19', name: 'Q 860', color: '#e8e8e6' },
+      { id: 'solid20', name: 'Q 861', color: '#a7a59d' },
+      { id: 'solid21', name: 'Q 862', color: '#6a665f' },
+      { id: 'solid2', name: 'RC 864', color: '#f4a832' },
+      { id: 'solid3', name: 'Q 865', color: '#c1cf69' },
+      { id: 'solid22', name: 'Q 867', color: '#b1c3d7' },
+      { id: 'solid23', name: 'RC 869', color: '#007b3e' },
+      { id: 'solid24', name: 'RC 872', color: '#e21a37' },
+      { id: 'solid25', name: 'Q 873', color: '#586061' },
+      { id: 'solid26', name: 'Q 879', color: '#b7a593' },
+      { id: 'solid27', name: 'RC 884', color: '#72adf5' },
+      { id: 'solid28', name: 'RC 885', color: '#c3c5be' },
+      { id: 'solid29', name: 'Q 886', color: '#e0dad7' },
+      { id: 'solid30', name: 'Q 887', color: '#989898' },
+      { id: 'solid31', name: 'Q 888', color: '#cbbeb3' },
+      { id: 'solid32', name: 'Q 889', color: '#474747' }
+    ];
+            </script>
+
+</body>
+</html>
