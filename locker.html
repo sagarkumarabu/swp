@@ -18,6 +18,7 @@
         columns:<input type="number" id="lc" value="2" min="1"><br>
         z-shape:<input type="checkbox" id="zshape"> for col (0=All):<input type="number" id="zcol" value="1" min="0" style="width:40px"><br>
         rows:<input type="number" id="lr" value="2" min="1"><br>
+
         <button type="button" onclick="calculate()">Calculate</button>
     </form>
     <canvas id="cv" width="750" height="400">    </canvas>
@@ -96,8 +97,8 @@
                         ctx.stroke();
 
                         // Draw Lock / Handle for Door 1
-                        var knobR = Math.max(2, 4 * scale);
-                        var knobX = x + w - inset - Math.max(4, 15 * scale);
+                        var knobR = Math.max(3, 4 * scale);
+                        var knobX = x + inset + Math.max(6, 15 * scale);
                         var knobY1 = y + fullH * 0.325; 
                         ctx.beginPath();
                         ctx.fillStyle = '#555';
@@ -148,9 +149,9 @@
                             ctx.strokeRect(x + inset, rowY + inset, w - inset * 2, h - inset * 2);
 
                             // Draw Lock / Handle
-                            var knobX = x + w - inset - Math.max(4, 15 * scale);
+                            var knobX = x + inset + Math.max(6, 15 * scale);
                             var knobY = rowY + h / 2;
-                            var knobR = Math.max(2, 4 * scale);
+                            var knobR = Math.max(3, 4 * scale);
                             
                             ctx.beginPath();
                             ctx.fillStyle = '#555';
