@@ -7,19 +7,52 @@
 </head>
 <body>
     <style> 
+       *{margin:0; padding:0;}
         canvas{border: 1px solid black;}
+        body{background-color: antiquewhite;margin-left: 10px;margin-right: 10px}
     </style>
     <form>
-        <label>
-           locker
-        </label>
-        height:<input type="number" id="lh" value="1830" min="1000"><br>
-        width:<input type="number" id="lw" value="1830" min="50"><br>
-        columns:<input type="number" id="lc" value="2" min="1"><br>
-        z-shape:<input type="checkbox" id="zshape"> for col (0=All):<input type="number" id="zcol" value="1" min="0" style="width:40px"><br>
-        rows:<input type="number" id="lr" value="2" min="1"><br>
-
-        <button type="button" onclick="calculate()">Calculate</button>
+        <h3>Locker Configuration</h3>
+        <table>
+            <tr>
+                <td><label for="lh">Height:</label></td>
+                <td><input type="number" id="lh" value="1830" min="1000"></td>
+            </tr>
+            <tr>
+                <td><label for="lw">Width:</label></td>
+                <td><input type="number" id="lw" value="1830" min="50"></td>
+            </tr>
+            <tr>
+                <td><label for="lc">Columns:</label></td>
+                <td><input type="number" id="lc" value="2" min="1"></td>
+            </tr>
+            <tr>
+                <td><label for="zshape">Z-shape:</label></td>
+                <td>
+                    <input type="checkbox" id="zshape"> 
+                    <label for="zcol">for col (0=All):</label>
+                    <input type="number" id="zcol" value="1" min="0" style="width:40px">
+                </td>
+            </tr>
+            <tr>
+                <td><label for="lr">Locker size:</label></td>
+                <td>
+                    <select name="" id="lr">
+                        <option value="1">A1</option>
+                        <option value="2">A2</option>
+                        <option value="3">A3</option>
+                        <option value="4">A4</option>
+                        <option value="5">A5</option>
+                        <option value="6">A6</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 10px;">
+                    <button type="button" onclick="calculate()">Calculate</button>
+                </td>
+            </tr>
+        </table>
     </form>
     <canvas id="cv" width="750" height="400">    </canvas>
     <script>
@@ -174,6 +207,14 @@
                         }
                     }
                 }
+
+                var depth = 450;
+                ctx.fillStyle = '#333';
+                ctx.font = '14px Roboto, sans-serif';
+                ctx.fillText('Overall dimension: ' + lw + 'W x ' + lh + 'H', startX, startY + (lh * scale) + 25);
+                ctx.fillText('Locker dimension: ' + 
+                rw.toFixed(1) + 'W x ' + rh.toFixed(1) + 
+                'H x ' + depth + ' Depth', startX, startY + (lh * scale) + 45);
             }
         }
           const solids = [
