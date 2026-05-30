@@ -15,7 +15,7 @@
         <h3>Locker Configuration</h3>
         <table>
             <tr>
-                <td><label for="lh">Height:</label></td>
+              <td><label for="lh">Height:</label></td>
                 <td><input type="number" id="lh" value="1830" min="1000"></td>
             </tr>
             <tr>
@@ -52,10 +52,38 @@
                     <button type="button" onclick="calculate()">Calculate</button>
                 </td>
             </tr>
+            <tr>
+                <td>Color:</td><td><div id="color"></div></td></tr>
         </table>
     </form>
     <canvas id="cv" width="750" height="400">    </canvas>
     <script>
+        let currentColor = '#e9ecef';
+
+        function color() {
+            let shade = document.getElementById('color');
+            shade.style.display = 'flex';
+            shade.style.flexWrap = 'wrap';
+            shade.style.gap = '4px';
+            
+            solids.forEach(solid => {
+                let swatch = document.createElement('div');
+                swatch.style.width = '24px';
+                swatch.style.height = '24px';
+                swatch.style.backgroundColor = solid.color;
+                swatch.style.border = '1px solid #ccc';
+                swatch.style.borderRadius = '3px';
+                swatch.title = solid.name;
+                swatch.style.cursor = 'pointer';
+                swatch.onclick = () => {
+                    currentColor = solid.color;
+                    calculate();
+                };
+                shade.appendChild(swatch);
+            });
+        }
+
+
         function calculate() {
             var lh = parseFloat(document.getElementById('lh').value);
             var lw = parseFloat(document.getElementById('lw').value);
@@ -90,7 +118,7 @@
                     if (zshape && (zcol === 0 || c === zcol - 1)) {
                         // Draw entire column as a single Z-shape (2 doors)
                         var y = startY;
-                        ctx.fillStyle = '#e9ecef';
+                        ctx.fillStyle = currentColor;
                         ctx.fillRect(x, y, w, fullH);
                         ctx.strokeRect(x, y, w, fullH);
 
@@ -173,7 +201,7 @@
                             var h = rh * scale;
 
                             // Draw locker frame
-                            ctx.fillStyle = '#e9ecef';
+                            ctx.fillStyle = currentColor;
                             ctx.fillRect(x, rowY, w, h);
                             ctx.strokeRect(x, rowY, w, h);
 
@@ -251,6 +279,9 @@
       { id: 'solid31', name: 'Q 888', color: '#cbbeb3' },
       { id: 'solid32', name: 'Q 889', color: '#474747' }
     ];
+
+        // Initialize the color palette
+        color();
             </script>
 
 </body>

@@ -9,7 +9,9 @@
 <body>
   <div class="wrap">
     <div class="sidebar">
-      <button><a href="calculate.html">Calculate</a></button>
+      <div class="row2">
+      <button><a href="calculate.html">Partition</a></button>
+      <button><a href="locker.html">locker</a></div>
       <h2>Cubicle Partition Calculator</h2>
       <div class="err" id="errBox"></div>
       <div class="fg">
@@ -111,7 +113,8 @@
         </div>
         <div class="fg">
           <label><input type="radio" name="colorTarget" value="pilasterShade"> Pilaster</label>
-          <input  id="pilasterShade" value="#b5b5b5" oninput="calculate()" onchange="calculate()">
+          <input  id="pilasterShade" value="#b5b5b5"
+           oninput="calculate()" onchange="calculate()">
         </div>
         <div class="fg">
           <label><input type="radio" name="colorTarget" value="topRailShade"> Top rail</label>
@@ -120,7 +123,8 @@
       </div>
       <div class="fg">
         <label>Color Palette </label>
-        <div id="shadePalette" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;"></div>
+        <div id="shadePalette" style="display: flex;
+         flex-wrap: wrap; gap: 6px; margin-top: 5px;"></div>
       </div>
       
       <button class="calcbtn" onclick="calculate()">Calculate</button>
