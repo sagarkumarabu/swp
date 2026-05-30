@@ -8,23 +8,42 @@
 <body>
     <style> 
        *{margin:0; padding:0;}
-        canvas{border: 1px solid black;}
-        body{background-color: antiquewhite;margin-left: 10px;margin-right: 10px}
+        canvas{border: 0.1rem solid black; margin:10px;
+       }
+        body{background-color: antiquewhite;
+           
+            flex-direction: column;
+           
+        height: 100vh;}
+        .summary { 
+            float: right; 
+            border: solid 2px;
+            height: 400px;
+            width: 400px;
+            background: #fff;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
     </style>
     <form>
         <h3>Locker Configuration</h3>
         <table>
             <tr>
               <td><label for="lh">Height:</label></td>
-                <td><input type="number" id="lh" value="1830" min="1000"></td>
+                <td><input type="number" id="lh" value="1800" min="1000"></td>
+            </tr>
+            <tr>
+                <td><label for="skirting">Skirting (mm):</label></td>
+                <td><input type="number" id="skirting" value="60" min="0"></td>
             </tr>
             <tr>
                 <td><label for="lw">Width:</label></td>
-                <td><input type="number" id="lw" value="1830" min="50"></td>
+                <td><input type="number" id="lw" value="1800" min="50"></td>
             </tr>
             <tr>
                 <td><label for="lc">Columns:</label></td>
-                <td><input type="number" id="lc" value="2" min="1"></td>
+                <td><input type="number" id="lc" value="4" min="1"></td>
             </tr>
             <tr>
                 <td><label for="zshape">Z-shape:</label></td>
@@ -35,9 +54,9 @@
                 </td>
             </tr>
             <tr>
-                <td><label for="lr">Locker size:</label></td>
+                <td><label for="lr">Module:</label></td>
                 <td>
-                    <select name="" id="lr">
+                    <select name="lr" id="lr">
                         <option value="1">A1</option>
                         <option value="2">A2</option>
                         <option value="3">A3</option>
@@ -56,9 +75,28 @@
                 <td>Color:</td><td><div id="color"></div></td></tr>
         </table>
     </form>
-    <canvas id="cv" width="750" height="400">    </canvas>
+    <table><tr><td>
+    <canvas id="cv" width="500" height="400">    </canvas>
+
+    </td>
+    <td><div class="summary">
+       <h3 style="text-align:center; margin-bottom: 10px;">Summary</h3>
+       <table style="width: 100%; border-collapse: collapse; text-align: left;">
+           <thead>
+               <tr style="background: #f1f1f1;">
+                   <th style="border: 1px solid #ccc; padding: 6px;">Item</th>
+                   <th style="border: 1px solid #ccc; padding: 6px;">Qty</th>
+                   <th style="border: 1px solid #ccc; padding: 6px;">Dimension (W x H)</th>
+               </tr>
+           </thead>
+           <tbody id="summaryBody">
+           </tbody>
+       </table>
+    </div></td></tr></table>
+    </div>
     <script>
         let currentColor = '#e9ecef';
+        let lockerColors = {};
 
         function color() {
             let shade = document.getElementById('color');
@@ -66,7 +104,7 @@
             shade.style.flexWrap = 'wrap';
             shade.style.gap = '4px';
             
-            solids.forEach(solid => {
+            solids.forEach((solid, index) => {
                 let swatch = document.createElement('div');
                 swatch.style.width = '24px';
                 swatch.style.height = '24px';
@@ -75,9 +113,21 @@
                 swatch.style.borderRadius = '3px';
                 swatch.title = solid.name;
                 swatch.style.cursor = 'pointer';
-                swatch.onclick = () => {
+
+                if (index === 0) {
                     currentColor = solid.color;
-                    calculate();
+                    swatch.style.outline = '2px solid #333';
+                    swatch.style.transform = 'scale(1.1)';
+                }
+
+                swatch.onclick = () => {
+                    Array.from(shade.children).forEach(child => {
+                        child.style.outline = 'none';
+                        child.style.transform = 'scale(1)';
+                    });
+                    swatch.style.outline = '2px solid #333';
+                    swatch.style.transform = 'scale(1.1)';
+                    currentColor = solid.color;
                 };
                 shade.appendChild(swatch);
             });
@@ -89,6 +139,7 @@
             var lw = parseFloat(document.getElementById('lw').value);
             var lc = parseInt(document.getElementById('lc').value);
             var lr = parseInt(document.getElementById('lr').value);
+            var skirting = parseFloat(document.getElementById('skirting').value) || 0;
             var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
             var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
             
@@ -97,7 +148,8 @@
             ctx.clearRect(0, 0, cv.width, cv.height);
             
             if (lh > 0 && lw > 0 && lc > 0 && lr > 0) {
-                var rh = lh / lr;
+                var lockerH = Math.max(0, lh - skirting);
+                var rh = lockerH / lr;
                 var rw = lw / lc;
 
                 // Calculate scale and padding to fit drawing into the canvas
@@ -113,26 +165,41 @@
                 for (var c = 0; c < lc; c++) {
                     var x = startX + c * rw * scale;
                     var w = rw * scale;
-                    var fullH = lh * scale;
+                    var fullH = lockerH * scale;
 
                     if (zshape && (zcol === 0 || c === zcol - 1)) {
                         // Draw entire column as a single Z-shape (2 doors)
                         var y = startY;
-                        ctx.fillStyle = currentColor;
-                        ctx.fillRect(x, y, w, fullH);
-                        ctx.strokeRect(x, y, w, fullH);
 
                         var cutX = x + w / 2;
                         var cutY1 = y + fullH * 0.35;
                         var cutY2 = y + fullH * 0.65;
                         var inset = Math.max(2, 5 * scale);
 
-                        // Draw Z cut line
+                        // Top Door
+                        ctx.fillStyle = lockerColors[c + '-0'] || '#e9ecef';
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + w, y);
+                        ctx.lineTo(x + w, cutY2);
+                        ctx.lineTo(cutX, cutY2);
+                        ctx.lineTo(cutX, cutY1);
+                        ctx.lineTo(x, cutY1);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Bottom Door
+                        ctx.fillStyle = lockerColors[c + '-1'] || '#e9ecef';
                         ctx.beginPath();
                         ctx.moveTo(x, cutY1);
                         ctx.lineTo(cutX, cutY1);
                         ctx.lineTo(cutX, cutY2);
                         ctx.lineTo(x + w, cutY2);
+                        ctx.lineTo(x + w, y + fullH);
+                        ctx.lineTo(x, y + fullH);
+                        ctx.closePath();
+                        ctx.fill();
                         ctx.stroke();
 
                         // Door 1 Inset
@@ -201,7 +268,7 @@
                             var h = rh * scale;
 
                             // Draw locker frame
-                            ctx.fillStyle = currentColor;
+                            ctx.fillStyle = lockerColors[c + '-' + r] || '#e9ecef';
                             ctx.fillRect(x, rowY, w, h);
                             ctx.strokeRect(x, rowY, w, h);
 
@@ -235,6 +302,13 @@
                         }
                     }
                 }
+                
+                // Draw skirting
+                if (skirting > 0) {
+                    ctx.fillStyle = '#4a4e4a';
+                    ctx.fillRect(startX, startY + lockerH * scale, lw * scale, skirting * scale);
+                    ctx.strokeRect(startX, startY + lockerH * scale, lw * scale, skirting * scale);
+                }
 
                 var depth = 450;
                 ctx.fillStyle = '#333';
@@ -243,6 +317,55 @@
                 ctx.fillText('Locker dimension: ' + 
                 rw.toFixed(1) + 'W x ' + rh.toFixed(1) + 
                 'H x ' + depth + ' Depth', startX, startY + (lh * scale) + 45);
+
+                // Generate Summary
+                var topQty = 1;
+                var bottomQty = 1;
+                var sidesQty = 2;
+                var backboardQty = 1;
+                var dividerQty = lc - 1;
+                
+                var shelfQty = 0;
+                var normalDoorsQty = 0;
+                var zDoorsQty = 0;
+                
+                for (var c = 0; c < lc; c++) {
+                    var isZ = zshape && (zcol === 0 || c === zcol - 1);
+                    if (isZ) {
+                        zDoorsQty += 2;
+                        shelfQty += 2;
+                    } else {
+                        shelfQty += Math.max(0, lr - 1);
+                        normalDoorsQty += lr;
+                    }
+                }
+                
+                var totalDoors = normalDoorsQty + zDoorsQty;
+                var summaryHtml = '';
+                
+                function addSummaryRow(item, qty, dim) {
+                    if (qty > 0) {
+                        summaryHtml += '<tr>';
+                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + item + '</td>';
+                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + qty + '</td>';
+                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + dim + '</td>';
+                        summaryHtml += '</tr>';
+                    }
+                }
+                
+                addSummaryRow('Top', topQty, lw.toFixed(1) + ' x ' + depth);
+                addSummaryRow('Bottom', bottomQty, lw.toFixed(1) + ' x ' + depth);
+                addSummaryRow('Sides', sidesQty, depth + ' x ' + lh.toFixed(1));
+                addSummaryRow('Backboard', backboardQty, lw + ' x ' + lh - skirting.toFixed(1));
+                addSummaryRow('Divider', dividerQty, depth + ' x ' + lockerH.toFixed(1));
+                addSummaryRow('Shelf', shelfQty, rw.toFixed(1) + ' x ' + depth);
+                if (normalDoorsQty > 0) addSummaryRow('Shutter', normalDoorsQty, rw.toFixed(1) + ' x ' + rh.toFixed(1));
+                if (zDoorsQty > 0) addSummaryRow('Z-Shutter', zDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1));
+                addSummaryRow('Lock', totalDoors, '-');
+                addSummaryRow('Hinges', totalDoors * 3, '-');
+                
+                var summaryBody = document.getElementById('summaryBody');
+                if (summaryBody) summaryBody.innerHTML = summaryHtml;
             }
         }
           const solids = [
@@ -282,7 +405,51 @@
 
         // Initialize the color palette
         color();
-            </script>
+
+        // Handle canvas clicks to color individual lockers
+        document.getElementById('cv').addEventListener('click', function(e) {
+            var cv = document.getElementById('cv');
+            var rect = cv.getBoundingClientRect();
+            var clickX = e.clientX - rect.left;
+            var clickY = e.clientY - rect.top;
+
+            var lh = parseFloat(document.getElementById('lh').value);
+            var lw = parseFloat(document.getElementById('lw').value);
+            var lc = parseInt(document.getElementById('lc').value);
+            var lr = parseInt(document.getElementById('lr').value);
+            var skirting = parseFloat(document.getElementById('skirting').value) || 0;
+            var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
+            var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
+            
+            var padding = 50;
+            var scale = Math.min((cv.width - padding * 2) / lw, (cv.height - padding * 2) / lh);
+
+            var startX = (cv.width - (lw * scale)) / 2;
+            var startY = (cv.height - (lh * scale)) / 2;
+            var lockerH = Math.max(0, lh - skirting);
+            var rh = lockerH / lr;
+            var rw = lw / lc;
+
+            if (clickX >= startX && clickX <= startX + (lw * scale) && clickY >= startY && clickY <= startY + (lockerH * scale)) {
+                var c = Math.floor((clickX - startX) / (rw * scale));
+                var isZ = zshape && (zcol === 0 || c === zcol - 1);
+                var r;
+
+                if (isZ) {
+                    var cutY1 = startY + (lockerH * scale) * 0.35;
+                    var cutY2 = startY + (lockerH * scale) * 0.65;
+                    var cutX = startX + c * rw * scale + (rw * scale) / 2;
+                    
+                    r = clickY < cutY1 ? 0 : (clickY > cutY2 ? 1 : (clickX < cutX ? 1 : 0));
+                } else {
+                    r = Math.floor((clickY - startY) / (rh * scale));
+                }
+
+                lockerColors[c + '-' + r] = currentColor;
+                calculate();
+            }
+        });
+    </script>
 
 </body>
 </html>
