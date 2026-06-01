@@ -1,4 +1,5 @@
         :root {
+            --font-scale: 1;
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
             --bg-main: #b9bcc0;
@@ -9,17 +10,55 @@
         *{margin:0; padding:0; box-sizing:border-box;}
     body {
       font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-      font-size: 13px;
+      font-size: calc(13px * var(--font-scale));
       background: var(--bg-card);
       color: #1c1c2e;
       height: 90vh
     }
+    nav{
+      background-color: dimgray;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 8px;
+    }
+        nav a{color:#fff;text-decoration: none;padding:8px 10px; font-size: calc(13px * var(--font-scale));}
+        a:hover{background-color: green;}
+    .font-controls {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .font-btn {
+      border: 1px solid #8f8f8f;
+      border-radius: 4px;
+      background: #f4f4f4;
+      color: #1c1c2e;
+      cursor: pointer;
+      font-weight: 700;
+      min-width: 34px;
+      padding: 4px 8px;
+      font-size: calc(12px * var(--font-scale));
+      line-height: 1.1;
+    }
+    .font-btn:hover {
+      background: #ffffff;
+    }
+    button,
+    input,
+    select,
+    textarea,
+    table {
+      font-size: calc(12px * var(--font-scale));
+    }
     table tr td {
-      padding: 8px; border-bottom: 1px solid #eee;
+      padding: 1px; border-bottom: 1px solid #eee;
     }
     .wrap {
       display: grid;
-      grid-template-columns: 330px 1fr;
+      grid-template-columns: 20vw 1fr;
       gap: 0;
       border: 1px solid #c8cad4;
       border-radius: 10px;
@@ -47,14 +86,14 @@
     }
 
     h2 {
-      font-size: 14px;
+      font-size: calc(14px * var(--font-scale));
       font-weight: 700;
       border-bottom: 1px solid #c8cad4;
       color: #1c1c2e
     }
 
     .section-title {
-      font-size: 10px;
+      font-size: calc(10px * var(--font-scale));
       font-weight: 700;
       color: #7a7d8c;
       text-transform: uppercase;
@@ -69,7 +108,7 @@
     }
 
     .fg label {
-      font-size: 11px;
+      font-size: calc(11px * var(--font-scale));
       color: #55586a;
       font-weight: 500
     }
@@ -82,7 +121,7 @@
       border-radius: 5px;
       background: #fff;
       color: #1c1c2e;
-      font-size: 12px;
+      font-size: calc(12px * var(--font-scale));
       outline: none;
       transition: border-color .15s
     }
@@ -123,7 +162,7 @@
     }
 
     .stall-row label {
-      font-size: 11px;
+      font-size: calc(11px * var(--font-scale));
       color: #55586a;
       white-space: nowrap
     }
@@ -162,7 +201,7 @@
       border-radius: 6px;
       background: #1560c8;
       color: #fff;
-      font-size: 13px;
+      font-size: calc(13px * var(--font-scale));
       cursor: pointer;
       font-weight: 700;
       transition: background .15s
@@ -174,7 +213,7 @@
 
     .err {
       color: #b91c1c;
-      font-size: 11px;
+      font-size: calc(11px * var(--font-scale));
       padding: 6px 10px;
       background: #fee2e2;
       border: 1px solid #fca5a5;
@@ -203,13 +242,13 @@
     }
 
     .kpi .val {
-      font-size: 20px;
+      font-size: calc(20px * var(--font-scale));
       font-weight: 700;
       color: #1560c8
     }
 
     .kpi .lbl {
-      font-size: 10px;
+      font-size: calc(10px * var(--font-scale));
       color: #55586a;
       margin-top: 2px
     }
@@ -223,7 +262,7 @@
 
     .tab {
       padding: 8px 16px;
-      font-size: 12px;
+      font-size: calc(12px * var(--font-scale));
       font-weight: 500;
       cursor: pointer;
       border-bottom: 2px solid transparent;
@@ -260,7 +299,7 @@
     }
 
     .sz {
-      font-size: 11px;
+      font-size: calc(11px * var(--font-scale));
       color: #7a7d8c
     }
 
