@@ -85,6 +85,13 @@
                 </td>
             </tr>
             <tr>
+                <td><label for="customColumns">Custom columns:</label></td>
+                <td>
+                    <input type="text" id="customColumns" placeholder="Example: 2,3" style="width:110px">
+                    <span style="font-size: calc(12px * var(--font-scale));">lockers per column</span>
+                </td>
+            </tr>
+            <tr>
                 <td colspan="2" style="padding-top: 10px;">
                     <button type="button" onclick="calculate()">Calculate</button>
                 </td>
@@ -105,6 +112,7 @@
                    <th style="border: 1px solid #ccc; padding: 6px;">Item</th>
                    <th style="border: 1px solid #ccc; padding: 6px;">Qty</th>
                    <th style="border: 1px solid #ccc; padding: 6px;">Dimension (W x H)</th>
+                   <th style="border: 1px solid #ccc; padding: 6px;">Thickness</th>
                </tr>
            </thead>
            <tbody id="summaryBody">
@@ -114,6 +122,11 @@
     </div>
     <script src="font-size.js"></script>
     <script>
+         const availableSheets = [
+        { name: "12 x 6 feet", width: 3670, height: 1860 },
+        { name: "14 x 6 feet", width: 4300, height: 1860 },
+        { name: "8 x 4 feet", width: 2438, height: 1219 }
+      ];
         let currentColor = '#e9ecef';
         let lockerColors = {};
 
@@ -158,6 +171,7 @@
             var lw = parseFloat(document.getElementById('lw').value);
             var lc = parseInt(document.getElementById('lc').value);
             var lr = parseInt(document.getElementById('lr').value);
+            var customColumns = getCustomColumns();
             var skirting = parseFloat(document.getElementById('skirting').value) || 0;
             var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
             var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
@@ -168,8 +182,9 @@
             
             if (lh > 0 && lw > 0 && lc > 0 && lr > 0) {
                 var lockerH = Math.max(0, lh - skirting);
+                var colCount = customColumns.length > 0 ? customColumns.length : lc;
+                var rw = lw / colCount;
                 var rh = lockerH / lr;
-                var rw = lw / lc;
 
                 // Calculate scale and padding to fit drawing into the canvas
                 var padding = 50;
@@ -181,12 +196,26 @@
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 2;
 
-                for (var c = 0; c < lc; c++) {
-                    var x = startX + c * rw * scale;
-                    var w = rw * scale;
-                    var fullH = lockerH * scale;
+                if (customColumns.length > 0) {
+                    for (var c = 0; c < customColumns.length; c++) {
+                        var columnRows = customColumns[c];
+                        var customRh = lockerH / columnRows;
+                        var x = startX + c * rw * scale;
+                        var w = rw * scale;
 
-                    if (zshape && (zcol === 0 || c === zcol - 1)) {
+                        for (var r = 0; r < columnRows; r++) {
+                            var rowY = startY + r * customRh * scale;
+                            var h = customRh * scale;
+                            drawNormalDoor(ctx, x, rowY, w, h, scale, lockerColors['custom-' + c + '-' + r] || '#e9ecef');
+                        }
+                    }
+                } else {
+                    for (var c = 0; c < lc; c++) {
+                        var x = startX + c * rw * scale;
+                        var w = rw * scale;
+                        var fullH = lockerH * scale;
+
+                        if (zshape && (zcol === 0 || c === zcol - 1)) {
                         // Draw entire column as a single Z-shape (2 doors)
                         var y = startY;
 
@@ -280,44 +309,14 @@
                             ctx.stroke();
                         }
                         ctx.lineWidth = 2;
-                    } else {
+                        } else {
                         // Draw multiple rows for this column
                         for (var r = 0; r < lr; r++) {
                             var rowY = startY + r * rh * scale;
                             var h = rh * scale;
 
-                            // Draw locker frame
-                            ctx.fillStyle = lockerColors[c + '-' + r] || '#e9ecef';
-                            ctx.fillRect(x, rowY, w, h);
-                            ctx.strokeRect(x, rowY, w, h);
-
-                            // Draw door inset outline
-                            var inset = Math.max(2, 5 * scale);
-                            ctx.strokeRect(x + inset, rowY + inset, w - inset * 2, h - inset * 2);
-
-                            // Draw Lock / Handle
-                            var knobX = x + inset + Math.max(6, 15 * scale);
-                            var knobY = rowY + h / 2;
-                            var knobR = Math.max(3, 4 * scale);
-                            
-                            ctx.beginPath();
-                            ctx.fillStyle = '#555';
-                            ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            // Draw vents at the top of the door
-                            var ventW = Math.min(w / 3, 30 * scale);
-                            var ventX = x + w / 2 - ventW / 2;
-                            var ventY = rowY + inset + Math.max(5, 15 * scale);
-                            
-                            ctx.lineWidth = 1;
-                            for (var v = 0; v < 4; v++) {
-                                ctx.beginPath();
-                                ctx.moveTo(ventX, ventY + (v * Math.max(3, 8 * scale)));
-                                ctx.lineTo(ventX + ventW, ventY + (v * Math.max(3, 8 * scale)));
-                                ctx.stroke();
-                            }
-                            ctx.lineWidth = 2; // Restore stroke width for next locker
+                            drawNormalDoor(ctx, x, rowY, w, h, scale, lockerColors[c + '-' + r] || '#e9ecef');
+                        }
                         }
                     }
                 }
@@ -333,53 +332,77 @@
                 ctx.fillStyle = '#333';
                 ctx.font = '14px Roboto, sans-serif';
                 ctx.fillText('Overall dimension: ' + lw + 'W x ' + lh + 'H', startX, startY + (lh * scale) + 25);
-                ctx.fillText('Locker dimension: ' + 
-                rw.toFixed(1) + 'W x ' + rh.toFixed(1) + 
-                'H x ' + depth + ' Depth', startX, startY + (lh * scale) + 45);
+                if (customColumns.length > 0) {
+                    ctx.fillText('Custom columns: ' + customColumns.join(', ') + ' lockers | Col W ' + rw.toFixed(1), startX, startY + (lh * scale) + 45);
+                } else {
+                    ctx.fillText('Locker dimension: ' + 
+                    rw.toFixed(1) + 'W x ' + rh.toFixed(1) + 
+                    'H x ' + depth + ' Depth', startX, startY + (lh * scale) + 45);
+                }
 
                 // Generate Summary
                 var topQty = 1;
                 var bottomQty = 1;
                 var sidesQty = 2;
                 var backboardQty = 1;
-                var dividerQty = lc - 1;
+                var dividerQty = colCount - 1;
                 
                 var shelfQty = 0;
                 var normalDoorsQty = 0;
                 var zDoorsQty = 0;
                 
-                for (var c = 0; c < lc; c++) {
-                    var isZ = zshape && (zcol === 0 || c === zcol - 1);
-                    if (isZ) {
-                        zDoorsQty += 2;
-                        shelfQty += 2;
-                    } else {
-                        shelfQty += Math.max(0, lr - 1);
-                        normalDoorsQty += lr;
+                if (customColumns.length > 0) {
+                    normalDoorsQty = customColumns.reduce(function(total, rows) { return total + rows; }, 0);
+                    shelfQty = customColumns.reduce(function(total, rows) {
+                        return total + Math.max(0, rows - 1);
+                    }, 0);
+                } else {
+                    for (var c = 0; c < lc; c++) {
+                        var isZ = zshape && (zcol === 0 || c === zcol - 1);
+                        if (isZ) {
+                            zDoorsQty += 2;
+                            shelfQty += 2;
+                        } else {
+                            shelfQty += Math.max(0, lr - 1);
+                            normalDoorsQty += lr;
+                        }
                     }
                 }
                 
                 var totalDoors = normalDoorsQty + zDoorsQty;
                 var summaryHtml = '';
                 
-                function addSummaryRow(item, qty, dim) {
+                function addSummaryRow(item, qty, dim, thickness) {
                     if (qty > 0) {
                         summaryHtml += '<tr>';
                         summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + item + '</td>';
                         summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + qty + '</td>';
                         summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + dim + '</td>';
+                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + (thickness || '-') + '</td>';
                         summaryHtml += '</tr>';
                     }
                 }
                 
-                addSummaryRow('Top', topQty, lw.toFixed(1) + ' x ' + depth);
-                addSummaryRow('Bottom', bottomQty, lw.toFixed(1) + ' x ' + depth);
-                addSummaryRow('Sides', sidesQty, depth + ' x ' + lh.toFixed(1));
-                addSummaryRow('Backboard', backboardQty, lw + ' x ' + (lh - skirting));
-                addSummaryRow('Divider', dividerQty, depth + ' x ' + lockerH.toFixed(1));
-                addSummaryRow('Shelf', shelfQty, rw.toFixed(1) + ' x ' + depth);
-                if (normalDoorsQty > 0) addSummaryRow('Shutter', normalDoorsQty, rw.toFixed(1) + ' x ' + rh.toFixed(1));
-                if (zDoorsQty > 0) addSummaryRow('Z-Shutter', zDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1));
+                addSummaryRow('Top', topQty, lw.toFixed(1) + ' x ' + depth, '9 mm');
+                addSummaryRow('Bottom', bottomQty, lw.toFixed(1) + ' x ' + depth, '9 mm');
+                addSummaryRow('Sides', sidesQty, depth + ' x ' + lh.toFixed(1), '3 mm');
+                addSummaryRow('Backboard', backboardQty, lw + ' x ' + (lh - skirting), '3 mm');
+                addSummaryRow('Divider', dividerQty, depth + ' x ' + lockerH.toFixed(1), '3 mm');
+                addSummaryRow('Shelf', shelfQty, rw.toFixed(1) + ' x ' + depth, '9 mm');
+                if (customColumns.length > 0) {
+                    var customDoorGroups = {};
+                    customColumns.forEach(function(rows) {
+                        var doorH = (lockerH / rows).toFixed(1);
+                        var key = rw.toFixed(1) + ' x ' + doorH;
+                        customDoorGroups[key] = (customDoorGroups[key] || 0) + rows;
+                    });
+                    Object.keys(customDoorGroups).forEach(function(dim) {
+                        addSummaryRow('Shutter', customDoorGroups[dim], dim, '9 mm');
+                    });
+                } else if (normalDoorsQty > 0) {
+                    addSummaryRow('Shutter', normalDoorsQty, rw.toFixed(1) + ' x ' + rh.toFixed(1), '9 mm');
+                }
+                if (zDoorsQty > 0) addSummaryRow('Z-Shutter', zDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1), '9 mm');
                 addSummaryRow('Lock', totalDoors, '-');
                 addSummaryRow('Hinges', totalDoors * 3, '-');
                 addSummaryRow('U-channel', (totalDoors + 1)*2, '-');
@@ -388,6 +411,43 @@
                 var summaryBody = document.getElementById('summaryBody');
                 if (summaryBody) summaryBody.innerHTML = summaryHtml;
             }
+        }
+        function getCustomColumns() {
+            var input = document.getElementById('customColumns');
+            if (!input || input.value.trim() === '') return [];
+
+            return input.value.split(',')
+                .map(function(value) { return parseInt(value.trim()); })
+                .filter(function(value) { return value > 0; });
+        }
+
+        function drawNormalDoor(ctx, x, y, w, h, scale, fillColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeRect(x, y, w, h);
+
+            var inset = Math.max(2, 5 * scale);
+            ctx.strokeRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
+
+            var knobX = x + inset + Math.max(6, 15 * scale);
+            var knobY = y + h / 2;
+            var knobR = Math.max(3, 4 * scale);
+            ctx.beginPath();
+            ctx.fillStyle = '#555';
+            ctx.arc(knobX, knobY, knobR, 0, Math.PI * 2);
+            ctx.fill();
+
+            var ventW = Math.min(w / 3, 30 * scale);
+            var ventX = x + w / 2 - ventW / 2;
+            var ventY = y + inset + Math.max(5, 15 * scale);
+            ctx.lineWidth = 1;
+            for (var v = 0; v < 4; v++) {
+                ctx.beginPath();
+                ctx.moveTo(ventX, ventY + (v * Math.max(3, 8 * scale)));
+                ctx.lineTo(ventX + ventW, ventY + (v * Math.max(3, 8 * scale)));
+                ctx.stroke();
+            }
+            ctx.lineWidth = 2;
         }
           const solids = [
       { id: 'solid1', name: 'Q 13', color: '#fcf8f1', },
@@ -438,6 +498,7 @@
             var lw = parseFloat(document.getElementById('lw').value);
             var lc = parseInt(document.getElementById('lc').value);
             var lr = parseInt(document.getElementById('lr').value);
+            var customColumns = getCustomColumns();
             var skirting = parseFloat(document.getElementById('skirting').value) || 0;
             var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
             var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
@@ -448,10 +509,23 @@
             var startX = (cv.width - (lw * scale)) / 2;
             var startY = (cv.height - (lh * scale)) / 2;
             var lockerH = Math.max(0, lh - skirting);
+            var colCount = customColumns.length > 0 ? customColumns.length : lc;
+            var rw = lw / colCount;
             var rh = lockerH / lr;
-            var rw = lw / lc;
 
             if (clickX >= startX && clickX <= startX + (lw * scale) && clickY >= startY && clickY <= startY + (lockerH * scale)) {
+                if (customColumns.length > 0) {
+                    var col = Math.floor((clickX - startX) / (rw * scale));
+                    col = Math.max(0, Math.min(customColumns.length - 1, col));
+                    var columnRows = customColumns[col];
+                    var customRh = lockerH / columnRows;
+                    var row = Math.floor((clickY - startY) / (customRh * scale));
+                    row = Math.max(0, Math.min(columnRows - 1, row));
+                    lockerColors['custom-' + col + '-' + row] = currentColor;
+                    calculate();
+                    return;
+                }
+
                 var c = Math.floor((clickX - startX) / (rw * scale));
                 var isZ = zshape && (zcol === 0 || c === zcol - 1);
                 var r;
