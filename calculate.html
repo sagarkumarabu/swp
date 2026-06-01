@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <title>2D Sheet Cutting Optimizer</title>
     <style>
+        :root { --font-scale: 1; }
+        *{margin: 0; padding: 0;}
         body { font-family: sans-serif; background-color: #cac0c0; 
-        font-size: larger;}
+            font-size: calc(12px * var(--font-scale));
+        }
         table { border-collapse: collapse; margin-bottom: 15px; width: 80vw; 
             border: solid 2px #333; background: #a59a9a;
              }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         input { width: 90%; padding: 4px; }
         button { padding: 6px 12px; cursor: pointer; }
+        input, select, button, table { font-size: calc(14px * var(--font-scale)); }
         .result-box { display: none; background: #eff1f1;
              border: 1px solid #d2e7de; padding: 15px; margin-top: 20px;
             width: 80vw;  }
@@ -20,10 +24,27 @@
             width: 80vw;  }
         .sheet-container { margin-bottom: 30px; }
         .waste-info { color: #c62828; font-weight: bold; margin: 5px 0; }
+        nav{ background-color: dimgray; min-height: 34px; display:flex; align-items:center; gap:2px; padding:0 8px;}
+        nav a{color:#fff;text-decoration: none;padding:8px 10px; font-size: calc(14px * var(--font-scale));}
+        a:hover{background-color: green;}
+        .font-controls { margin-left:auto; display:flex; align-items:center; gap:4px; }
+        .font-btn { border:1px solid #8f8f8f; border-radius:4px; background:#f4f4f4; color:#1c1c2e;
+             cursor:pointer; font-weight:700; min-width:34px; padding:4px 8px; line-height:1.1; }
+        .font-btn:hover { background:#fff; }
     </style>
 </head>
 <body>
-<button><a href="index.html">hpl calculate</a></button>
+ <nav>
+        <a href="index.html">Cubicle</a>
+        <a href="locker.html">Locker</a>
+        <a href="calculate.html">Partition</a>
+        <div class="font-controls" aria-label="Font size controls">
+            <button type="button" class="font-btn" 
+            onclick="changeFontSize(1)" title="Increase font size">A+</button>
+            <button type="button" class="font-btn" onclick="changeFontSize(-1)" title="Decrease font size">A-</button>
+        </div>
+
+    </nav>
     <h2>2D Sheet Cutting Optimizer</h2>
     <label>Kerf / Blade Width (mm): 
         <input type="number" id="kerf" value="2" style="width:60px;"></label>
@@ -85,6 +106,7 @@
     </table>
 </div>
 
+<script src="font-size.js"></script>
 <script>
 function addRow() {
     const tbody = document.getElementById('itemBody');
