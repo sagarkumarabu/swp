@@ -356,13 +356,15 @@
                 addSummaryRow('Top', topQty, lw.toFixed(1) + ' x ' + depth);
                 addSummaryRow('Bottom', bottomQty, lw.toFixed(1) + ' x ' + depth);
                 addSummaryRow('Sides', sidesQty, depth + ' x ' + lh.toFixed(1));
-                addSummaryRow('Backboard', backboardQty, lw + ' x ' + lh - skirting.toFixed(1));
+                addSummaryRow('Backboard', backboardQty, lw + ' x ' + (lh - skirting));
                 addSummaryRow('Divider', dividerQty, depth + ' x ' + lockerH.toFixed(1));
                 addSummaryRow('Shelf', shelfQty, rw.toFixed(1) + ' x ' + depth);
                 if (normalDoorsQty > 0) addSummaryRow('Shutter', normalDoorsQty, rw.toFixed(1) + ' x ' + rh.toFixed(1));
                 if (zDoorsQty > 0) addSummaryRow('Z-Shutter', zDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1));
                 addSummaryRow('Lock', totalDoors, '-');
                 addSummaryRow('Hinges', totalDoors * 3, '-');
+                addSummaryRow('U-channel', (totalDoors + 1)*2, '-');
+                addSummaryRow('Half-round', (totalDoors +1)*4, '-');
                 
                 var summaryBody = document.getElementById('summaryBody');
                 if (summaryBody) summaryBody.innerHTML = summaryHtml;
