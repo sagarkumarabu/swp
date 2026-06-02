@@ -8,7 +8,7 @@
 </head>
 <body>
    <nav>
-        <a href="index.html">Cubicle</a>
+        <a href="index.html" aria-current="page">Cubicle</a>
         <a href="locker.html">Locker</a>
         <a href="calculate.html">Partition</a>
         <div class="font-controls" aria-label="Font size controls">
@@ -114,23 +114,25 @@
       <div class="section-title">Elevation Shades</div>
       <div class="row3">
         <div class="fg">
-          <label><input type="radio" name="colorTarget" value="doorShade" checked> Door</label>
-          <input  id="doorShade" value="#dedede" oninput="calculate()" onchange="calculate()">
+          <label><input type="radio" name="colorTarget" value="doorShade" checked
+            oninput="calculate()" onchange="calculate()"> Door</label>
         </div>
         <div class="fg">
-          <label><input type="radio" name="colorTarget" value="pilasterShade"> Pilaster</label>
-          <input  id="pilasterShade" value="#b5b5b5"
-           oninput="calculate()" onchange="calculate()">
+          <label><input type="radio" name="colorTarget" value="pilasterShade"
+            oninput="calculate()" onchange="calculate()"> Pilaster</label>
         </div>
         <div class="fg">
-          <label><input type="radio" name="colorTarget" value="topRailShade"> Top rail</label>
-          <input  id="topRailShade" value="#8f8f8f" oninput="calculate()" onchange="calculate()">
+          <label><input type="radio" name="colorTarget" value="topRailShade" 
+            oninput="calculate()" onchange="calculate()" > Top rail</label>
+
         </div>
       </div>
       <div class="fg">
-        <label>Color Palette </label>
         <div id="shadePalette" style="display: flex;
          flex-wrap: wrap; gap: 6px; margin-top: 5px;"></div>
+        <input type="hidden" id="doorShade" value="#dedede">
+        <input type="hidden" id="pilasterShade" value="#b5b5b5">
+        <input type="hidden" id="topRailShade" value="#8f8f8f">
       </div>
       
       <button class="calcbtn" onclick="calculate()">Calculate</button>
@@ -241,7 +243,11 @@
       { id: 'solid29', name: 'Q 886', color: '#e0dad7' },
       { id: 'solid30', name: 'Q 887', color: '#989898' },
       { id: 'solid31', name: 'Q 888', color: '#cbbeb3' },
-      { id: 'solid32', name: 'Q 889', color: '#474747' }
+      { id: 'solid32', name: 'Q 889', color: '#474747' },
+       { id: 'solid33', name: 'Light Ash / Birch', color: '#e8cca3' },
+  { id: 'solid34', name: 'Natural Oak', color: '#c49a6c' },
+  { id: 'solid35', name: 'Warm Cherry Wood', color: '#9a5332' },
+  { id: 'solid36', name: 'Dark Walnut', color: '#4a3225' }
     ];
 
     function buildPalette() {

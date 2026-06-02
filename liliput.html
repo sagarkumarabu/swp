@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lilliput Elevation</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      min-height: 100vh;
+      height: auto;
+      background: #5f6368;
+    }
+
+    .liliput-wrap {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      max-width: 1240px;
+      margin: 0 auto;
+      background: #b9bcc0;
+      border: 1px solid #c8cad4;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 3px 16px rgba(0, 0, 0, .18);
+    }
+
+    .liliput-main {
+      padding: 14px;
+      background: #6d6868;
+      min-width: 0;
+    }
+
+    .canvas-shell {
+      background: #b9bcc0;
+      border: 1px solid #9da1a8;
+      border-radius: 6px;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    #cvLiliput {
+      width: 100%;
+      max-width: 980px;
+      height: auto;
+      margin: 0 auto;
+    }
+
+    .liliput-note {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding-top: 10px;
+    }
+
+    .mini-kpi {
+      background: #f9fafc;
+      border-radius: 6px;
+      padding: 8px;
+      color: #1c1c2e;
+      font-size: calc(11px * var(--font-scale));
+    }
+
+    .mini-kpi strong {
+      display: block;
+      color: #1560c8;
+      font-size: calc(16px * var(--font-scale));
+    }
+
+    @media (max-width: 760px) {
+      .liliput-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .liliput-note {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Cubicle</a>
+    <a href="locker.html">Locker</a>
+    <a href="calculate.html">Partition</a>
+    <a href="liliput.html" aria-current="page">Lilliput</a>
+    <div class="font-controls" aria-label="Font size controls">
+      <button type="button" class="font-btn" onclick="changeFontSize(1)" title="Increase font size">A+</button>
+      <button type="button" class="font-btn" onclick="changeFontSize(-1)" title="Decrease font size">A-</button>
+    </div>
+  </nav>
+
+  <div class="liliput-wrap">
+    <aside class="sidebar">
+      <h2>Lilliput Elevation</h2>
+      <div class="section-title">Layout</div>
+      <div class="row2">
+        <div class="fg">
+          <label>Total width (mm)</label>
+          <input type="number" id="totalWidth" value="4200" min="1200" step="50" oninput="calculate()">
+        </div>
+        <div class="fg">
+          <label>Partitions</label>
+          <input type="number" id="panelCount" value="4" min="2" max="8" oninput="calculate()">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="fg">
+          <label>Panel ht (mm)</label>
+          <input type="number" id="panelHeight" value="1200" min="800" step="25" oninput="calculate()">
+        </div>
+        <div class="fg">
+          <label>Pilaster ht (mm)</label>
+          <input type="number" id="pilasterHeight" value="1600" min="1000" step="25" oninput="calculate()">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="fg">
+          <label>Pilaster width</label>
+          <input type="number" id="pilasterWidth" value="320" min="160" step="10" oninput="calculate()">
+        </div>
+        <div class="fg">
+          <label>Shoe height</label>
+          <input type="number" id="shoeHeight" value="140" min="60" step="10" oninput="calculate()">
+        </div>
+      </div>
+
+      <div class="section-title">Shades</div>
+      <div class="row2">
+        <div class="fg">
+          <label>Wave panel</label>
+          <input type="color" id="panelShade" value="#9ad33e" oninput="calculate()">
+        </div>
+        <div class="fg">
+          <label>Pilaster</label>
+          <input type="color" id="pilasterShade" value="#2f9472" oninput="calculate()">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="fg">
+          <label>Wall</label>
+          <input type="color" id="wallShade" value="#8a7352" oninput="calculate()">
+        </div>
+        <div class="fg">
+          <label>Floor</label>
+          <input type="color" id="floorShade" value="#30333d" oninput="calculate()">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>
+          <input type="checkbox" id="showArtwork" checked onchange="calculate()">
+          Kids rope artwork
+        </label>
+      </div>
+
+      <button class="calcbtn" type="button" onclick="calculate()">Draw Elevation</button>
+    </aside>
+
+    <main class="liliput-main">
+      <div class="canvas-shell">
+        <canvas id="cvLiliput" width="980" height="640"></canvas>
+      </div>
+      <div class="liliput-note">
+        <div class="mini-kpi"><strong id="kWidth">-</strong>Total width</div>
+        <div class="mini-kpi"><strong id="kPanels">-</strong>Wave panels</div>
+        <div class="mini-kpi"><strong id="kPilasters">-</strong>Pilasters</div>
+        <div class="mini-kpi"><strong id="kHeight">-</strong>Max height</div>
+      </div>
+    </main>
+  </div>
+
+  <script src="font-size.js"></script>
+  <script>
+    function cadClear(ctx) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+
+    function dimLine(ctx, x1, y1, x2, y2, label, color, side) {
+      color = color || '#1560c8';
+      side = (side !== undefined) ? side : -1;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.5;
+      var isH = Math.abs(y1 - y2) < 0.5;
+      var tk = 5;
+
+      if (isH) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1 - tk);
+        ctx.lineTo(x1, y1 + tk);
+        ctx.moveTo(x2, y2 - tk);
+        ctx.lineTo(x2, y2 + tk);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(x1 - tk, y1);
+        ctx.lineTo(x1 + tk, y1);
+        ctx.moveTo(x2 - tk, y2);
+        ctx.lineTo(x2 + tk, y2);
+        ctx.stroke();
+      }
+
+      ctx.setLineDash([4, 2]);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      var ang = Math.atan2(y2 - y1, x2 - x1);
+      [[x1, y1, ang + Math.PI], [x2, y2, ang]].forEach(function (pt) {
+        ctx.beginPath();
+        ctx.moveTo(pt[0], pt[1]);
+        ctx.lineTo(pt[0] + 7 * Math.cos(pt[2] - 0.3), pt[1] + 7 * Math.sin(pt[2] - 0.3));
+        ctx.lineTo(pt[0] + 7 * Math.cos(pt[2] + 0.3), pt[1] + 7 * Math.sin(pt[2] + 0.3));
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      var mx = (x1 + x2) / 2;
+      var my = (y1 + y2) / 2;
+      var lx = isH ? mx : mx + side * 14;
+      var ly = isH ? my + side * 11 : my;
+      ctx.font = '13px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var tw = ctx.measureText(label).width;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(lx - tw / 2 - 3, ly - 7, tw + 6, 14);
+      ctx.fillStyle = color;
+      ctx.fillText(label, lx, ly);
+      ctx.restore();
+    }
+
+    function leader(ctx, x1, y1, x2, y2, text, color) {
+      color = color || '#444';
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      var headlen = 8;
+      var angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + headlen * Math.cos(angle + Math.PI / 6), y1 + headlen * Math.sin(angle + Math.PI / 6));
+      ctx.lineTo(x1 + headlen * Math.cos(angle - Math.PI / 6), y1 + headlen * Math.sin(angle - Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.font = '12px monospace';
+      ctx.textAlign = x2 > x1 ? 'left' : 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x2, y2);
+      ctx.restore();
+    }
+
+    function roundedTopPanel(ctx, x, y, w, h, r, fill) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h);
+      ctx.lineTo(x, y + h);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.28)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function drawWavePanel(ctx, x, baseY, w, h, fill, index) {
+      var topY = baseY - h;
+      var lift = h * 0.12;
+      var dip = h * 0.06;
+      ctx.beginPath();
+      ctx.moveTo(x, baseY);
+      ctx.lineTo(x, topY + lift);
+      ctx.bezierCurveTo(x + w * 0.28, topY - dip, x + w * 0.58, topY - dip, x + w, topY + lift);
+      ctx.lineTo(x + w, baseY);
+      ctx.closePath();
+
+      var grad = ctx.createLinearGradient(x, topY, x, baseY);
+      grad.addColorStop(0, fill);
+      grad.addColorStop(1, shade(fill, -8));
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(55,80,35,.55)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x + w * 0.48, topY + h * 0.45, w * 0.35, h * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = 'rgba(43,67,30,.85)';
+      ctx.textAlign = 'center';
+      ctx.fillText('PANEL ' + (index + 1), x + w / 2, baseY - 26);
+    }
+
+    function drawShoe(ctx, x, y, w, h) {
+      var grad = ctx.createLinearGradient(x, y, x + w, y);
+      grad.addColorStop(0, '#d8d8d8');
+      grad.addColorStop(0.45, '#ffffff');
+      grad.addColorStop(1, '#9b9b9b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#8a8a8a';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, w, h);
+
+      ctx.fillStyle = 'rgba(0,0,0,.15)';
+      ctx.fillRect(x, y + h, w, Math.max(10, h * 0.35));
+    }
+
+    function drawWallAndFloor(ctx, r, ox, oy, pw, ph, floorY) {
+      var cw = ctx.canvas.width;
+      var ch = ctx.canvas.height;
+
+      ctx.fillStyle = r.wallShade;
+      ctx.fillRect(0, 0, cw, floorY);
+      ctx.fillStyle = 'rgba(0,0,0,.12)';
+      for (var x = ox; x <= ox + pw + 1; x += pw / r.count) {
+        ctx.fillRect(x, 0, 3, floorY);
+      }
+
+      var floorGrad = ctx.createLinearGradient(0, floorY, 0, ch);
+      floorGrad.addColorStop(0, shade(r.floorShade, 12));
+      floorGrad.addColorStop(1, shade(r.floorShade, -12));
+      ctx.fillStyle = floorGrad;
+      ctx.fillRect(0, floorY, cw, ch - floorY);
+
+      ctx.strokeStyle = 'rgba(255,255,255,.16)';
+      ctx.lineWidth = 1;
+      for (var tx = -60; tx < cw + 80; tx += 110) {
+        ctx.beginPath();
+        ctx.moveTo(tx, floorY);
+        ctx.lineTo(tx + 70, ch);
+        ctx.stroke();
+      }
+      for (var ty = floorY + 45; ty < ch; ty += 52) {
+        ctx.beginPath();
+        ctx.moveTo(0, ty);
+        ctx.lineTo(cw, ty);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(0,0,0,.35)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ox - 10, floorY);
+      ctx.lineTo(ox + pw + 10, floorY);
+      ctx.stroke();
+    }
+
+    function drawKid(ctx, x, y, scale, shirt, pants, hair) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      ctx.strokeStyle = '#1e1e1e';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, -170);
+      ctx.bezierCurveTo(-12, -110, 20, -70, 0, 5);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f3c59b';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(-14, -70);
+      ctx.lineTo(-42, -46);
+      ctx.moveTo(14, -70);
+      ctx.lineTo(30, -105);
+      ctx.moveTo(-10, -18);
+      ctx.lineTo(-36, 20);
+      ctx.moveTo(12, -18);
+      ctx.lineTo(38, 14);
+      ctx.stroke();
+
+      ctx.fillStyle = shirt;
+      ctx.beginPath();
+      ctx.roundRect(-22, -82, 44, 60, 12);
+      ctx.fill();
+
+      ctx.fillStyle = pants;
+      ctx.fillRect(-20, -26, 20, 22);
+      ctx.fillRect(0, -26, 20, 22);
+
+      ctx.fillStyle = '#f3c59b';
+      ctx.beginPath();
+      ctx.arc(0, -112, 24, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = hair;
+      ctx.beginPath();
+      ctx.arc(0, -120, 27, Math.PI, Math.PI * 2);
+      ctx.quadraticCurveTo(24, -124, 20, -92);
+      ctx.quadraticCurveTo(5, -102, -22, -96);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#1e1e1e';
+      ctx.beginPath();
+      ctx.arc(-8, -112, 2.8, 0, Math.PI * 2);
+      ctx.arc(8, -112, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#a24f45';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -105, 8, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#e43d3d';
+      ctx.fillRect(-42, 18, 18, 8);
+      ctx.fillStyle = '#22aa76';
+      ctx.fillRect(30, 12, 18, 8);
+      ctx.restore();
+    }
+
+    function shade(hex, percent) {
+      var clean = hex.replace('#', '');
+      var num = parseInt(clean, 16);
+      var amt = Math.round(2.55 * percent);
+      var r = Math.max(0, Math.min(255, (num >> 16) + amt));
+      var g = Math.max(0, Math.min(255, ((num >> 8) & 0x00ff) + amt));
+      var b = Math.max(0, Math.min(255, (num & 0x0000ff) + amt));
+      return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+    }
+
+    function readNumber(id, fallback) {
+      var value = Number(document.getElementById(id).value);
+      return Number.isFinite(value) && value > 0 ? value : fallback;
+    }
+
+    function calculate() {
+      var r = {
+        W: readNumber('totalWidth', 4200),
+        count: Math.max(2, Math.min(8, Math.round(readNumber('panelCount', 4)))),
+        panelH: readNumber('panelHeight', 1200),
+        pilH: readNumber('pilasterHeight', 1600),
+        pilW: readNumber('pilasterWidth', 320),
+        shoeH: readNumber('shoeHeight', 140),
+        panelShade: document.getElementById('panelShade').value,
+        pilasterShade: document.getElementById('pilasterShade').value,
+        wallShade: document.getElementById('wallShade').value,
+        floorShade: document.getElementById('floorShade').value,
+        showArtwork: document.getElementById('showArtwork').checked
+      };
+
+      r.pilasters = r.count + 1;
+      r.panelW = Math.max(120, (r.W - (r.pilasters * r.pilW)) / r.count);
+      drawElev(r);
+
+      document.getElementById('kWidth').textContent = Math.round(r.W) + ' mm';
+      document.getElementById('kPanels').textContent = r.count;
+      document.getElementById('kPilasters').textContent = r.pilasters;
+      document.getElementById('kHeight').textContent = Math.round(r.pilH) + ' mm';
+    }
+
+    function drawElev(r) {
+      var cv = document.getElementById('cvLiliput');
+      var ctx = cv.getContext('2d');
+      var CW = cv.width;
+      var CH = cv.height;
+      cadClear(ctx);
+
+      var mL = 70;
+      var mR = 70;
+      var mT = 64;
+      var mB = 130;
+      var dW = CW - mL - mR;
+      var dH = CH - mT - mB;
+      var scale = Math.min(dW / r.W, dH / r.pilH);
+      var ox = mL + (dW - r.W * scale) / 2;
+      var oy = mT;
+      var pw = r.W * scale;
+      var floorY = oy + r.pilH * scale;
+      var panelHpx = r.panelH * scale;
+      var pilHpx = r.pilH * scale;
+      var pilWpx = r.pilW * scale;
+      var panelWpx = r.panelW * scale;
+      var shoeHpx = r.shoeH * scale;
+
+      drawWallAndFloor(ctx, r, ox, oy, pw, pilHpx, floorY);
+
+      var x = ox;
+      var pilasterRects = [];
+      var panelRects = [];
+      for (var i = 0; i < r.pilasters; i++) {
+        pilasterRects.push({ x: x, y: floorY - pilHpx, w: pilWpx, h: pilHpx });
+        x += pilWpx;
+
+        if (i < r.count) {
+          panelRects.push({ x: x, y: floorY - panelHpx, w: panelWpx, h: panelHpx });
+          x += panelWpx;
+        }
+      }
+
+      for (var p = 0; p < panelRects.length; p++) {
+        drawWavePanel(ctx, panelRects[p].x, floorY - shoeHpx * 0.25, panelRects[p].w, panelRects[p].h, r.panelShade, p);
+      }
+
+      for (var j = 0; j < pilasterRects.length; j++) {
+        var pil = pilasterRects[j];
+        roundedTopPanel(ctx, pil.x, pil.y, pil.w, pil.h, Math.min(38, pil.w / 2), r.pilasterShade);
+        drawShoe(ctx, pil.x + pil.w * 0.14, floorY, pil.w * 0.72, shoeHpx);
+
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(pil.x + pil.w * 0.18, pil.y + 30, pil.w * 0.22, pil.h - 70);
+        ctx.restore();
+      }
+
+      if (r.showArtwork) {
+        var artY = oy + pilHpx * 0.30;
+        var gap = pw / Math.max(1, r.count);
+        var colors = [
+          ['#1f9bd6', '#30353c', '#6d1b1b'],
+          ['#7d3fb4', '#b72238', '#1e8a46'],
+          ['#d72235', '#1d9c62', '#653418'],
+          ['#27a568', '#e5962c', '#d58a22'],
+          ['#cf4f9e', '#7338a4', '#715322']
+        ];
+        for (var k = 0; k < Math.min(5, r.count + 1); k++) {
+          var c = colors[k % colors.length];
+          drawKid(ctx, ox + gap * (k + 0.35), artY + (k % 2) * 26, 0.55, c[0], c[1], c[2]);
+        }
+        leader(ctx, ox + gap * 0.36, artY - 88, ox + gap * 0.05, artY - 115, 'ROPE ARTWORK', '#1c1c2e');
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(CW - 170, 20, 130, 54);
+      ctx.strokeStyle = '#d7d7d7';
+      ctx.strokeRect(CW - 170, 20, 130, 54);
+      ctx.fillStyle = '#1f2e64';
+      ctx.font = 'bold 30px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('CubiQ', CW - 105, 48);
+
+      dimLine(ctx, ox, oy - 22, ox + pw, oy - 22, Math.round(r.W) + 'mm', '#2f3440', -1);
+      dimLine(ctx, ox + pw + 24, floorY - pilHpx, ox + pw + 24, floorY, Math.round(r.pilH) + 'mm', '#2f3440', 1);
+      if (panelRects.length) {
+        dimLine(ctx, panelRects[0].x, floorY + 48, panelRects[0].x + panelRects[0].w, floorY + 48, Math.round(r.panelW) + 'mm', '#2f3440', 1);
+      }
+      dimLine(ctx, pilasterRects[0].x, floorY + 78, pilasterRects[0].x + pilasterRects[0].w, floorY + 78, Math.round(r.pilW) + 'mm', '#2f3440', 1);
+
+      leader(ctx, pilasterRects[0].x + pilasterRects[0].w / 2, floorY - pilHpx / 2, ox - 36, floorY - pilHpx / 2, 'PISTA PILASTER', '#2f3440');
+      leader(ctx, panelRects[0].x + panelRects[0].w / 2, floorY - panelHpx * 0.45, panelRects[0].x + panelRects[0].w * 0.55, floorY - panelHpx - 46, 'PARROT GREEN WAVE PANEL', '#2f3440');
+      leader(ctx, pilasterRects[0].x + pilasterRects[0].w / 2, floorY + shoeHpx * 0.45, ox - 30, floorY + shoeHpx * 0.5, 'SS SHOE', '#2f3440');
+
+      ctx.fillStyle = '#1c1c2e';
+      ctx.font = '28px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('LILLIPUT', CW / 2, CH - 36);
+
+      var btnX = 14;
+      var btnY = CH - 54;
+      var btnW = 124;
+      var btnH = 24;
+      ctx.fillStyle = '#2a2e45';
+      ctx.beginPath();
+      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
+      ctx.fill();
+      ctx.font = 'bold 10px monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
+
+      cv.onclick = function (e) {
+        var rect = cv.getBoundingClientRect();
+        var clickX = (e.clientX - rect.left) * (cv.width / rect.width);
+        var clickY = (e.clientY - rect.top) * (cv.height / rect.height);
+        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+          var link = document.createElement('a');
+          link.download = 'lilliput-elevation.png';
+          link.href = cv.toDataURL('image/png');
+          link.click();
+        }
+      };
+    }
+
+    calculate();
+  </script>
+</body>
+</html>
