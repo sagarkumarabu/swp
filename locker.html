@@ -111,7 +111,7 @@
 
     </td>
     <td><div class="summary">
-       <h3 style="text-align:center; margin-bottom: 10px;">Summary</h3>
+       <button type="button" onclick="exportExcel();">Download</button>
        <table style="width: 100%; border-collapse: collapse; text-align: left;">
            <thead>
                <tr style="background: #f1f1f1;">
@@ -121,7 +121,7 @@
                    <th style="border: 1px solid #ccc; padding: 6px;">Thickness</th>
                </tr>
            </thead>
-           <tbody id="summaryBody">
+           <tbody id="summaryTable">
            </tbody>
        </table>
        <div id="sheetResult" class="sheet-result"></div>
@@ -129,9 +129,38 @@
     </div>
     <script src="font-size.js"></script>
     <script>
-         const sheets = [
+          function exportExcel() {
+      var table = document.getElementById("summaryTable");
+      var rows = table.querySelectorAll("tr");
+      var csv = [];
+      for (var i = 0; i < rows.length; i++) {
+        var row = [], cols = rows[i].querySelectorAll("td, th");
+        for (var j = 0; j < cols.length; j++) {
+          var data = cols[j].innerText.replace(/"/g, '""');
+          row.push('"' + data + '"');
+        }
+        csv.push(row.join(","));
+      }
+      var csvString = csv.join("\n");
+      var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      var link = document.createElement("a");
+      var url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "Summary.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+        
+
+         const sheets9mm = [
         { name: "12 x 6 feet", width: 3670, height: 1860 },
         { name: "14 x 6 feet", width: 4300, height: 1860 },
+        { name: "8 x 4 feet", width: 2438, height: 1219 }
+      ];
+       const sheets3mm = [
+        { name: "12 x 6 feet", width: 3670, height: 1860 },
         { name: "8 x 4 feet", width: 2438, height: 1219 }
       ];
         let currentColor = '#e9ecef';
@@ -343,12 +372,13 @@
                 }
                 if (zDoorsQty > 0) addSummaryRow('Z-Shutter', zDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1), '9 mm', rw, lockerH * 0.65);
                 addSummaryRow('Lock', totalDoors, '-');
-                addSummaryRow('Hinges', totalDoors * 3, '-');
-                addSummaryRow('U-channel', (totalDoors + 1)*2, '-');
-                addSummaryRow('Half-round', (totalDoors +1)*4, '-');
+                addSummaryRow('Hinges', totalDoors * 2, '-');
+                addSummaryRow('front-channel', (colCount + 1), '-');
+                addSummaryRow('back-channel', (colCount + 1), '-');
+                addSummaryRow('Half-round', (colCount +1)*4, '-');
                 
-                var summaryBody = document.getElementById('summaryBody');
-                if (summaryBody) summaryBody.innerHTML = summaryHtml;
+                var summaryTable = document.getElementById('summaryTable');
+                if (summaryTable) summaryTable.innerHTML = summaryHtml;
                 drawRequiredSheets(panelParts);
             }
         }
@@ -489,13 +519,19 @@
                 if (!groups[part.thickness]) groups[part.thickness] = [];
                 groups[part.thickness].push(part);
             });
+            
+            var sheetCounts = {};
 
             Object.keys(groups).sort().forEach(function(thickness) {
-                var packedSheets = packPanels(groups[thickness], sheets);
+                var availableSheets = getSheetsForThickness(thickness);
+                var packedSheets = getRequiredSheets(groups[thickness], availableSheets);
+                var planStats = getPlanStats(packedSheets);
                 var thicknessTitle = document.createElement('h4');
                 thicknessTitle.textContent = thickness + ' panels: ' + packedSheets.length + ' sheet(s)';
                 thicknessTitle.style.margin = '10px 0 4px';
                 container.appendChild(thicknessTitle);
+                
+                sheetCounts[thickness] = packedSheets.length;
 
                 if (packedSheets.length === 0) {
                     var warning = document.createElement('div');
@@ -504,6 +540,13 @@
                     container.appendChild(warning);
                     return;
                 }
+
+                var planInfo = document.createElement('div');
+                planInfo.style.fontSize = '12px';
+                planInfo.style.marginBottom = '6px';
+                planInfo.innerHTML = 'Total used: ' + (planStats.usedArea / 1000000).toFixed(2) +
+                    ' sq.m | Total balance: ' + (planStats.wasteArea / 1000000).toFixed(2) + ' sq.m';
+                container.appendChild(planInfo);
 
                 packedSheets.forEach(function(sheet, index) {
                     var card = document.createElement('div');
@@ -529,6 +572,72 @@
                     drawSheetCanvas(canvas, sheet);
                     container.appendChild(card);
                 });
+            });
+            
+            var summaryTable = document.getElementById('summaryTable');
+            if (summaryTable) {
+                Object.keys(sheetCounts).forEach(function(thickness) {
+                    if (sheetCounts[thickness] > 0) {
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = '<td style="border: 1px solid #ccc; padding: 6px;">HPL Sheet ' + thickness + '</td>' +
+                                       '<td style="border: 1px solid #ccc; padding: 6px;">' + sheetCounts[thickness] + '</td>' +
+                                       '<td style="border: 1px solid #ccc; padding: 6px;">-</td>' +
+                                       '<td style="border: 1px solid #ccc; padding: 6px;">' + thickness + '</td>';
+                        summaryTable.appendChild(tr);
+                    }
+                });
+            }
+        }
+
+        function getSheetsForThickness(thickness) {
+            return thickness === '3 mm' ? sheets3mm : sheets9mm;
+        }
+
+        function getRequiredSheets(parts, availableSheets) {
+            var candidates = [];
+
+            availableSheets.forEach(function(stock) {
+                candidates.push(packPanels(parts, [stock]));
+            });
+
+            candidates.push(packPanels(parts, availableSheets));
+
+            return candidates.reduce(function(best, plan) {
+                if (!plan || plan.length === 0) return best;
+                if (!best || isBetterSheetPlan(plan, best)) return plan;
+                return best;
+            }, null) || [];
+        }
+
+        function isBetterSheetPlan(nextPlan, currentPlan) {
+            var next = getPlanStats(nextPlan);
+            var current = getPlanStats(currentPlan);
+
+            if (Math.abs(next.wasteArea - current.wasteArea) > 0.1) {
+                return next.wasteArea < current.wasteArea;
+            }
+            if (next.sheetCount !== current.sheetCount) {
+                return next.sheetCount < current.sheetCount;
+            }
+            return next.totalArea < current.totalArea;
+        }
+
+        function getPlanStats(plan) {
+            return plan.reduce(function(stats, sheet) {
+                var usedArea = sheet.items.reduce(function(total, item) {
+                    return total + item.finalW * item.finalH;
+                }, 0);
+                var sheetArea = sheet.stock.width * sheet.stock.height;
+                stats.usedArea += usedArea;
+                stats.totalArea += sheetArea;
+                stats.wasteArea += sheetArea - usedArea;
+                stats.sheetCount += 1;
+                return stats;
+            }, {
+                usedArea: 0,
+                totalArea: 0,
+                wasteArea: 0,
+                sheetCount: 0
             });
         }
 
