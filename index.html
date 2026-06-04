@@ -172,8 +172,16 @@
         <div class="tab" id="tab-summary" onclick="switchTab('summary')">Summary</div><!-- Added Tab -->
       </div>
       <div class="drawing-area">
-        <canvas id="cvFloor" width="750" height="400"></canvas>
-        <canvas id="cvElev" width="750" height="400" style="display:none"></canvas>
+        <div style="position: relative;">
+          <canvas id="cvFloor" width="750" height="400"></canvas>
+          <button id="floorb" type="button" onclick="downloadFloor()"
+           class="floorb">DOWNLOAD</button>
+        </div>
+        <div style="position: relative;">
+          <canvas id="cvElev" width="750" height="400" style="display:none"></canvas>
+          <button id="downloadElevBtn" type="button" onclick="downloadElevation()" 
+           class="floorb">DOWNLOAD</button>
+        </div>
         <!-- Dynamic nested layouts will append here container -->
         <div id="sheetLayouts" style="height:400px;  display:none;"></div>
         <div id="summaryArea" style="display:none; padding: 20px; overflow-y:auto; height: 100%; box-sizing: border-box;">
@@ -636,7 +644,9 @@
       document.getElementById('tab-nesting').classList.toggle('active', tab === 'nesting');
       document.getElementById('tab-summary').classList.toggle('active', tab === 'summary');
       document.getElementById('cvFloor').style.display = tab === 'floor' ? 'block' : 'none';
+      document.getElementById('floorb').style.display = tab === 'floor' ? 'block' : 'none';
       document.getElementById('cvElev').style.display = tab === 'elev' ? 'block' : 'none';
+      document.getElementById('downloadElevBtn').style.display = tab === 'elev' ? 'block' : 'none';
       document.getElementById('sheetLayouts').style.display = tab === 'nesting' ? 'block' : 'none';
       document.getElementById('summaryArea').style.display = tab === 'summary' ? 'block' : 'none';
       if (tab !== 'nesting') {
@@ -1048,7 +1058,7 @@
         var labelY = oy + ph - (doorWpx + 25); // Safely clear both the pot at the top and open doors at the bottom
 
         ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#2a2e45';
-        ctx.fillText('S' + (i + 1), sx + sw / 2, labelY);
+        ctx.fillText('C' + (i + 1), sx + sw / 2, labelY);
         ctx.font = '10px monospace'; ctx.fillStyle = '#6a7090';
         ctx.fillText(Math.round(r.stallWidths[i]) + 'mm', sx + sw / 2, labelY + 14);
       }
@@ -1074,8 +1084,8 @@
       }
 
       /* Footer Layout Blocks & Monochromatic Legend */
-      ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
-      ctx.fillText('FLOOR PLAN', ox, CH - 22);
+      // ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
+      // ctx.fillText('FLOOR PLAN', ox, CH - 22);
       ctx.font = '9px monospace'; ctx.fillStyle = '#7a7d8c'; ctx.textAlign = 'right';
       ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
 
@@ -1088,33 +1098,7 @@
         ctx.font = '7px monospace'; ctx.fillStyle = '#555'; ctx.textAlign = 'left';
         ctx.fillText(sw2[i].t, ox + i * 135 + 11, CH - 4);
       }
-      /* === DOWNLOAD BUTTON INTERFACE === */
-      var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
 
-      // 1. Draw Button Graphic Layout Background
-      ctx.fillStyle = '#2a2e45';
-      ctx.beginPath();
-      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
-      ctx.fill();
-
-      // 2. Draw Button Label Text
-      ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
-
-      // 3. Click Event Handling Handler Logic
-      cv.onclick = function (e) {
-        var rect = cv.getBoundingClientRect();
-        var clickX = e.clientX - rect.left;
-        var clickY = e.clientY - rect.top;
-
-        // Check if user clicked within the button boundaries
-        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
-          var link = document.createElement('a');
-          link.download = 'cubicle-floor-plan.png';
-          link.href = cv.toDataURL('image/png');
-          link.click();
-        }
-      };
 
     }
     //-----------sheet
@@ -1558,31 +1542,24 @@
 
       leader(ctx, leftEndRect.x + leftEndRect.w / 2, floorY - pilHpx / 2,
         leftEndRect.x - 40, floorY - pilHpx / 2 , 'END PANEL', '#4a4a4a');
-      var btnX = 10, btnY = CH - 45, btnW = 120, btnH = 20;
-      ctx.fillStyle = '#2a2e45';
-      ctx.beginPath();
-      ctx.roundRect(btnX, btnY, btnW, btnH, 4);
-      ctx.fill();
-
-      ctx.font = 'bold 10px monospace';
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('DOWNLOAD PLAN', btnX + btnW / 2, btnY + btnH / 2);
-
-      cv.onclick = function (e) {
-        var rect = cv.getBoundingClientRect();
-        var clickX = e.clientX - rect.left;
-        var clickY = e.clientY - rect.top;
-
-        if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
-          var link = document.createElement('a');
-          link.download = 'cubicle-elevation.png';
-          link.href = cv.toDataURL('image/png');
-          link.click();
-        }
-      };
     }
+
+    function downloadFloor() {
+      var cv = document.getElementById('cvFloor');
+      var link = document.createElement('a');
+      link.download = 'cubicle-floor-plan.png';
+      link.href = cv.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadElevation() {
+      var cv = document.getElementById('cvElev');
+      var link = document.createElement('a');
+      link.download = 'cubicle-elevation.png';
+      link.href = cv.toDataURL('image/png');
+      link.click();
+    }
+
     buildStallInputs();
     buildPalette();
     calculate();

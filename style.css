@@ -328,3 +328,8 @@
         grid-template-columns: 1fr 1fr
       }
     }
+.floorb{
+  position: absolute; bottom: 10px; left: 10px; padding: 2px; 
+           background: #2a2e45; color: white; border: none; border-radius: 4px; 
+           cursor: pointer;
+}
