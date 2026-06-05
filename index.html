@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cubicle Calculator</title>
+  <title>Cubicle </title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,16 +18,8 @@
     </nav>
   <div class="wrap">
     <div class="sidebar">
-      <h2>Cubicle Partition Calculator</h2>
+      <h2>Cubicle Partition </h2>
       <div class="err" id="errBox"></div>
-      <div class="fg">
-        <label>Item</label>
-        <select id="item">
-          <option value="cubicle">Cubicle</option>
-          <option value="urinal">Urinal</option>
-          <option value="locker">Locker</option>
-        </select>
-      </div>
       <div class="fg">
         <label>Wall type</label>
         <select id="wall">
@@ -50,16 +42,18 @@
       <div class="stall-inputs hidden" id="stallWidthFields"></div>
       <div class="section-title">Area Dimensions</div>
       <div class="row2">
-        <div class="fg"><label>Total width (mm)</label><input type="number" id="totalwidth" value="2000" min="1000">
+        <div class="fg"><label>Total width (mm)</label>
+          <input type="number" id="totalwidth" value="2000" min="1000">
         </div>
-        <div class="fg"><label>Depth (mm)</label><input type="number" id="depth" value="1500" min="500"></div>
+        <div class="fg"><label>Depth (mm)</label>
+          <input type="number" id="depth" value="1500" min="500"></div>
       </div>
 
-      <div class="section-title">End Panel Settings</div>
+      <div class="section-title"></div>
       <div class="fg">
         <label>End panel distribution</label>
         <select id="endpanelEqual" onchange="toggleEndpanel()">
-          <option value="equal">Equal both sides</option>
+          <option value="equal">Equal </option>
           <option value="unequal">Unequal</option>
         </select>
       </div>
@@ -76,11 +70,11 @@
         </div>
       </div>
 
-      <div class="section-title">Component Heights / Widths</div>
+      <div class="section-title"></div>
       <div class="row3"> 
-       <div class="fg">ump  height:<input type="number" value="900" id="umph"></div>
-       <div class="fg">ump  width:<input type="number" value="450" id="umpw"></div>  
-       <div class="fg">quantity:<input type="number" value="0" id="umpq"></div>       
+       <div class="fg"><label>UMP height:</label><input type="number" value="900" id="umph"></div>
+       <div class="fg"><label>UMP width:</label><input type="number" value="450" id="umpw"></div>  
+       <div class="fg"><label>Quantity:</label><input type="number" value="0" id="umpq"></div>       
       </div>
       <div class="row2">
         <div class="fg"><label>Divider ht (mm)</label>
@@ -160,10 +154,10 @@
           <div class="val" id="kendwall">-</div>
           <div class="lbl">End Walls</div>
         </div>
-          <DIV class="kpi">
+          <div class="kpi">
             <div class="val" id="kump">-</div>
-            <div class="lbl">Ump</div>
-          </DIV>
+            <div class="lbl">UMP</div>
+          </div>
       </div>
       <div class="tabs">
         <div class="tab active" id="tab-floor" onclick="switchTab('floor')">Floor Plan</div>
@@ -185,16 +179,15 @@
         <!-- Dynamic nested layouts will append here container -->
         <div id="sheetLayouts" style="height:400px;  display:none;"></div>
         <div id="summaryArea" style="display:none; padding: 20px; overflow-y:auto; height: 100%; box-sizing: border-box;">
-          <h3 style="margin-top: 0;">Hardware & Material Summary</h3>
-          <button onclick="exportExcel()"
-           style="margin-bottom: 15px; padding: 6px 12px; cursor: pointer;
-            background: #2e7d32; color: white; border: none; border-radius: 4px;">
-            Download Excel (CSV)</button>
+          
+          <button onclick="exportExcel()" class="summary-btn">
+            Download Excel</button>
           <table id="summaryTable" style="width: 100%; border-collapse: collapse; text-align: left; background: #fff;">
             <thead>
               <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
                 <th style="padding: 8px;">Item</th>
                 <th style="padding: 8px;">Quantity / Value</th>
+                <th style="padding: 8px;"> Dimension</th>
               </tr>
             </thead>
             <tbody id="summaryTbody">
@@ -206,11 +199,11 @@
         <div class="sz">Cubicle width: <span id="szCW">-</span></div>
         <div class="sz">Divider (W x H): <span id="szDiv">-</span></div>
         <div class="sz">Door (W x H): <span id="szDoor">-</span></div>
-        <div class="sz">End panel (W x H): <span id="szEP">-</span></div>
+        <div class="sz">End wall (W x H): <span id="szEP">-</span></div>
         <div class="sz">Mid panel (W x H): <span id="szMP">-</span></div>
         <div class="sz">End panel L: <span id="szEQL">-</span></div>
         <div class="sz">End panel R: <span id="szEQR">-</span></div>
-        <div class="sz">Net surface area: <span id="szNet">-</span> m2</div>
+        <div class="sz">Overall height: <span id="szNet">-</span> mm</div>
       </div>
     </div>
   </div>
@@ -219,8 +212,7 @@
     var result = null;
     var activeTab = 'floor';
     const solids = [
-      { id: 'solid1', name: 'Q 13', color: '#fcf8f1', 
-      doorImg: 'https://www.cubiq.in/wp-content/uploads/2025/10/onex-rc-13xl.png' },
+      { id: 'solid1', name: 'Q 13', color: '#fcf8f1',  },
       { id: 'solid5', name: 'RC 15', color: '#f7df37' },
       { id: 'solid6', name: 'Q 17', color: '#f9f1e5' },
       { id: 'solid7', name: 'Q 601', color: '#fdfdfd' },
@@ -251,11 +243,7 @@
       { id: 'solid29', name: 'Q 886', color: '#e0dad7' },
       { id: 'solid30', name: 'Q 887', color: '#989898' },
       { id: 'solid31', name: 'Q 888', color: '#cbbeb3' },
-      { id: 'solid32', name: 'Q 889', color: '#474747' },
-       { id: 'solid33', name: 'Light Ash / Birch', color: '#e8cca3' },
-  { id: 'solid34', name: 'Natural Oak', color: '#c49a6c' },
-  { id: 'solid35', name: 'Warm Cherry Wood', color: '#9a5332' },
-  { id: 'solid36', name: 'Dark Walnut', color: '#4a3225' }
+      { id: 'solid32', name: 'Q 889', color: '#474747' }
     ];
 
     function buildPalette() {
@@ -317,14 +305,14 @@
         originalParts.push({
           label: 'EP' + (i + 1),
           finalW: r.endPanelW,
-          finalH: r.dH
+          finalH: r.pilH
         });
       }
       for (let i = 0; i < r.countMid; i++) {
         originalParts.push({
           label: 'MID' + (i + 1),
           finalW: r.midPanelW,
-          finalH: r.dH
+          finalH: r.pilH
         });
       }
       for (let i = 0; i < r.umpq; i++) {
@@ -686,18 +674,41 @@
          });
       }
       var remainArea = totalArea - usedArea;
+      var sheetTypeName = plan && plan.sheetType ? plan.sheetType.name : '';
+      var wallMap = { l: 1, c: 0, s: 2 };
+      var endWallCount = wallMap[document.getElementById('wall').value] || 0;
+
+      // Compute dimension strings (match the sizing-box values)
+      var minW = (r.stallWidths && r.stallWidths.length) ? Math.min.apply(null, r.stallWidths) : (r.W || 0);
+      var maxW = (r.stallWidths && r.stallWidths.length) ? Math.max.apply(null, r.stallWidths) : (r.W || 0);
+      var cubicleWidthStr = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
+      var dividerDim = (r.D || '') + ' x ' + (r.dH || '') + ' mm';
+      var doorDim = (r.doorW || '') + ' x ' + (r.doorH || '') + ' mm';
+      var endPanelDim = Math.round(r.endPanelW || 0) + ' x ' + (r.pilH || '') + ' mm';
+      var midPanelDim = Math.round(r.midPanelW || 0) + ' x ' + (r.pilH || '') + ' mm';
+      var ewLDim = Math.round(r.D || 0) + ' x ' + (r.doorH || '') + ' mm';
+      var ewRDim = Math.round(r.ewR || 0) + ' x ' + (r.pilH || '') + ' mm';
+      var netDim = (typeof r.theight !== 'undefined') ? r.theight.toFixed(2) + ' mm' : '';
+
       var html = `
-        <tr><td >HPL Sheets Required</td><td >${sheetsReq} (${plan ? plan.sheetType.name : ''})</td></tr>
-        <tr><td >Used Area</td><td >${(usedArea / 1e6).toFixed(3)} m²</td></tr>
-        <tr><td >Remaining Area</td><td >${(remainArea / 1e6).toFixed(3)} m²</td></tr>
-        <tr><td >Legs</td><td >${legCount}</td></tr>
-        <tr><td >Shoeboxes</td><td >${shoeboxCount}</td></tr>
-        <tr><td >Knobs</td><td >${knobCount}</td></tr>
-        <tr><td >Locks / Indicators</td><td >${lockCount}</td></tr>
-        <tr><td >Hinges</td><td >${hingeCount}</td></tr>
-        <tr><td >Coat Hooks</td><td >${coatHookCount}</td></tr>
-        <tr><td >Top Rail Length</td><td >${toprailLength}</td></tr>
-        <tr><td >Urinal Modesty Panels (UMP)</td><td >${umpCount}</td></tr>
+        <tr><td>HPL Sheets Required</td><td>${sheetsReq}</td><td>${sheetTypeName}</td></tr>
+        <tr><td>Cubicle width</td><td></td><td>${cubicleWidthStr}</td></tr>
+        <tr><td>Used Area</td><td>${(usedArea / 1e6).toFixed(3)} m²</td><td></td></tr>
+        <tr><td>Remaining Area</td><td>${(remainArea / 1e6).toFixed(3)} m²</td><td></td></tr>
+        <tr><td>Legs</td><td>${legCount}</td><td></td></tr>
+        <tr><td>Shoeboxes</td><td>${shoeboxCount}</td><td></td></tr>
+        <tr><td>Knobs</td><td>${knobCount}</td><td></td></tr>
+        <tr><td>Locks / Indicators</td><td>${lockCount}</td><td></td></tr>
+        <tr><td>Hinges</td><td>${hingeCount}</td><td></td></tr>
+        <tr><td>Coat Hooks</td><td>${coatHookCount}</td><td></td></tr>
+        <tr><td>Top Rail Length</td><td>${toprailLength}</td><td></td></tr>
+        <tr><td>Urinal Modesty Panels (UMP)</td><td>${umpCount}</td><td></td></tr>
+        <tr><td>Dividers</td><td>${r.countDividers}</td><td>${dividerDim}</td></tr>
+        <tr><td>Mid panels</td><td>${r.countMid}</td><td>${midPanelDim}</td></tr>
+        <tr><td>End panels</td><td>${r.countEnd}</td><td>${endPanelDim}</td></tr>
+        <tr><td>Doors</td><td>${r.countDoors}</td><td>${doorDim}</td></tr>
+        <tr><td>End Walls</td><td>${endWallCount}</td><td>${ewLDim} </td></tr>
+        <tr><td>Overall height</td><td></td><td>${netDim}</td></tr>
       `;
       tbody.innerHTML = html;
     }
@@ -806,12 +817,14 @@
       var countEnd = 2;
       var endPanelW = ewL;
       // Structural square meter accounting equations
-      var netArea = ((countDividers * D * dH) + (countDoors * doorW * doorH) + (countEnd * endPanelW * dH) + (countMid * midPanelW * dH) + (umpq * umpw * umph)) / 1e6;
-      var grossArea = netArea * 1.12;
+      var legH = supportType === 'none' ? 0 : 150;
+      var theight = pilH + legH;
+      
+      var grossArea = theight * 1.12;
 
       result = {
         n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, doorShade, pilasterShade, topRailShade, ewL, ewR, ewEqual, stallWidths,
-        countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, netArea, grossArea, umph, umpw, umpq
+        countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, theight, grossArea, umph, umpw, umpq
       };
       //===============================
       const wallMap = { l: 1, c: 0, s: 2 };
@@ -827,11 +840,11 @@
       document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
       document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';
       document.getElementById('szDoor').textContent = doorW + ' x ' + doorH + ' mm';
-      document.getElementById('szEP').textContent = Math.round(endPanelW) + ' x ' + pilH + ' mm';
+      document.getElementById('szEP').textContent = Math.round(D) + ' x ' + dH + ' mm';
       document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
       document.getElementById('szEQL').textContent = Math.round(ewL) + 'x' + pilH + ' mm';
       document.getElementById('szEQR').textContent = Math.round(ewR) + 'x' + pilH + ' mm';
-      document.getElementById('szNet').textContent = netArea.toFixed(2);
+      document.getElementById('szNet').textContent = theight.toFixed(2);
 
       var bestPlan = generateNestingPlan(result, activeTab === 'nesting');
 
@@ -1301,13 +1314,16 @@
       ctx.lineTo(ox + pw + 15, floorY);
       ctx.stroke();
 
-      function drawPanel(rect, fill, stroke, lineWidth) {
+     function drawPanel(rect, fill, stroke, lineWidth) {
         if (rect.w <= 0) return;
+        var pHeight = r.supportType === 'shoebox' ? (r.pilH - 100) * scale : pilHpx;
+        if (pHeight < 0) pHeight = 0;
+        var pTop = floorY - pHeight; // align pilaster from bottom
         ctx.fillStyle = fill;
-        ctx.fillRect(rect.x, floorY - pilHpx, rect.w, pilHpx);
+        ctx.fillRect(rect.x, pTop, rect.w, pHeight);
         ctx.strokeStyle = stroke;
         ctx.lineWidth = lineWidth || 1.5;
-        ctx.strokeRect(rect.x, floorY - pilHpx, rect.w, pilHpx);
+        ctx.strokeRect(rect.x, pTop, rect.w, pHeight);
       }
 
       function drawPilasterLeg(x, align) {
@@ -1440,15 +1456,11 @@
         ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-// lock
-        let lockx = midPanelWpx;
-        let locky = doorHpx;
         var lockX = d.x + d.w + Math.max(8, 15 * scale);
         var lockY = knobY;
         var lockR = Math.max(4, 5 * scale);
         ctx.beginPath();
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.arc(knobX + lockx, knobY + locky + 1, lockR, 0, Math.PI * 2);
         ctx.arc(lockX, lockY + 1, lockR, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
@@ -1527,7 +1539,7 @@
       dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
       //enpanel
       var bY1 = floorY + 18, bY2 = floorY + 36, bY4 = floorY + 72;
-      var bY1 = bY1 + 5;
+      bY1 = bY1 + 5;
       dimLine(ctx, leftEndRect.x, bY1, leftEndRect.x + leftEndRect.w, bY1, Math.round(r.ewL) + 'mm', '#4a4a4a', 1);
       dimLine(ctx, rightEndRect.x, bY1, rightEndRect.x + rightEndRect.w, bY1, Math.round(r.ewR) + 'mm', '#4a4a4a', 1);
       //door
