@@ -23,8 +23,8 @@
       <div class="fg">
         <label>Wall type</label>
         <select id="wall">
-          <option value="l">L wall</option>
           <option value="c">C wall</option>
+          <option value="l">L wall</option>
           <option value="s">Straight wall</option>
         </select>
       </div>
@@ -617,7 +617,7 @@
       box.classList.remove('hidden');
       var w = parseInt(document.getElementById('totalwidth').value) || 2000;
       var v = w/n;
-
+      v = Math.round(v);
       for (var i = 1; i <= n; i++) {
   var row = document.createElement('div');
   row.className = 'stall-row';
