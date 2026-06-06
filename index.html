@@ -856,7 +856,8 @@
       } else {
         ewL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
         ewR = parseFloat(document.getElementById('endpanelRight').value) || 200;
-        midPanelW = ewL + ewR; // Fallback calculation for unequal mixtures
+        // For unequal stalls, the panel segment near the door should equal left end-panel width.
+        midPanelW = ewL;
       }
 
       // The true physical open space span per stall for the canvas loop to map positions
@@ -1063,11 +1064,11 @@
       ctx.beginPath(); ctx.moveTo(ox + pw, oy); ctx.lineTo(ox + pw, oy + ph); ctx.stroke(); // Right
 
       /* 3. MID PANEL DIVIDERS (Clean Gray Outlines) */
-      for (var i = 1; i < r.n; i++) {
+     for (var i = 1; i < r.n; i++) {
         var mx = stallXs[i];
         ctx.strokeStyle = '#a0a0a0'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(mx, oy); ctx.lineTo(mx, oy + ph); ctx.stroke();
-      }
+      } 
 
       /* 4. TOILET POT FIXTURES (Filleted Tank & Half-Ellipse Centred on Wall) */
       var tankWpx = 400 * scale;
@@ -1119,7 +1120,17 @@
       /* 5. FRONT INLINE FASCIAS AND ACTIVE DOORS */
       for (var i = 0; i < stallXs.length; i++) {
         var sx = stallXs[i], sw = r.stallWidths[i] * scale;
-        var dxL = sx + (sw - doorWpx) / 2;
+        var dxL;
+        var spacingMode = document.getElementById('equal').value;
+        if (spacingMode === 'unequal') {
+          var gap = (r.ewL || 0) * scale;
+          dxL = sx + gap;
+          if (dxL + doorWpx > sx + sw) {
+            dxL = Math.max(sx, sx + sw - doorWpx);
+          }
+        } else {
+          dxL = sx + (sw - doorWpx) / 2;
+        }
 
         // Front Static Fascias (Dark Charcoal Accent Profiles)
         ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3;
@@ -1158,12 +1169,24 @@
 
       if (stallXs.length > 0) {
         var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        var dxL = sx + (sw - doorWpx) / 2;
+        var dxL;
+        var spacingMode = document.getElementById('equal').value;
+        if (spacingMode === 'unequal') {
+          dxL = sx + ((r.ewL || 0) * scale);
+          if (dxL + doorWpx > sx + sw) dxL = Math.max(sx, sx + sw - doorWpx);
+        } else {
+          dxL = sx + (sw - doorWpx) / 2;
+        }
         dimLine(ctx, dxL, oy + ph + 40, dxL + doorWpx, oy + ph + 40, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
       }
       if (stallXs.length > 1) {
         var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        dimLine(ctx, sx + sw - (midPanelWpx / 2), oy + ph + 60, sx + sw + (midPanelWpx / 2), oy + ph + 60, Math.round(r.midPanelW) + 'mm', '#7a7a7a', 1);
+        var midWidthPx = r.midPanelW * scale;
+        var left = sx + sw - midWidthPx / 2;
+        var right = sx + sw + midWidthPx / 2;
+        left = Math.max(ox, left);
+        right = Math.min(ox + pw, right);
+        dimLine(ctx, left, oy + ph + 60, right, oy + ph + 60, Math.round(r.midPanelW) + 'mm', '#7a7a7a', 1);
       }
 
       /* Footer Layout Blocks & Monochromatic Legend */
