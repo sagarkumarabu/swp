@@ -29,7 +29,13 @@
         </select>
       </div>
      
-      <div class="section-title">Area Dimensions</div>
+      <div class="section-title">Areas Configuration</div>
+      <button class="calcbtn" onclick="addArea()" style="margin-bottom: 10px; width: 100%; background: #4CAF50;">+ Add Area</button>
+      <div id="areasContainer" 
+      style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+      </div>
+
+      <div class="section-title">Current Area Settings</div>
       <div class="row2">
         <div class="fg"><label>Total width (mm)</label>
           <input type="number" id="totalwidth" value="2000" min="1000">
@@ -211,6 +217,9 @@
   <script>
     var result = null;
     var activeTab = 'floor';
+    var areas = []; // Array to store all cubicle areas
+    var allResults = []; // Array to store results for each area
+    
     const solids = [
       { id: 'solid1', name: 'Q 13', color: '#fcf8f1',  },
       { id: 'solid5', name: 'RC 15', color: '#f7df37' },
@@ -279,6 +288,47 @@
 
     function onSpacingChange() { buildStallInputs(); }
     function onStallCountChange() { buildStallInputs(); }
+    
+    // AREA MANAGEMENT FUNCTIONS
+    function addArea() {
+      const currentArea = {
+        width: parseFloat(document.getElementById('totalwidth').value) || 2000,
+        depth: parseFloat(document.getElementById('depth').value) || 1500,
+        numCubicles: parseInt(document.getElementById('numStalls').value) || 2
+      };
+      areas.push(currentArea);
+      renderAreasUI();
+      alert('Area added: ' + currentArea.numCubicles + ' cubicles, ' + currentArea.width + 'x' + currentArea.depth + ' mm');
+    }
+
+    function removeArea(index) {
+      areas.splice(index, 1);
+      renderAreasUI();
+    }
+
+    function renderAreasUI() {
+      const container = document.getElementById('areasContainer');
+      if (!container) return;
+      
+      if (areas.length === 0) {
+        container.innerHTML = '<p style="color: #999; text-align: center; padding: 10px;">No areas added yet</p>';
+        return;
+      }
+      
+      let html = '';
+      areas.forEach((area, index) => {
+        html += `
+          <div style="border-bottom: 1px solid #ddd; padding: 10px 5px; margin-bottom: 10px; background: #f9f9f9; border-radius: 3px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Area ${index + 1}</div>
+            <div style="font-size: 12px; margin: 3px 0;">Cubicles: ${area.numCubicles}</div>
+            <div style="font-size: 12px; margin: 3px 0;">Dimensions: ${area.width} x ${area.depth} mm</div>
+            <button onclick="removeArea(${index})" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px;">Remove</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
     // sheet layout
     function generateNestingPlan(r, render = true) {
       const availableSheets = [
@@ -506,7 +556,6 @@
         // RULE 3:
         // Same sheet size
         // choose lower waste
-
         else if (
           sameSheetCount &&
           sheetArea ===
@@ -532,7 +581,7 @@
       }
       return bestSolution;
     }
-    //=============================================================================
+    //====================================
     function createSheet(stockSheet) {
       return {
         stock: stockSheet,
@@ -727,7 +776,10 @@
         <tr><td>Doors</td><td>${r.countDoors}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td>${ewLDim} </td></tr>
         <tr><td>Overall height</td><td></td><td>${netDim}</td></tr>
-        <tr><td>Remaining Area</td><td>${(remainArea / 1e6).toFixed(3)} m²</td><td></td></tr>      `;
+        <tr><td>Remaining Area</td><td>${(remainArea / 1e6).toFixed(3)} m²</td><td></td></tr> 
+        <tr><td>U-channel</td><td>${r.countDoors*2}</td><td>6 feet</td></tr> 
+        <tr><td>Doorstopper-channel</td><td>${r.countDoors*2}</td><td>6 feet</td></tr> 
+        <tr><td>F-channel</td><td>${endWallCount}</td><td></td></tr> `;
       tbody.innerHTML = html;
     }
 
