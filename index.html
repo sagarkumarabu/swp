@@ -28,6 +28,15 @@
           <option value="s">Straight wall</option>
         </select>
       </div>
+     
+      <div class="section-title">Area Dimensions</div>
+      <div class="row2">
+        <div class="fg"><label>Total width (mm)</label>
+          <input type="number" id="totalwidth" value="2000" min="1000">
+        </div>
+        <div class="fg"><label>Depth (mm)</label>
+          <input type="number" id="depth" value="1500" min="500"></div>
+      </div>
       <div class="fg">
         <label>Number of cubicles</label>
         <input type="number" id="numStalls" value="2" min="1" max="15" oninput="onStallCountChange()">
@@ -40,15 +49,6 @@
         </select>
       </div>
       <div class="stall-inputs hidden" id="stallWidthFields"></div>
-      <div class="section-title">Area Dimensions</div>
-      <div class="row2">
-        <div class="fg"><label>Total width (mm)</label>
-          <input type="number" id="totalwidth" value="2000" min="1000">
-        </div>
-        <div class="fg"><label>Depth (mm)</label>
-          <input type="number" id="depth" value="1500" min="500"></div>
-      </div>
-
       <div class="section-title"></div>
       <div class="fg">
         <label>End panel distribution</label>
@@ -615,15 +615,17 @@
       box.innerHTML = '';
       if (eq !== 'unequal') { box.classList.add('hidden'); return; }
       box.classList.remove('hidden');
+      var w = parseInt(document.getElementById('totalwidth').value) || 2000;
+      var v = w/n;
+
       for (var i = 1; i <= n; i++) {
-        var row = document.createElement('div');
-        row.className = 'stall-row';
-        row.innerHTML = '<label>Stall ' + i + ' (mm)</label>'
-          + '<input type="number" id="sw_' + i + '" value="800" min="600" '
-          + 'style="padding:4px 8px;border:1px solid #c8cad4;border-radius:5px;font-size:12px;width:100%">';
-        box.appendChild(row);
-      }
-    }
+  var row = document.createElement('div');
+  row.className = 'stall-row';
+  row.innerHTML = '<label>Stall ' + i + ' (mm)</label>'
+    + '<input type="number" id="sw_' + i + '" value="' + v + '" min="600" '
+    + 'style="padding:4px 8px;border:1px solid #c8cad4;border-radius:5px;font-size:12px;width:100%">';
+  box.appendChild(row);
+               }    }
 
     function switchTab(tab) {
       activeTab = tab;
@@ -673,7 +675,24 @@
              });
          });
       }
-      var remainArea = totalArea - usedArea;
+          var remainingParts = [];
+          if (plan) {
+           plan.sheets.forEach((s, si) => {
+             (s.freeRects || []).forEach(fr => {
+               remainingParts.push({ h: fr.height || 0, w: fr.width || 0, area: (fr.width || 0) * (fr.height || 0), sheet: si + 1 });
+             });
+           });
+           remainingParts.sort((a, b) => b.area - a.area);
+           plan.remainingParts = remainingParts;
+          }
+          var remainArea = 0;
+          if (plan) {
+           plan.sheets.forEach(s => {
+             (s.freeRects || []).forEach(fr => {
+               remainArea = Math.max(remainArea, (fr.width || 0) * (fr.height || 0));
+             });
+           });
+          }
       var sheetTypeName = plan && plan.sheetType ? plan.sheetType.name : '';
       var wallMap = { l: 1, c: 0, s: 2 };
       var endWallCount = wallMap[document.getElementById('wall').value] || 0;
@@ -694,7 +713,6 @@
         <tr><td>HPL Sheets Required</td><td>${sheetsReq}</td><td>${sheetTypeName}</td></tr>
         <tr><td>Cubicle width</td><td></td><td>${cubicleWidthStr}</td></tr>
         <tr><td>Used Area</td><td>${(usedArea / 1e6).toFixed(3)} m²</td><td></td></tr>
-        <tr><td>Remaining Area</td><td>${(remainArea / 1e6).toFixed(3)} m²</td><td></td></tr>
         <tr><td>Legs</td><td>${legCount}</td><td></td></tr>
         <tr><td>Shoeboxes</td><td>${shoeboxCount}</td><td></td></tr>
         <tr><td>Knobs</td><td>${knobCount}</td><td></td></tr>
@@ -709,7 +727,7 @@
         <tr><td>Doors</td><td>${r.countDoors}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td>${ewLDim} </td></tr>
         <tr><td>Overall height</td><td></td><td>${netDim}</td></tr>
-      `;
+        <tr><td>Remaining Area</td><td>${(remainArea / 1e6).toFixed(3)} m²</td><td></td></tr>      `;
       tbody.innerHTML = html;
     }
 
@@ -1564,13 +1582,17 @@
       link.click();
     }
 
-    function downloadElevation() {
-      var cv = document.getElementById('cvElev');
-      var link = document.createElement('a');
-      link.download = 'cubicle-elevation.png';
-      link.href = cv.toDataURL('image/png');
-      link.click();
-    }
+   function downloadElevation(fileName) {
+  var cv = document.getElementById('cvElev');
+  var link = document.createElement('a');
+  
+  // Use the given name, or fall back to a default if empty
+  link.download = fileName ? fileName + '.png' : 'cubicle-elevation.png';
+  
+  link.href = cv.toDataURL('image/png');
+  link.click();
+}
+
 
     buildStallInputs();
     buildPalette();
