@@ -71,11 +71,6 @@
       </div>
 
       <div class="section-title"></div>
-      <div class="row3"> 
-       <div class="fg"><label>UMP height:</label><input type="number" value="900" id="umph"></div>
-       <div class="fg"><label>UMP width:</label><input type="number" value="450" id="umpw"></div>  
-       <div class="fg"><label>Quantity:</label><input type="number" value="0" id="umpq"></div>       
-      </div>
       <div class="row2">
         <div class="fg"><label>Divider ht (mm)</label>
           <input type="number" id="dividerHeight" value="1790" min="1000">
@@ -87,6 +82,11 @@
         <div class="fg"><label>Pilaster ht (mm)</label>
           <input type="number" id="pilasterHeight" value="1830" min="1000">
         </div>
+      </div>
+       <div class="row3"> 
+       <div class="fg"><label>UMP height:</label><input type="number" value="900" id="umph"></div>
+       <div class="fg"><label>UMP width:</label><input type="number" value="450" id="umpw"></div>  
+       <div class="fg"><label>Quantity:</label><input type="number" value="0" id="umpq"></div>       
       </div>
       <div class="row2">
         <div class="fg">
@@ -1577,38 +1577,7 @@
   link.href = cv.toDataURL('image/png');
   link.click();
 }
-function exportExcel() {
-  var table = document.getElementById("summaryTable");
-  var rows = table.querySelectorAll("tr");
-  var csv = [];
 
-  for (var i = 0; i < rows.length; i++) {
-    var row = [], cols = rows[i].querySelectorAll("td, th");
-    for (var j = 0; j < cols.length; j++) {
-      var data = cols[j].innerText.replace(/"/g, '""');
-      row.push('"' + data + '"');
-    }
-    csv.push(row.join(","));
-  }
-
-  var csvString = csv.join("\n");
-  var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-  var url = URL.createObjectURL(blob);
-
-  // Ask user for file name
-  var fileName = prompt("Enter file name:");
-  if (!fileName) {
-  return; // fallback if user cancels or leaves blank
-  }
-
-  var link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", fileName + ".csv");
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
 
     buildStallInputs();
     buildPalette();
