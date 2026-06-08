@@ -40,10 +40,10 @@
         <div class="fg"><label>Area width</label>
           <input type="number" id="totalwidth" value="2000" min="1000">
         </div>
-        <div class="fg"><label>Area Depth</label>
+        <div class="fg"><label>Area Depth </label>
           <input type="number" id="depth" value="1500" min="500"></div>
         <div class="fg">
-        <label>cubicles</label>
+        <label>Cubicles</label>
         <input type="number" id="numStalls" value="2" min="1" max="15" oninput="onStallCountChange()">
       </div>
       </div>
@@ -78,13 +78,13 @@
       </div>
 
       <div class="row2">
-        <div class="fg"><label>Divider ht (mm)</label>
-          <input type="number" id="dividerHeight" value="1790" min="1000">
-        </div>
+        <div class="fg"><label>Door width (mm)</label><input type="number" id="doorWidth" value="600" min="400"></div>
         <div class="fg"><label>Door ht (mm)</label><input type="number" id="doorHeight" value="1790" min="1000"></div>
       </div>
       <div class="row2">
-        <div class="fg"><label>Door width (mm)</label><input type="number" id="doorWidth" value="600" min="400"></div>
+          <div class="fg"><label>Divider ht (mm)</label>
+          <input type="number" id="dividerHeight" value="1790" min="1000">
+        </div>
         <div class="fg"><label>Pilaster ht (mm)</label>
           <input type="number" id="pilasterHeight" value="1830" min="1000">
         </div>
@@ -140,7 +140,6 @@
       <div class="section-title">Save Project Data</div>
       <form id="dataForm" onsubmit="submitProject(event)" style="margin-top: 15px;">
         <div class="fg"><label>Name</label><input type="text" id="userName" required></div>
-        <div class="fg"><label>Email</label><input type="email" id="userEmail" required></div>
         <div class="fg"><label>Notes</label><textarea id="userNotes" rows="3" style="width:100%; padding:8px; border:1px solid #c8cad4; border-radius:5px;"></textarea></div>
         <button type="submit" class="calcbtn" style="background:#1976d2;">Submit to Database</button>
         <div class="err" id="formMsg" style="margin-top:8px; padding:8px; display:none;"></div>
@@ -223,6 +222,13 @@
     </div>
   </div>
   <script src="main.js"></script>
+  <!-- Load Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = 'https://ijnqtrmhvrphwwwiqhkl.supabase.co'; 
+    const supabaseKey = 'sb_publishable_Xs8LhB0UU7-8ttz8lE7iGg_dI_8GEuc';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  </script>
   <script>
     var result = null;
     var activeTab = 'floor';
@@ -640,8 +646,7 @@
       calculate();
     }
 
-    function renderSummary(r, plan) {
-      var plans = Array.isArray(plan) ? plan : [{ areaLabel: 'Area 1', plan: plan, areaResult: r }];
+    function renderSummary(areaPlans, combinedPlan) {
       var tbody = document.getElementById('summaryTbody');
       if (!tbody) return;
 
@@ -662,6 +667,7 @@
       var totalArea = 0;
       var remainingParts = [];
 
+      var plans = areaPlans || [];
       plans.forEach(function (entry) {
          if (!entry || !entry.areaResult) return;
          var area = entry.areaResult;
@@ -679,27 +685,41 @@
          } else if (area.supportType === 'shoebox') {
             totalShoeboxCount += (area.ewL > 0 ? 1 : 0) + (area.ewR > 0 ? 1 : 0) + (area.countMid || 0);
          }
+      });
 
-         if (!entry.plan) return;
-         sheetsReq += entry.plan.sheetCount || 0;
-         entry.plan.sheets.forEach(function (s, si) {
+      var activePlan = combinedPlan || (plans[0] && plans[0].plan);
+
+      if (activePlan) {
+         sheetsReq = activePlan.sheetCount || 0;
+         activePlan.sheets.forEach(function (s, si) {
              totalArea += (s.stock.width * s.stock.height);
              s.placedItems.forEach(function (item) {
                  usedArea += (item.finalW * item.finalH);
              });
              (s.freeRects || []).forEach(function (fr) {
-               remainingParts.push({ h: fr.height || 0, w: fr.width || 0, area: (fr.width || 0) * (fr.height || 0), sheet: entry.areaLabel + ' #' + (si + 1) });
+               remainingParts.push({ h: fr.height || 0, w: fr.width || 0, area: (fr.width || 0) * (fr.height || 0), sheet: 'Sheet #' + (si + 1) });
              });
          });
-      });
+      }
 
       remainingParts.sort(function (a, b) { return b.area - a.area; });
       var remainArea = 0;
       remainingParts.forEach(function (part) {
          remainArea = Math.max(remainArea, part.area);
       });
-      if (plans.length === 0) plans = [{ areaLabel: 'Area 1', plan: null }];
-      var sheetTypeName = plans.length > 1 ? 'Mixed areas' : (plans[0].plan && plans[0].plan.sheetType ? plans[0].plan.sheetType.name : '');
+      
+      var sheetTypeName = '';
+      if (activePlan && activePlan.sheets) {
+        var counts = {};
+        activePlan.sheets.forEach(function(s) {
+          counts[s.stock.name] = (counts[s.stock.name] || 0) + 1;
+        });
+        var types = [];
+        for (var name in counts) {
+          types.push(counts[name] + ' of ' + name);
+        }
+        sheetTypeName = types.join(', ');
+      }
       var wallMap = { l: 1, c: 0, s: 2 };
       var endWallCount = wallMap[document.getElementById('wall').value] || 0;
 
@@ -713,7 +733,7 @@
       var minW = allStallWidths.length ? Math.min.apply(null, allStallWidths) : 0;
       var maxW = allStallWidths.length ? Math.max.apply(null, allStallWidths) : 0;
       var cubicleWidthStr = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
-      var firstArea = plans[0] && plans[0].areaResult ? plans[0].areaResult : r;
+      var firstArea = plans[0] && plans[0].areaResult ? plans[0].areaResult : {};
       var dividerDim = (firstArea.D || '') + ' x ' + (firstArea.dH || '') + ' mm';
       var doorDim = (firstArea.doorW || '') + ' x ' + (firstArea.doorH || '') + ' mm';
       var endPanelDim = Math.round(firstArea.endPanelW || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
@@ -728,9 +748,6 @@
 
       var html = `
         <tr><td>HPL Sheets Required</td><td>${sheetsReq}</td><td>${sheetTypeName}</td></tr>
-        ${plans.length > 1 ? plans.map(function(entry) {
-              return `<tr><td>${entry.areaLabel} Sheets</td><td>${entry.plan ? entry.plan.sheetCount : 0}</td><td>${entry.plan && entry.plan.sheetType ? entry.plan.sheetType.name : ''}</td></tr>`;
-            }).join('') : ''}
         <tr><td>Cubicle width</td><td></td><td>${cubicleWidthStr}</td></tr>
         <tr><td>Used Area</td><td>${(usedArea / 1e6).toFixed(3)} m²</td><td></td></tr>
         <tr><td>Legs</td><td>${totalLegCount}</td><td></td></tr>
@@ -766,27 +783,17 @@
         return;
       }
       try {
-        var response = await fetch('/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name, email: email, notes: notes })
-        });
-        var text = await response.text();
-        var result = {};
-        if (text) {
-          try {
-            result = JSON.parse(text);
-          } catch (parseError) {
-            result = { error: 'Invalid server response' };
-          }
-        }
-        if (response.ok) {
+        const { data, error } = await supabaseClient
+          .from('form_submissions')
+          .insert([{ name: name, email: email, notes: notes }]);
+
+        if (!error) {
           messageBox.textContent = 'Saved successfully.';
           messageBox.style.display = 'block';
           messageBox.style.color = '#1b5e20';
           document.getElementById('dataForm').reset();
         } else {
-          messageBox.textContent = result.error || 'Unable to save data.';
+          messageBox.textContent = error.message || 'Unable to save data.';
           messageBox.style.display = 'block';
           messageBox.style.color = '#b00020';
         }
@@ -958,7 +965,7 @@
       }
 
       if (activeTab === 'summary') {
-        renderSummary(result, areaPlans);
+        renderSummary(areaPlans, combinedPlan);
       }
 
       const wallMap = { l: 1, c: 0, s: 2 };
@@ -986,8 +993,6 @@
         drawElev(result);
       } else if (activeTab === 'nesting' && areas.length === 0) {
         generateNestingPlan(result);
-      } else if (activeTab === 'summary' && areas.length === 0) {
-        renderSummary(result, areaPlans[0] ? areaPlans[0].plan : null);
       }
     }
     /* ── Drawing helpers ─────────────────────────────── */
