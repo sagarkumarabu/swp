@@ -93,3 +93,26 @@ function exportExcel() {
       { id: 'solid32', name: 'Q 889', color: '#474747' }
     ];
 
+  function buildPalette() {
+      const paletteContainer = document.getElementById('shadePalette');
+      if (!paletteContainer) return;
+      solids.forEach(solid => {
+        const swatch = document.createElement('div');
+        swatch.style.width = '24px';
+        swatch.style.height = '24px';
+        swatch.style.backgroundColor = solid.color;
+        swatch.style.border = '1px solid #ccc';
+        swatch.style.borderRadius = '3px';
+        swatch.style.cursor = 'pointer';
+        swatch.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        swatch.title = solid.name;
+        swatch.onclick = () => {
+          const target = document.querySelector('input[name="colorTarget"]:checked');
+          if (target) {
+            document.getElementById(target.value).value = solid.color;
+            calculate();
+          }
+        };
+        paletteContainer.appendChild(swatch);
+      });
+    }
