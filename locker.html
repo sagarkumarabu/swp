@@ -4,20 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Locker</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <style> 
-       :root{--font-scale:1;}
-       *{margin:0; padding:0;}
-        canvas{border: 0.1rem solid black; margin:10px;
-       }
-        body{background-color: rgb(114, 112, 110);
-            font-size: calc(16px * var(--font-scale));
-           
-            flex-direction: column;
-           
-        height: 100vh;}
-        input, select, button, table { font-size: calc(14px * var(--font-scale)); }
         .summary { 
             float: right; 
             border: solid 2px;
@@ -28,14 +18,6 @@
             box-sizing: border-box;
             overflow-y: auto;
         }
-       nav a:visited{background-color: #1560c8;}
-        nav{ background-color: rgb(0, 0, 0); min-height:34px; display:flex; align-items:center; gap:2px; padding:0 8px;}
-        nav a{color:#fff;text-decoration: none;padding:8px 10px; font-size: calc(14px * var(--font-scale)); border-radius:4px;}
-        nav a[aria-current="page"]{background-color: green;}
-        a:hover{background-color: green;}
-        .font-controls{margin-left:auto; display:flex; align-items:center; gap:4px;}
-        .font-btn{border:1px solid #8f8f8f; border-radius:4px; background:#f4f4f4; color:#1c1c2e; cursor:pointer; font-weight:700; min-width:34px; padding:4px 8px; line-height:1.1;}
-        .font-btn:hover{background:#fff;}
         .sheet-result{margin-top:12px;}
         .sheet-card{border-top:1px solid #ccc; padding-top:8px; margin-top:10px;}
         .sheet-card h4{margin:0 0 4px;}
@@ -129,29 +111,38 @@
     </div>
     <script src="font-size.js"></script>
     <script>
-          function exportExcel() {
-      var table = document.getElementById("summaryTable");
-      var rows = table.querySelectorAll("tr");
-      var csv = [];
-      for (var i = 0; i < rows.length; i++) {
-        var row = [], cols = rows[i].querySelectorAll("td, th");
-        for (var j = 0; j < cols.length; j++) {
-          var data = cols[j].innerText.replace(/"/g, '""');
-          row.push('"' + data + '"');
-        }
-        csv.push(row.join(","));
-      }
-      var csvString = csv.join("\n");
-      var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-      var link = document.createElement("a");
-      var url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "Summary.csv");
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+        function exportExcel() {
+  var table = document.getElementById("summaryTable");
+  var rows = table.querySelectorAll("tr");
+  var csv = [];
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = [], cols = rows[i].querySelectorAll("td, th");
+    for (var j = 0; j < cols.length; j++) {
+      var data = cols[j].innerText.replace(/"/g, '""');
+      row.push('"' + data + '"');
     }
+    csv.push(row.join(","));
+  }
+
+  var csvString = csv.join("\n");
+  var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+  var url = URL.createObjectURL(blob);
+
+  // Ask user for file name
+  var fileName = prompt("Enter file name:");
+  if (!fileName) {
+  return; // fallback if user cancels or leaves blank
+  }
+
+  var link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", fileName + ".csv");
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
         
 
          const sheets9mm = [
@@ -812,11 +803,7 @@
       { id: 'solid29', name: 'Q 886', color: '#e0dad7' },
       { id: 'solid30', name: 'Q 887', color: '#989898' },
       { id: 'solid31', name: 'Q 888', color: '#cbbeb3' },
-      { id: 'solid32', name: 'Q 889', color: '#474747' },
-       { id: 'solid33', name: 'Light Ash / Birch', color: '#e8cca3' },
-  { id: 'solid34', name: 'Natural Oak', color: '#c49a6c' },
-  { id: 'solid35', name: 'Warm Cherry Wood', color: '#9a5332' },
-  { id: 'solid36', name: 'Dark Walnut', color: '#4a3225' }
+      { id: 'solid32', name: 'Q 889', color: '#474747' }      
     ];
 
         // Initialize the color palette
