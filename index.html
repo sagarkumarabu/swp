@@ -35,8 +35,6 @@
       <div id="areasContainer" 
       style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
       </div>
-
-      <div class="section-title">Current Area Settings</div>
       <div class="row3">
         <div class="fg"><label>Area width</label>
           <input type="number" id="totalwidth" value="2000" min="1000">
@@ -198,9 +196,9 @@
           
           <button onclick="exportExcel()" class="summary-btn">
             Download Excel</button>
-          <table id="summaryTable" style="width: 100%; border-collapse: collapse; text-align: left; background: #fff;">
+          <table id="summaryTable" >
             <thead>
-              <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
+              <tr >
                 <th style="padding: 8px;">Item</th>
                 <th style="padding: 8px;">Quantity / Value</th>
                 <th style="padding: 8px;"> Dimension</th>
@@ -223,6 +221,7 @@
       </div>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="main.js"></script>
   <script>
     var result = null;
@@ -244,7 +243,7 @@
     function addArea() {
       const width = parseFloat(document.getElementById('totalwidth').value) || 2000;
       const depth = parseFloat(document.getElementById('depth').value) || 1500;
-      const numCubicles = parseInt(document.getElementById('numStalls').value) || 0;
+      const numCubicles = parseInt(document.getElementById('numStalls').value) ;
       const equalSpacing = document.getElementById('equal').value;
       const ewEqual = document.getElementById('endpanelEqual').value === 'equal';
       const doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
@@ -253,6 +252,7 @@
       const pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
       const supportType = document.getElementById('supportType').value;
       const topRail = document.getElementById('topRail').value;
+      const wallType = document.getElementById('wall').value;
       const umph = parseFloat(document.getElementById('umph').value) || 900;
       const umpw = parseFloat(document.getElementById('umpw').value) || 450;
       const umpq = parseInt(document.getElementById('umpq').value) || 0;
@@ -304,7 +304,8 @@
       };
       areas.push(currentArea);
       renderAreasUI();
-      alert('Area added: ' + currentArea.numCubicles + ' cubicles, ' + currentArea.width + 'x' + currentArea.depth + ' mm');
+      alert('Area added: ' + currentArea.numCubicles + ' cubicles, ' + currentArea.width + 'x' + currentArea.depth 
+       + ' ,' +currentArea.umpq + ' ump ' + currentArea.umpw + 'x' + currentArea.umph );
     }
 
     function removeArea(index) {
@@ -315,7 +316,6 @@
     function renderAreasUI() {
       const container = document.getElementById('areasContainer');
       if (!container) return;
-      
       if (areas.length === 0) {
         container.innerHTML = '<p style="color: #999; text-align: center; padding: 10px;">No areas added yet</p>';
         return;
@@ -326,9 +326,9 @@
         html += `
           <div style="border-bottom: 1px solid #ddd; padding: 10px 5px; margin-bottom: 10px; background: #f9f9f9; border-radius: 3px;">
             <div style="font-weight: bold; margin-bottom: 5px;">Area ${index + 1}</div>
-            <div style="font-size: 12px; margin: 3px 0;">Cubicles: ${area.numCubicles}</div>
-            <div style="font-size: 12px; margin: 3px 0;">Dimensions: ${area.width} x ${area.depth} mm</div>
-            <button onclick="removeArea(${index})" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px;">Remove</button>
+           <div>Cubicles: ${area.numCubicles} ${area.width} x ${area.depth} mm</div>
+           <div>Ump: ${area.umpq} ${area.umpw} x ${area.umph} mm</div>
+            <button id="r" onclick="removeArea(${index})">Remove</button>
           </div>
         `;
       });
@@ -356,6 +356,14 @@
           label: `A${areaIndex + 1}-DOOR${i + 1}`,
           finalW: r.doorW,
           finalH: r.doorH,
+          areaIndex: areaIndex
+        });
+      }
+      for (let i = 0; i < r.countEndWalls; i++) {
+        parts.push({
+          label: `A${areaIndex + 1}-EW${i + 1}`,
+          finalW: r.D,
+          finalH: r.dH,
           areaIndex: areaIndex
         });
       }
@@ -733,18 +741,19 @@
       var doorDim = (firstArea.doorW || '') + ' x ' + (firstArea.doorH || '') + ' mm';
       var endPanelDim = Math.round(firstArea.endPanelW || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
       var midPanelDim = Math.round(firstArea.midPanelW || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
+      var endWallDim = dividerDim;
       var ewLDim = Math.round(firstArea.ewL || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
       var ewRDim = Math.round(firstArea.ewR || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
       var netDim = (typeof firstArea.theight !== 'undefined') ? firstArea.theight.toFixed(2) + ' mm' : '';
-      var toprailLengthStr = toprailLength > 0 ? Math.round(toprailLength) + ' mm' : '0 mm';
+      var toprailLengthStr = toprailLength > 0   ? (Math.round(toprailLength / 3600) + 'unit')  : '0 unit';
+
       var umpCount = plans.reduce(function (sum, entry) {
         return sum + ((entry.areaResult && entry.areaResult.umpq) || 0);
       }, 0);
 
       var html = `
         <tr><td>HPL Sheets Required</td><td>${sheetsReq}</td><td>${sheetTypeName}</td></tr>
-        <tr><td>Cubicle width</td><td></td><td>${cubicleWidthStr}</td></tr>
-        <tr><td>Used Area</td><td>${(usedArea / 1e6).toFixed(3)} m²</td><td></td></tr>
+        <tr><td>Cubicle</td><td>${totalDoors}</td><td></td></tr>
         <tr><td>Legs</td><td>${totalLegCount}</td><td></td></tr>
         <tr><td>Shoeboxes</td><td>${totalShoeboxCount}</td><td></td></tr>
         <tr><td>Knobs</td><td>${totalDoors}</td><td></td></tr>
@@ -757,9 +766,8 @@
         <tr><td>Mid panels</td><td>${totalMid}</td><td>${midPanelDim}</td></tr>
         <tr><td>End panels</td><td>${totalEnd}</td><td>${endPanelDim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td>${doorDim}</td></tr>
-        <tr><td>End Walls</td><td>${endWallCount}</td><td>${ewLDim} </td></tr>
+        <tr><td>End Walls</td><td>${endWallCount}</td><td>${endWallDim}</td></tr>
         <tr><td>Overall height</td><td></td><td>${netDim}</td></tr>
-        <tr><td>Remaining Area</td><td>${(remainArea / 1e6).toFixed(3)} m²</td><td></td></tr> 
         <tr><td>U-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
         <tr><td>Doorstopper-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
         <tr><td>F-channel</td><td>${endWallCount}</td><td></td></tr> `;
@@ -844,6 +852,7 @@
       var pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
       var supportType = document.getElementById('supportType').value;
       var topRail = document.getElementById('topRail').value;
+      var wallType = document.getElementById('wall').value;
       var doorShade = document.getElementById('doorShade').value;
       var pilasterShade = document.getElementById('pilasterShade').value;
       var topRailShade = document.getElementById('topRailShade').value;
@@ -914,7 +923,7 @@
       var grossArea = theight * 1.12;
 
       result = {
-        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, doorShade, pilasterShade, topRailShade, ewL, ewR, ewEqual, stallWidths,
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, wallType, doorShade, pilasterShade, topRailShade, ewL, ewR, ewEqual, stallWidths,
         countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, theight, grossArea, umph, umpw, umpq
       };
 
@@ -924,6 +933,7 @@
         const countDividers = Math.max(0, n - 1);
         const countMid = n > 1 ? n - 1 : 0;
         const theight = area.pilH + (area.supportType === 'none' ? 0 : 150);
+        const countEndWalls = ({ l: 1, c: 0, s: 2 })[area.wallType] || 0;
 
         return {
           n,
@@ -935,6 +945,7 @@
           pilH: area.pilH,
           supportType: area.supportType,
           topRail: area.topRail,
+          wallType: area.wallType,
           doorShade: area.doorShade || '#dedede',
           pilasterShade: area.pilasterShade || '#b5b5b5',
           topRailShade: area.topRailShade || '#8f8f8f',
@@ -946,6 +957,7 @@
           countDividers,
           countMid,
           countEnd: 2,
+          countEndWalls,
           endPanelW: area.ewL,
           midPanelW: area.midPanelW,
           umph: area.umph,
