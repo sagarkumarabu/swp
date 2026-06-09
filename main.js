@@ -58,6 +58,24 @@ function exportExcel() {
   link.click();
   document.body.removeChild(link);
 }
+
+// Dynamically update navigation for authenticated users
+document.addEventListener('DOMContentLoaded', () => {
+  const authLinks = document.querySelectorAll('a[href="login.html"]');
+  const isLoggedIn = !!localStorage.getItem('authToken');
+  
+  authLinks.forEach(link => {
+    if (isLoggedIn) {
+      link.textContent = 'Logout';
+      link.href = '#';
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('authToken');
+        window.location.href = 'login.html';
+      });
+    }
+  });
+});
     const solids = [
       { id: 'solid1', name: 'Q 13', color: '#fcf8f1',  },
       { id: 'solid5', name: 'RC 15', color: '#f7df37' },
@@ -116,3 +134,8 @@ function exportExcel() {
         paletteContainer.appendChild(swatch);
       });
     }
+    const { createClient } = supabase;
+
+const supabaseUrl = "https://ijnqtrmhvrphwwwiqhkl.supabase.co";
+const supabaseKey = "sb_publishable_Xs8LhB0UU7-8ttz8lE7iGg_dI_8GEuc";
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
