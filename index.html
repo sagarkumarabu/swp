@@ -37,10 +37,10 @@
       </div>
       <div class="row3">
         <div class="fg"><label>Area width</label>
-          <input type="number" id="totalwidth" value="2000" min="1000">
+          <input type="number" id="totalwidth" value="0" min="1000">
         </div>
         <div class="fg"><label>Area Depth </label>
-          <input type="number" id="depth" value="1500" min="500"></div>
+          <input type="number" id="depth" value="0" min="500"></div>
         <div class="fg">
         <label>Cubicles</label>
         <input type="number" id="numStalls" value="0" min="1" max="15" oninput="onStallCountChange()">
@@ -243,7 +243,7 @@
     function addArea() {
       const width = parseFloat(document.getElementById('totalwidth').value) || 2000;
       const depth = parseFloat(document.getElementById('depth').value) || 1500;
-      const numCubicles = parseInt(document.getElementById('numStalls').value) ;
+      const numCubicles = parseInt(document.getElementById('numStalls').value, 10) || 0;
       const equalSpacing = document.getElementById('equal').value;
       const ewEqual = document.getElementById('endpanelEqual').value === 'equal';
       const doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
@@ -255,8 +255,18 @@
       const wallType = document.getElementById('wall').value;
       const umph = parseFloat(document.getElementById('umph').value) || 900;
       const umpw = parseFloat(document.getElementById('umpw').value) || 450;
-      const umpq = parseInt(document.getElementById('umpq').value) || 0;
+      const umpq = parseInt(document.getElementById('umpq').value, 10) || 0;
       let ewL, ewR, midPanelW;
+
+      if (umpq < 1 && numCubicles < 1) {
+        alert("Enter a valid number of cubicles");
+        return;
+      }
+
+      // if (numCubicles < 1) {
+      //   alert("Enter a valid number of cubicles.");
+      //   return;
+      // }
 
       if (ewEqual) {
         const cubicleSpace = width / numCubicles;
@@ -302,10 +312,15 @@
         umpw,
         umpq
       };
+      // if (umpq && (!Number.isFinite(numCubicles) || numCubicles < 1)) {
+      //   alert("Enter a valid number of cubicles when UMP quantity is set.");
+      //   return;
+      // }
+
       areas.push(currentArea);
       renderAreasUI();
       alert('Area added: ' + currentArea.numCubicles + ' cubicles, ' + currentArea.width + 'x' + currentArea.depth 
-       + ' ,' +currentArea.umpq + ' ump ' + currentArea.umpw + 'x' + currentArea.umph );
+        + ' ,' + currentArea.umpq + ' ump ' + currentArea.umpw + 'x' + currentArea.umph );
     }
 
     function removeArea(index) {
