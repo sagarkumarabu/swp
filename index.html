@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cubicle </title>
   <link rel="stylesheet" href="style.css">
-  <script>
-    if (!localStorage.getItem('authToken')) {
-      window.location.href = 'login.html';
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"> </script>
 </head>
 <body>
    <nav>
         <a href="index.html" aria-current="page">Cubicle</a>
         <a href="locker.html">Locker</a>
         <a href="calculate.html">Partition</a>
-        <a href="login.html">Login</a>
+        <a href="login.html">login</a>
         <div class="font-controls" aria-label="Font size controls">
           <button type="button" class="font-btn" onclick="changeFontSize(1)" title="Increase font size">A+</button>
           <button type="button" class="font-btn" onclick="changeFontSize(-1)" title="Decrease font size">A-</button>
@@ -143,7 +139,7 @@
       </div>
       
       <button class="calcbtn" onclick="calculate()">Calculate</button>
-     
+      <div class="section-title">Save Project Data</div>
       <form id="dataForm" onsubmit="submitProject(event)" style="margin-top: 15px;">
         <div class="fg"><label>Name</label><input type="text" id="userName" required></div>
         <div class="fg"><label>Email</label><input type="text" id="userEmail" required></div>
@@ -229,6 +225,8 @@
     </div>
   </div>
   <script src="main.js"></script>
+  <!-- Load Supabase JS client -->
+  
   <script>
     var result = null;
     var activeTab = 'floor';
@@ -772,56 +770,28 @@
     }
     async function submitProject(event) {
       event.preventDefault();
+      var name = document.getElementById('userName').value.trim();
+      var email = document.getElementById('userEmail').value.trim();
+      var notes = document.getElementById('userNotes').value.trim();
       var messageBox = document.getElementById('formMsg');
-      
-      var payload = {
-        wallType: document.getElementById('wall').value,
-        areaWidth: parseInt(document.getElementById('totalwidth').value) || null,
-        areaDepth: parseInt(document.getElementById('depth').value) || null,
-        numCubicles: parseInt(document.getElementById('numStalls').value) || null,
-        cubicleSpacing: document.getElementById('equal').value,
-        endPanelDistribution: document.getElementById('endpanelEqual').value,
-        endPanelSize: parseInt(document.getElementById('endpanelSize').value) || null,
-        endPanelLeft: parseInt(document.getElementById('endpanelLeft').value) || null,
-        endPanelRight: parseInt(document.getElementById('endpanelRight').value) || null,
-        doorWidth: parseInt(document.getElementById('doorWidth').value) || null,
-        doorHeight: parseInt(document.getElementById('doorHeight').value) || null,
-        dividerHeight: parseInt(document.getElementById('dividerHeight').value) || null,
-        pilasterHeight: parseInt(document.getElementById('pilasterHeight').value) || null,
-        umpHeight: parseInt(document.getElementById('umph').value) || null,
-        umpWidth: parseInt(document.getElementById('umpw').value) || null,
-        umpQuantity: parseInt(document.getElementById('umpq').value) || null,
-        supportType: document.getElementById('supportType').value,
-        topRail: document.getElementById('topRail').value,
-        doorShade: document.getElementById('doorShade').value,
-        pilasterShade: document.getElementById('pilasterShade').value,
-        topRailShade: document.getElementById('topRailShade').value,
-        userName: document.getElementById('userName').value.trim(),
-        userEmail: document.getElementById('userEmail').value.trim(),
-        userNotes: document.getElementById('userNotes').value.trim()
-      };
-
-      if (!payload.userName || !payload.userEmail) {
+      if (!name || !email) {
         messageBox.textContent = 'Name and email are required.';
         messageBox.style.display = 'block';
         messageBox.style.color = '#b00020';
         return;
       }
       try {
-        const response = await fetch('/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
+        const { data, error } = await supabaseClient
+          .from('form_submissions')
+          .insert([{ name: name, email: email, notes: notes }]);
 
-        if (response.ok && data.success) {
+        if (!error) {
           messageBox.textContent = 'Saved successfully.';
           messageBox.style.display = 'block';
           messageBox.style.color = '#1b5e20';
           document.getElementById('dataForm').reset();
         } else {
-          messageBox.textContent = data.error || 'Unable to save data.';
+          messageBox.textContent = error.message || 'Unable to save data.';
           messageBox.style.display = 'block';
           messageBox.style.color = '#b00020';
         }

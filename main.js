@@ -1,3 +1,10 @@
+
+// Redirect unauthenticated users away from protected pages,
+// but don't redirect when already on the login page.
+if (!localStorage.getItem('authToken') && !/\/?login\.html$/.test(window.location.pathname)) {
+  window.location.href = 'login.html';
+}
+
 (function () {
   const STORAGE_KEY = 'hplFontScale';
   const STEP = 0.1;
@@ -134,8 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
         paletteContainer.appendChild(swatch);
       });
     }
-    const { createClient } = supabase;
-
-const supabaseUrl = "https://ijnqtrmhvrphwwwiqhkl.supabase.co";
-const supabaseKey = "sb_publishable_Xs8LhB0UU7-8ttz8lE7iGg_dI_8GEuc";
-const supabaseClient = createClient(supabaseUrl, supabaseKey);
+  // Supabase configuration: ensure the CDN <script> is included in your HTML
+  // before this file, or import `createClient` as an ES module instead.
+  const supabaseUrl = "https://ijnqtrmhvrphwwwiqhkl.supabase.co";
+  const supabaseKey = "sb_publishable_Xs8LhB0UU7-8ttz8lE7iGg_dI_8GEuc";
+  let supabaseClient = null;
+  if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'function') {
+    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  } else if (typeof createClient === 'function') {
+    supabaseClient = createClient(supabaseUrl, supabaseKey);
+  } else {
+    console.warn('Supabase client not initialized. Include the CDN script before main.js or import createClient.');
+  }
