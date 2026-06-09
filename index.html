@@ -40,7 +40,7 @@
           <input type="number" id="totalwidth" value="0" min="1000">
         </div>
         <div class="fg"><label>Area Depth </label>
-          <input type="number" id="depth" value="0" min="500"></div>
+          <input type="number" id="depth" value="0" min="800"></div>
         <div class="fg">
         <label>Cubicles</label>
         <input type="number" id="numStalls" value="0" min="1" max="15" oninput="onStallCountChange()">
@@ -243,7 +243,7 @@
     function addArea() {
       const width = parseFloat(document.getElementById('totalwidth').value) || 2000;
       const depth = parseFloat(document.getElementById('depth').value) || 1500;
-      const numCubicles = parseInt(document.getElementById('numStalls').value, 10) || 0;
+      const numCubicles = parseInt(document.getElementById('numStalls').value) || 0;
       const equalSpacing = document.getElementById('equal').value;
       const ewEqual = document.getElementById('endpanelEqual').value === 'equal';
       const doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
@@ -291,6 +291,7 @@
         }
       }
 
+      const countEndWalls = ({ l: 1, c: 0, s: 2 })[wallType] || 0;
       const currentArea = {
         width,
         depth,
@@ -308,19 +309,20 @@
         pilH,
         supportType,
         topRail,
+        wallType,
+        countEndWalls,
         umph,
         umpw,
         umpq
       };
-      // if (umpq && (!Number.isFinite(numCubicles) || numCubicles < 1)) {
-      //   alert("Enter a valid number of cubicles when UMP quantity is set.");
-      //   return;
-      // }
-
       areas.push(currentArea);
       renderAreasUI();
       alert('Area added: ' + currentArea.numCubicles + ' cubicles, ' + currentArea.width + 'x' + currentArea.depth 
         + ' ,' + currentArea.umpq + ' ump ' + currentArea.umpw + 'x' + currentArea.umph );
+        document.getElementById("umph").value = 0;
+        document.getElementById("totalwidth").value = 0;
+        document.getElementById("depth").value = 0;
+        document.getElementById("numStalls").value = 0;
     }
 
     function removeArea(index) {
