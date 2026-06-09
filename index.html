@@ -192,8 +192,7 @@
         </div>
         <!-- Dynamic nested layouts will append here container -->
         <div id="sheetLayouts" style="height:400px;  display:none;"></div>
-        <div id="summaryArea" style="display:none; padding: 20px; overflow-y:auto; height: 100%; box-sizing: border-box;">
-          
+        <div id="summaryArea" style="display:none;  overflow-y:auto; height: 100%; box-sizing: border-box;">
           <button onclick="exportExcel()" class="summary-btn">
             Download Excel</button>
           <table id="summaryTable" >
@@ -228,6 +227,7 @@
     var activeTab = 'floor';
     var areas = []; // Array to store all cubicle areas
     var allResults = []; // Array to store results for each area
+    var currentArea = null;
 
     function toggleEndpanel() {
       var v = document.getElementById('endpanelEqual').value;
@@ -292,7 +292,9 @@
       }
 
       const countEndWalls = ({ l: 1, c: 0, s: 2 })[wallType] || 0;
-      const currentArea = {
+      currentArea = {
+        n: numCubicles,
+        W: width,
         width,
         depth,
         numCubicles,
@@ -310,10 +312,15 @@
         supportType,
         topRail,
         wallType,
+        doorShade: document.getElementById('doorShade').value,
+        pilasterShade: document.getElementById('pilasterShade').value,
+        topRailShade: document.getElementById('topRailShade').value,
         countEndWalls,
         umph,
         umpw,
-        umpq
+        umpq,
+        divT: 25,
+        pilT: 40
       };
       areas.push(currentArea);
       renderAreasUI();
@@ -323,11 +330,29 @@
         document.getElementById("totalwidth").value = 0;
         document.getElementById("depth").value = 0;
         document.getElementById("numStalls").value = 0;
+        drawElev(currentArea);
+        drawFloor(currentArea);
     }
 
     function removeArea(index) {
+      var removedArea = areas[index];
       areas.splice(index, 1);
+      if (currentArea === removedArea) {
+        currentArea = areas.length ? areas[areas.length - 1] : null;
+      }
       renderAreasUI();
+      if (currentArea) {
+        if (activeTab === 'floor') drawFloor(currentArea);
+        if (activeTab === 'elev') drawElev(currentArea);
+      }
+    }
+
+    function selectArea(index) {
+      currentArea = areas[index] || null;
+      renderAreasUI();
+      if (!currentArea) return;
+      if (activeTab === 'floor') drawFloor(currentArea);
+      if (activeTab === 'elev') drawElev(currentArea);
     }
 
     function renderAreasUI() {
@@ -340,12 +365,14 @@
       
       let html = '';
       areas.forEach((area, index) => {
+        const isActive = currentArea === area;
         html += `
-          <div style="border-bottom: 1px solid #ddd; padding: 10px 5px; margin-bottom: 10px; background: #f9f9f9; border-radius: 3px;">
-            <div style="font-weight: bold; margin-bottom: 5px;">Area ${index + 1}</div>
-           <div>Cubicles: ${area.numCubicles} ${area.width} x ${area.depth} mm</div>
-           <div>Ump: ${area.umpq} ${area.umpw} x ${area.umph} mm</div>
-            <button id="r" onclick="removeArea(${index})">Remove</button>
+          <div style="border-bottom: 1px solid #ddd; padding: 10px 10px; margin-bottom: 10px; background: ${isActive ? '#e8f4ff' : '#f9f9f9'}; border-radius: 3px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Area ${index + 1}${isActive ? ' (active)' : ''}</div>
+            <div>Cubicles: ${area.numCubicles} — ${area.width} x ${area.depth} mm</div>
+            <div>Ump: ${area.umpq} x ${area.umpw} x ${area.umph} mm</div>
+            <button type="button" onclick="selectArea(${index})">Show</button>
+            <button type="button" onclick="removeArea(${index})" style="margin-left: 8px;">Remove</button>
           </div>
         `;
       });
@@ -860,9 +887,9 @@
     ////end=============================================================================
     function calculate() {
       showErr('');
-      var n = Math.max(1, parseInt(document.getElementById('numStalls').value) || 1);
-      var W = parseFloat(document.getElementById('totalwidth').value) || 2000;
-      var D = parseFloat(document.getElementById('depth').value) || 1500;
+      var n = Math.max(1, parseInt(document.getElementById('numStalls').value) );
+      var W = parseFloat(document.getElementById('totalwidth').value) ;
+      var D = parseFloat(document.getElementById('depth').value) ;
       var dH = parseFloat(document.getElementById('dividerHeight').value) || 1790;
       var doorH = parseFloat(document.getElementById('doorHeight').value) || 1790;
       var doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
@@ -1040,13 +1067,15 @@
       document.getElementById('szNet').textContent = theight.toFixed(2);
 
       if (activeTab === 'floor') {
-        drawFloor(result);
+        var drawTarget = currentArea || (areas.length ? areas[areas.length - 1] : result);
+        if (drawTarget) drawFloor(drawTarget);
       } else if (activeTab === 'elev') {
-        drawElev(result);
+        var drawTarget = currentArea || (areas.length ? areas[areas.length - 1] : result);
+        if (drawTarget) drawElev(drawTarget);
       } else if (activeTab === 'nesting' && areas.length === 0) {
         generateNestingPlan(result);
       }
-    }
+    }    //*/
     /* ── Drawing helpers ─────────────────────────────── */
     function cadClear(ctx) {
       ctx.fillStyle = '#ffffff';
@@ -1143,6 +1172,7 @@
       var scale = Math.min(dW / r.W, dH2 / r.D);
       var ox = mL + (dW - r.W * scale) / 2, oy = mT;
       var pw = r.W * scale, ph = r.D * scale;
+      var spacingMode = r.equalSpacing || document.getElementById('equal').value;
 
       var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
       var midPanelWpx = r.midPanelW * scale;
@@ -1239,7 +1269,7 @@
       for (var i = 0; i < stallXs.length; i++) {
         var sx = stallXs[i], sw = r.stallWidths[i] * scale;
         var dxL;
-        var spacingMode = document.getElementById('equal').value;
+        var spacingMode = r.equalSpacing || 'equal';
         if (spacingMode === 'unequal') {
           var gap = (r.ewL || 0) * scale;
           dxL = sx + gap;
@@ -1288,7 +1318,7 @@
       if (stallXs.length > 0) {
         var sx = stallXs[0], sw = r.stallWidths[0] * scale;
         var dxL;
-        var spacingMode = document.getElementById('equal').value;
+        var spacingMode = r.equalSpacing || 'equal';
         if (spacingMode === 'unequal') {
           dxL = sx + ((r.ewL || 0) * scale);
           if (dxL + doorWpx > sx + sw) dxL = Math.max(sx, sx + sw - doorWpx);
@@ -1830,7 +1860,6 @@
 }
     buildStallInputs();
     buildPalette();
-    calculate();
   </script>
 </body>
 </html>
