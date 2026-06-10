@@ -57,7 +57,7 @@
       <div class="stall-inputs hidden" id="stallWidthFields"></div>
       <div class="section-title"></div>
       <div class="fg">
-        <label>End panel distribution</label>
+        <label> Panel distribution</label>
         <select id="endpanelEqual" onchange="toggleEndpanel()">
           <option value="equal">Equal </option>
           <option value="unequal">Unequal</option>
@@ -65,13 +65,13 @@
       </div>
       <div class="fg" id="endpanelEqualField">
         <label>End panel width (mm)</label>
-        <input type="number" id="endpanelSize" value="150" min="50">
+        <input type="number" id="endpanelSize" value="200" min="50">
       </div>
       <div class="sub-fields hidden" id="endpanelFields">
-        <div class="fg"><label>Left end panel (mm)</label>
-          <input type="number" id="endpanelLeft" value="150" min="50">
+        <div class="fg"><label>Fist panel (mm)</label>
+          <input type="number" id="endpanelLeft" value="200" min="50">
         </div>
-        <div class="fg"><label>Right end panel (mm)</label>
+        <div class="fg"><label>Last panel (mm)</label>
           <input type="number" id="endpanelRight" value="200" min="50">
         </div>
       </div>
@@ -106,6 +106,22 @@
         <div class="fg">
           <label>Top rail</label>
           <select id="topRail" onchange="calculate()">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>Profile</label>
+          <select id="profile" >
+            <option value="SS profile">SS </option>
+            <option value="Aluminium Profile">aluminium</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Door stopper</label>
+          <select id="ds" >
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
@@ -195,6 +211,7 @@
         <div id="summaryArea" style="display:none;  overflow-y:auto; height: 100%; box-sizing: border-box;">
           <button onclick="exportExcel()" class="summary-btn">
             Download Excel</button>
+            <input type="text" name="" id="note">
           <table id="summaryTable" >
             <thead>
               <tr >
@@ -696,7 +713,6 @@
     function renderSummary(areaPlans, combinedPlan) {
       var tbody = document.getElementById('summaryTbody');
       if (!tbody) return;
-
       var totalLegCount = 0;
       var totalShoeboxCount = 0;
       var totalDoors = 0;
@@ -708,7 +724,7 @@
       var coatHookCount = 0;
       var hingeCount = 0;
       var lockCount = 0;
-
+      if(totalLegCount > 0) 
       var sheetsReq = 0;
       var usedArea = 0;
       var totalArea = 0;
@@ -755,18 +771,18 @@
          remainArea = Math.max(remainArea, part.area);
       });
       
-      var sheetTypeName = '';
-      if (activePlan && activePlan.sheets) {
-        var counts = {};
-        activePlan.sheets.forEach(function(s) {
-          counts[s.stock.name] = (counts[s.stock.name] || 0) + 1;
-        });
-        var types = [];
-        for (var name in counts) {
-          types.push(counts[name] + ' of ' + name);
-        }
-        sheetTypeName = types.join(', ');
-      }
+//     var sheetTypeName = '';
+// if (activePlan && activePlan.sheets) {
+//   var counts = {};
+//   activePlan.sheets.forEach(function(s) {
+//     counts[s.stock.name] = (counts[s.stock.name] || 0) + 1;
+//   });
+//   var types = [];
+//   for (var name in counts) {
+//     types.push(counts[name] + ' of ' + name + ' sheet');
+//   }
+//   sheetTypeName = types.join(', ');
+// }
       var wallMap = { l: 1, c: 0, s: 2 };
       var endWallCount = wallMap[document.getElementById('wall').value] || 0;
 
@@ -793,28 +809,53 @@
 
       var umpCount = plans.reduce(function (sum, entry) {
         return sum + ((entry.areaResult && entry.areaResult.umpq) || 0);
-      }, 0);
-
+      }, 0); 
+      var ds = document.getElementById('ds').value;
+      var dsc = (ds === 'yes') ? totalDoors * 2 : 0;
+      var profile = document.getElementById('profile').value;
+       var supportType = document.getElementById("supportType").value;
+let message = "";
+if (supportType === "legs") {
+  message = "with legs";
+} else if (supportType === "shoebox") {
+  message = "with shoebox";
+} else {
+  message = "without legs";
+}
+  var note = document.getElementById("note").value ;
+  var counts = {};
+if (activePlan && activePlan.sheets) {
+  activePlan.sheets.forEach(function(s) {
+    counts[s.stock.name] = (counts[s.stock.name] || 0) + 1;
+  });
+}
+// Separate variables for each sheet type
+var count14x6 = counts["14 x 6 feet"] || 0;
+var count12x6 = counts["12 x 6 feet"] || 0;
+var count8x4  = counts["8 x 4 feet"] || 0;
+var count8x6  = counts["8 x 6 feet"] || 0;
       var html = `
-        <tr><td>HPL Sheets Required</td><td>${sheetsReq}</td><td>${sheetTypeName}</td></tr>
+        <tr><td>14 x 6 feet</td><td>${count14x6 }</td><td></td></tr>
+        <tr><td>12 x 6 feet</td><td>${count12x6}</td><td></td></tr>
+        <tr><td>8 x 4 feet</td><td>${count8x4}</td><td></td></tr>
+        <tr><td>8 x 6 feet</td><td>${count8x6 }</td><td></td></tr>
         <tr><td>Cubicle</td><td>${totalDoors}</td><td></td></tr>
-        <tr><td>Legs</td><td>${totalLegCount}</td><td></td></tr>
-        <tr><td>Shoeboxes</td><td>${totalShoeboxCount}</td><td></td></tr>
-        <tr><td>Knobs</td><td>${totalDoors}</td><td></td></tr>
-        <tr><td>Locks / Indicators</td><td>${lockCount}</td><td></td></tr>
-        <tr><td>Hinges</td><td>${hingeCount}</td><td></td></tr>
-        <tr><td>Coat Hooks</td><td>${coatHookCount}</td><td></td></tr>
+        <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td></tr>
         <tr><td>Top Rail Length</td><td>${toprailLengthStr}</td><td></td></tr>
-        <tr><td>Urinal Modesty Panels (UMP)</td><td>${umpCount}</td><td></td></tr>
+        <tr><td> UMP</td><td>${umpCount}</td><td>900 x 450 mm</td></tr>
+        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
+        <tr><td>Doorstopper-channel</td><td>${dsc}</td><td>6 feet</td></tr> 
+        <tr><td>F-channel</td><td>${endWallCount}</td><td></td></tr>
+        <tr><td >Cutting Details</td><td>${profile}</td><td></td></tr>
         <tr><td>Dividers</td><td>${totalDividers}</td><td>${dividerDim}</td></tr>
         <tr><td>Mid panels</td><td>${totalMid}</td><td>${midPanelDim}</td></tr>
         <tr><td>End panels</td><td>${totalEnd}</td><td>${endPanelDim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td>${endWallDim}</td></tr>
-        <tr><td>Overall height</td><td></td><td>${netDim}</td></tr>
-        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
-        <tr><td>Doorstopper-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
-        <tr><td>F-channel</td><td>${endWallCount}</td><td></td></tr> `;
+        <tr><td>Floor fastner</td><td></td><td></td></tr>
+        <tr><td>Side Cover</td><td></td><td></td></tr>
+        <tr><td>Front cover 1800</td><td></td><td></td></tr>
+        <tr><td>Notes</td><td>${note}</td><td></td></tr>  `;
       tbody.innerHTML = html;
     }
     async function submitProject(event) {
@@ -1075,7 +1116,7 @@
       } else if (activeTab === 'nesting' && areas.length === 0) {
         generateNestingPlan(result);
       }
-    }    //*/
+    }   
     /* ── Drawing helpers ─────────────────────────────── */
     function cadClear(ctx) {
       ctx.fillStyle = '#ffffff';
