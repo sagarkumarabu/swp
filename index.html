@@ -114,14 +114,14 @@
       <div class="row2">
         <div class="fg">
           <label>Profile</label>
-          <select id="profile" >
+          <select id="profile" oninput="calculate();" >
             <option value="SS profile">SS </option>
             <option value="Aluminium Profile">aluminium</option>
           </select>
         </div>
         <div class="fg">
           <label>Door stopper</label>
-          <select id="ds" >
+          <select id="ds" onchange="calculate()">
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
@@ -213,13 +213,7 @@
             Download Excel</button>
             <input type="text" name="" id="note">
           <table id="summaryTable" >
-            <thead>
-              <tr >
-                <th style="padding: 8px;">Item</th>
-                <th style="padding: 8px;">Quantity / Value</th>
-                <th style="padding: 8px;"> Dimension</th>
-              </tr>
-            </thead>
+           
             <tbody id="summaryTbody">
             </tbody>
           </table>
@@ -835,18 +829,20 @@ var count12x6 = counts["12 x 6 feet"] || 0;
 var count8x4  = counts["8 x 4 feet"] || 0;
 var count8x6  = counts["8 x 6 feet"] || 0;
       var html = `
-        <tr><td>14 x 6 feet</td><td>${count14x6 }</td><td></td></tr>
-        <tr><td>12 x 6 feet</td><td>${count12x6}</td><td></td></tr>
-        <tr><td>8 x 4 feet</td><td>${count8x4}</td><td></td></tr>
-        <tr><td>8 x 6 feet</td><td>${count8x6 }</td><td></td></tr>
-        <tr><td>Cubicle</td><td>${totalDoors}</td><td></td></tr>
+        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th></tr>
+        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td></tr>
+        <tr><th >Particulars</th> <th >Qty</th> <th > Dimension</th> <th>Rate</th>
+                <th>Amount </th>
+              </tr>
+      <tr><td>14 x 6 feet-HPL</td><td>${count14x6 }</td><td></td></tr>
+        <tr><td>12 x 6 feet-HPL</td><td>${count12x6}</td><td></td></tr>
+        <tr><td>8 x 4 feet-HPL</td><td>${count8x4}</td><td></td></tr>
+        <tr><td>8 x 6 feet-BOILO</td><td>${count8x6 }</td><td></td></tr>
         <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td></tr>
         <tr><td>Top Rail Length</td><td>${toprailLengthStr}</td><td></td></tr>
-        <tr><td> UMP</td><td>${umpCount}</td><td>900 x 450 mm</td></tr>
         <tr><td>U-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
         <tr><td>Doorstopper-channel</td><td>${dsc}</td><td>6 feet</td></tr> 
         <tr><td>F-channel</td><td>${endWallCount}</td><td></td></tr>
-        <tr><td >Cutting Details</td><td>${profile}</td><td></td></tr>
         <tr><td>Dividers</td><td>${totalDividers}</td><td>${dividerDim}</td></tr>
         <tr><td>Mid panels</td><td>${totalMid}</td><td>${midPanelDim}</td></tr>
         <tr><td>End panels</td><td>${totalEnd}</td><td>${endPanelDim}</td></tr>
