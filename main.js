@@ -38,14 +38,23 @@ function exportExcel() {
   var rows = table.querySelectorAll("tr");
   var csv = [];
 
-  for (var i = 0; i < rows.length; i++) {
-    var row = [], cols = rows[i].querySelectorAll("td, th");
-    for (var j = 0; j < cols.length; j++) {
-      var data = cols[j].innerText.replace(/"/g, '""');
-      row.push('"' + data + '"');
+ for (var i = 0; i < rows.length; i++) {
+        var row = [];
+        var cols = rows[i].querySelectorAll("td, th");
+
+        for (var j = 0; j < cols.length; j++) {
+
+            var input = cols[j].querySelector("input");
+
+            var data = input
+                ? input.value
+                : cols[j].innerText;
+
+            row.push('"' + data.replace(/"/g, '""') + '"');
+        }
+
+        csv.push(row.join(","));
     }
-    csv.push(row.join(","));
-  }
 
   var csvString = csv.join("\n");
   var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
