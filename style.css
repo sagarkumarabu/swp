@@ -15,7 +15,12 @@
       color: #1c1c2e;
       height: 90vh
     }
+    table { border-collapse: collapse; margin-bottom: 15px; width: 80vw; 
+            border: solid 2px #333; background: #a59a9a;
+             }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     nav{
+      position: sticky; top: 0; z-index: 100;
       background-color: rgb(0, 0, 0);
       min-height: 34px;
       display: flex;
@@ -333,3 +338,12 @@
            background: #2a2e45; color: white; border: none; border-radius: 4px; 
            cursor: pointer;
 }
+.summary-btn{
+  margin-bottom: 5px; padding: 5px; cursor: pointer;
+             background: #2e7d32; color: white; border: none; border-radius: 4px;
+}
+#summaryTable{ width: auto;}
+#r{background-color: red; color: white;}
+ table td {
+    text-align: center;
+  }
