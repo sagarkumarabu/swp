@@ -837,11 +837,16 @@ var count14x6 = counts["14 x 6 feet"] || 0;
 var count12x6 = counts["12 x 6 feet"] || 0;
 var count8x4  = counts["8 x 4 feet"] || 0;
 var count8x6  = counts["8 x 6 feet"] || 0;
+    var fastner = 0, sidecover = 0, frontcover = 0;
+if (supportType === "shoebox") {
+  fastner = totalDoors;
+  sidecover = (totalEnd + totalMid) * 2;
+  frontcover = (totalEnd + totalMid) * 2;}
       var html = `
-        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th></tr>
-        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td></tr>
+        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th></tr>
+        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td></tr>
         <tr><th >Particulars</th> <th >Qty</th> <th > Dimension</th> <th>Rate</th>
-                <th>Amount </th> </tr>
+                <th>Amount </th></tr>
       <tr><td>14 x 6 feet-HPL</td><td>${count14x6 }</td><td></td></tr>
         <tr><td>12 x 6 feet-HPL</td><td>${count12x6}</td><td></td></tr>
         <tr><td>8 x 4 feet-HPL</td><td>${count8x4}</td><td></td></tr>
@@ -857,12 +862,11 @@ var count8x6  = counts["8 x 6 feet"] || 0;
         <tr><td>End panels</td><td>${totalEnd}</td><td>${endPanelDim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td>${endWallDim}</td></tr>
-        <tr><td>Floor fastner</td><td></td><td></td></tr>
-        <tr><td>Side Cover</td><td></td><td></td></tr>
-        <tr><td>Front cover 1800</td><td></td><td></td></tr>
+        <tr><td>Floor fastner</td><td>${fastner}</td><td></td></tr>
+        <tr><td>Side Cover</td><td>${sidecover}</td><td></td></tr>
+        <tr><td>Front cover 1800</td><td>${frontcover}</td><td></td></tr>
         <tr><td>Notes</td><td>${note}</td><td></td></tr>  `;
-      tbody.innerHTML = html;
-    }
+      tbody.innerHTML = html;    }
     async function submitProject(event) {
       event.preventDefault();
       var messageBox = document.getElementById('formMsg');
