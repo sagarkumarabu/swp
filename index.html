@@ -21,6 +21,13 @@
     <div class="sidebar">
       <h2>Cubicle Partition </h2>
       <div class="err" id="errBox"></div>
+      <div class="row2">
+        <div class="fg"><label>Sheet type</label>
+          <select id="sheet" onchange="calculate()">
+            <option value="hpl">HPL</option>
+            <option value="boilo">BOILO</option>
+          </select>
+</div>
       <div class="fg">
         <label>Wall type</label>
         <select id="wall">
@@ -28,7 +35,7 @@
           <option value="l">L wall</option>
           <option value="s">Straight wall</option>
         </select>
-      </div>
+      </div></div>
      
       <div class="section-title">Areas Configuration</div>
       <button class="calcbtn" onclick="addArea()" style="margin-bottom: 10px; width: 100%; background: #4CAF50;">+ Add Area</button>
@@ -395,6 +402,7 @@
       { name: "12 x 6 feet", width: 3670, height: 1860 },
       { name: "14 x 6 feet", width: 4300, height: 1860 }
     ];
+    const boilo =[{name: "8 x 6 feet", width: 2439, height: 1829}];
 
     function buildPartsFromArea(r, areaIndex = 0) {
       const parts = [];
@@ -509,7 +517,8 @@
     }
 
     function generateNestingPlan(rOrParts, render = true) {
-      const availableSheets = SHEET_INVENTORY;
+      const sheetType = document.getElementById('sheet') ? document.getElementById('sheet').value : 'hpl';
+      const availableSheets = sheetType === 'boilo' ? boilo : SHEET_INVENTORY;
       const originalParts = Array.isArray(rOrParts)
         ? rOrParts.map(item => ({ ...item }))
         : buildPartsFromArea(rOrParts);
