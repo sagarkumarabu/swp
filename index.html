@@ -205,12 +205,12 @@
       <div class="drawing-area">
         <div style="position: relative;">
           <canvas id="cvFloor" width="750" height="400"></canvas>
-          <button id="floorb" type="button" onclick="downloadFloor()"
-           class="floorb">DOWNLOAD</button>
+          <button id="floorb" type="button" onclick="downloadFloor();"
+           class="floorb">dOWNLOAD</button>
         </div>
         <div style="position: relative;">
           <canvas id="cvElev" width="750" height="400" style="display:none"></canvas>
-          <button id="downloadElevBtn" type="button" onclick="downloadElevation()" 
+          <button id="downloadElevBtn" type="button" onclick="downloadElevation();" 
            class="floorb">DOWNLOAD</button>
         </div>
         <!-- Dynamic nested layouts will append here container -->
@@ -245,7 +245,7 @@
     var areas = []; // Array to store all cubicle areas
     var allResults = []; // Array to store results for each area
     var currentArea = null;
-
+ 
     function toggleEndpanel() {
       var v = document.getElementById('endpanelEqual').value;
       var isU = v === 'unequal';
@@ -255,7 +255,8 @@
 
     function onSpacingChange() { buildStallInputs(); }
     function onStallCountChange() { buildStallInputs(); }
-    
+
+
     // AREA MANAGEMENT FUNCTIONS
     function addArea() {
       const width = parseFloat(document.getElementById('totalwidth').value) || 2000;
@@ -266,15 +267,30 @@
       const doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
       const doorH = parseFloat(document.getElementById('doorHeight').value) || 1790;
       const dH = parseFloat(document.getElementById('dividerHeight').value) || 1790;
-      const pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
+      const remaincubiclespace = width - doorW;
+      const doorShade = document.getElementById('doorShade').value;
+      let pilH = parseFloat(document.getElementById('pilasterHeight').value) ;
       const supportType = document.getElementById('supportType').value;
       const topRail = document.getElementById('topRail').value;
       const wallType = document.getElementById('wall').value;
       const umph = parseFloat(document.getElementById('umph').value) || 900;
       const umpw = parseFloat(document.getElementById('umpw').value) || 450;
       const umpq = parseInt(document.getElementById('umpq').value, 10) || 0;
-      let ewL, ewR, midPanelW;
-
+      let epL, epR, midPanelW;
+     if (supportType === "shoebox") {
+  pilH = doorH + 100;
+} else if (supportType === "legs") {
+  pilH = doorH; // same as door
+} else if (supportType === "none") {
+  pilH = doorH; // same as door
+}
+// Add increments depending on top rail or bottom support
+if (topRail === "yes") {
+  pilH += 40; // add 40 if top rail
+}
+// Finally update the input field
+document.getElementById('pilasterHeight').value = pilH;
+  
       if (umpq < 1 && numCubicles < 1) {
         alert("Enter a valid number of cubicles");
         return;
@@ -287,14 +303,14 @@
 
       if (ewEqual) {
         const cubicleSpace = width / numCubicles;
-        const panelAllowancePerCubicle = cubicleSpace - doorW;
-        const derivedEndPanel = panelAllowancePerCubicle / 2;
-        ewL = ewR = Math.max(0, derivedEndPanel);
+        const remaincubiclespace = cubicleSpace - doorW;
+        const derivedEndPanel = remaincubiclespace / 2;
+        epL = epR = Math.max(0, derivedEndPanel);
         midPanelW = derivedEndPanel * 2;
       } else {
-        ewL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
-        ewR = parseFloat(document.getElementById('endpanelRight').value) || 200;
-        midPanelW = ewL;
+        epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
+        epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
+        midPanelW = epL + remaincubiclespace; 
       }
 
       const stallWidths = [];
@@ -317,8 +333,8 @@
         numCubicles,
         equalSpacing,
         ewEqual,
-        ewL,
-        ewR,
+        epL,
+        epR,
         midPanelW,
         stallWidths,
         D: depth,
@@ -711,7 +727,7 @@
       }
       calculate();
     }
-
+   
     function renderSummary(areaPlans, combinedPlan) {
       var tbody = document.getElementById('summaryTbody');
       if (!tbody) return;
@@ -746,9 +762,9 @@
          lockCount += (area.countDoors || 0);
          if (area.topRail === 'yes') toprailLength += area.W || 0;
          if (area.supportType === 'legs') {
-            totalLegCount += (area.ewL > 0 ? 1 : 0) + (area.ewR > 0 ? 1 : 0) + ((area.countMid || 0) > 0 ? (area.countMid || 0) * 2 : 0);
+            totalLegCount += (area.epL > 0 ? 1 : 0) + (area.epR > 0 ? 1 : 0) + ((area.countMid || 0) > 0 ? (area.countMid || 0) * 2 : 0);
          } else if (area.supportType === 'shoebox') {
-            totalShoeboxCount += (area.ewL > 0 ? 1 : 0) + (area.ewR > 0 ? 1 : 0) + (area.countMid || 0);
+            totalShoeboxCount += (area.epL > 0 ? 1 : 0) + (area.epR > 0 ? 1 : 0) + (area.countMid || 0);
          }
       });
 
@@ -773,18 +789,6 @@
          remainArea = Math.max(remainArea, part.area);
       });
       
-//     var sheetTypeName = '';
-// if (activePlan && activePlan.sheets) {
-//   var counts = {};
-//   activePlan.sheets.forEach(function(s) {
-//     counts[s.stock.name] = (counts[s.stock.name] || 0) + 1;
-//   });
-//   var types = [];
-//   for (var name in counts) {
-//     types.push(counts[name] + ' of ' + name + ' sheet');
-//   }
-//   sheetTypeName = types.join(', ');
-// }
       var wallMap = { l: 1, c: 0, s: 2 };
       var endWallCount = wallMap[document.getElementById('wall').value] || 0;
 
@@ -799,16 +803,20 @@
       var maxW = allStallWidths.length ? Math.max.apply(null, allStallWidths) : 0;
       var cubicleWidthStr = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
       var firstArea = plans[0] && plans[0].areaResult ? plans[0].areaResult : {};
-      var dividerDim = (firstArea.D || '') + ' x ' + (firstArea.dH || '') + ' mm';
-      var doorDim = (firstArea.doorW || '') + ' x ' + (firstArea.doorH || '') + ' mm';
-      var endPanelDim = Math.round(firstArea.endPanelW || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
-      var midPanelDim = Math.round(firstArea.midPanelW || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
+      function formatDim(width, height) {
+        var formattedWidth = (typeof width === 'number' && !isNaN(width)) ? Math.round(width) : (width || '');
+        var formattedHeight = height || '';
+        return (formattedWidth !== '' || formattedHeight !== '') ? formattedWidth + ' x ' + formattedHeight + ' mm' : '';
+      }
+      var dividerDim = formatDim(firstArea.D, firstArea.dH);
+      var doorDim = formatDim(firstArea.doorW, firstArea.doorH);
+      var endPanelDim = formatDim(firstArea.endPanelW, firstArea.pilH);
+      var midPanelDim = formatDim(firstArea.midPanelW, firstArea.pilH);
       var endWallDim = dividerDim;
-      var ewLDim = Math.round(firstArea.ewL || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
-      var ewRDim = Math.round(firstArea.ewR || 0) + ' x ' + (firstArea.pilH || '') + ' mm';
+      var epLdim = formatDim(firstArea.epL, firstArea.pilH);
+      var epRdim = formatDim(firstArea.epR, firstArea.pilH);
       var netDim = (typeof firstArea.theight !== 'undefined') ? firstArea.theight.toFixed(2) + ' mm' : '';
-      var toprailLengthStr = toprailLength > 0   ? (Math.round(toprailLength / 3600) + 'unit')  : '0 unit';
-
+     var toprailLengthStr = toprailLength > 0   ? ( (toprailLength / 304.8).toFixed(1) + ' ft')   : '0 ft';
       var umpCount = plans.reduce(function (sum, entry) {
         return sum + ((entry.areaResult && entry.areaResult.umpq) || 0);
       }, 0); 
@@ -851,14 +859,14 @@ if (supportType === "shoebox") {
         <tr><td>8 x 6 feet-BOILO</td><td>${count8x6 }</td><td></td></tr>
         <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td></tr>
         <tr><td>Ump Hardware set</td><td>${umpCount}</td><td></td></tr>
-        <tr><td>Top Rail Length</td><td>${toprailLengthStr}</td><td></td></tr>
-        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td>6 feet</td></tr> 
-        <tr><td>Doorstopper-channel</td><td>${dsc}</td><td>6 feet</td></tr> 
-        <tr><td>F-channel</td><td>${endWallCount}</td><td></td></tr>
+        <tr><td>Top Rail</td><td>${toprailLengthStr}</td><td></td></tr>
+        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
+        <tr><td>Doorstopper-channel</td><td>${dsc}</td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
+        <tr><td>F-channel</td><td>${endWallCount}</td><td><input type="text" name="" id="" value="6 feet"></td></tr>
         <tr><td>Dividers</td><td>${totalDividers}</td><td>${dividerDim}</td></tr>
         <tr><td>Mid panels</td><td>${totalMid}</td><td>${midPanelDim}</td></tr>
-        <tr><td>first panels</td><td>1</td><td>${ewLDim}</td></tr>
-        <tr><td>End panels</td><td>1</td><td>${endPanelDim}</td></tr>
+        <tr><td>first panels</td><td>1</td><td>${epLdim}</td></tr>
+        <tr><td>End panels</td><td>1</td><td>${epRdim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td>${endWallDim}</td></tr>
         <tr><td>Floor fastner</td><td>${fastner}</td><td></td></tr>
@@ -936,13 +944,13 @@ if (supportType === "shoebox") {
     ////end=============================================================================
     function calculate() {
       showErr('');
-      var n = Math.max(1, parseInt(document.getElementById('numStalls').value) );
-      var W = parseFloat(document.getElementById('totalwidth').value) ;
-      var D = parseFloat(document.getElementById('depth').value) ;
+      var n = Math.max(1, parseInt(document.getElementById('numStalls').value)|| 2 );
+      var W = parseFloat(document.getElementById('totalwidth').value)|| 2000;
+      var D = parseFloat(document.getElementById('depth').value) || 1500;
       var dH = parseFloat(document.getElementById('dividerHeight').value) || 1790;
       var doorH = parseFloat(document.getElementById('doorHeight').value) || 1790;
       var doorW = parseFloat(document.getElementById('doorWidth').value) || 600;
-      var pilH = parseFloat(document.getElementById('pilasterHeight').value) || 1830;
+      var pilH = parseFloat(document.getElementById('pilasterHeight').value) ;
       var supportType = document.getElementById('supportType').value;
       var topRail = document.getElementById('topRail').value;
       var wallType = document.getElementById('wall').value;
@@ -952,38 +960,54 @@ if (supportType === "shoebox") {
       var umph = parseFloat(document.getElementById('umph').value) || 900;
       var umpw = parseFloat(document.getElementById('umpw').value) || 450;
       var umpq = parseInt(document.getElementById('umpq').value) || 0;
+     
 
+if (supportType === "shoebox") {
+  pilH = doorH + 100;
+} else if (supportType === "legs") {
+  pilH = doorH; // same as door
+} else if (supportType === "none") {
+  pilH = doorH; // same as door
+}
+// Add increments depending on top rail or bottom support
+if (topRail === "yes") {
+  pilH += 40; // add 40 if top rail
+}
+// Finally update the input field
+document.getElementById('pilasterHeight').value = pilH;
+
+
+      
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
       var divT = 25;
 
       var ewEqual = document.getElementById('endpanelEqual').value === 'equal';
-      var ewL, ewR, midPanelW;
+      var epL, epR, midPanelW;
       if (ewEqual) {
         // 1. Calculate space allocated per single cubicle basket
         var cubicleSpace = W / n;
         // 2. Subtract door width from that space to find total facing panel allowance
-        var panelAllowancePerCubicle = cubicleSpace - doorW;
+        var remaincubiclespace = cubicleSpace - doorW;
         // 3. End panel takes exactly half of a single cubicle's remaining facing allowance
-        var derivedEndPanel = panelAllowancePerCubicle / 2;
+        var derivedEndPanel = remaincubiclespace / 2;
 
-        ewL = ewR = Math.max(0, derivedEndPanel);
-
+        epL = epR = Math.max(0, derivedEndPanel);
         // 4. The shared mid panel is the combination of two adjacent cubicle allowances
         midPanelW = derivedEndPanel * 2;
 
         // Sync calculated value out to the UI text box safely
         var uiField = document.getElementById('endpanelSize');
-        if (uiField) uiField.value = Math.round(ewL);
+        if (uiField) uiField.value = Math.round(epL);
       } else {
-        ewL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
-        ewR = parseFloat(document.getElementById('endpanelRight').value) || 200;
+        epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
+        epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
         // For unequal stalls, the panel segment near the door should equal left end-panel width.
-        midPanelW = ewL;
+        midPanelW = epL + remaincubiclespace ;
       }
 
       // The true physical open space span per stall for the canvas loop to map positions
-      var availableW = W - ewL - ewR;
+      var availableW = W - epL - epR;
       var spacing = document.getElementById('equal').value;
       var stallWidths = [];
 
@@ -1008,7 +1032,7 @@ if (supportType === "shoebox") {
       var countDividers = n - 1;
       var countMid = n > 1 ? n - 1 : 0;
       var countEnd = 2;
-      var endPanelW = ewL;
+      var endPanelW = epL;
       // Structural square meter accounting equations
       var legH = supportType === 'none' ? 0 : 150;
       var theight = pilH + legH;
@@ -1016,7 +1040,7 @@ if (supportType === "shoebox") {
       var grossArea = theight * 1.12;
 
       result = {
-        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, wallType, doorShade, pilasterShade, topRailShade, ewL, ewR, ewEqual, stallWidths,
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, wallType, doorShade, pilasterShade, topRailShade, epL, epR, ewEqual, stallWidths,
         countDoors, countDividers, countMid, countEnd, endPanelW, midPanelW, theight, grossArea, umph, umpw, umpq
       };
 
@@ -1042,8 +1066,8 @@ if (supportType === "shoebox") {
           doorShade: area.doorShade || '#dedede',
           pilasterShade: area.pilasterShade || '#b5b5b5',
           topRailShade: area.topRailShade || '#8f8f8f',
-          ewL: area.ewL,
-          ewR: area.ewR,
+          epL: area.epL,
+          epR: area.epR,
           ewEqual: area.ewEqual,
           stallWidths: area.stallWidths,
           countDoors,
@@ -1051,7 +1075,7 @@ if (supportType === "shoebox") {
           countMid,
           countEnd: 2,
           countEndWalls,
-          endPanelW: area.ewL,
+          endPanelW: area.epL,
           midPanelW: area.midPanelW,
           umph: area.umph,
           umpw: area.umpw,
@@ -1111,8 +1135,8 @@ if (supportType === "shoebox") {
       document.getElementById('szDoor').textContent = doorW + ' x ' + doorH + ' mm';
       document.getElementById('szEP').textContent = Math.round(D) + ' x ' + dH + ' mm';
       document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
-      document.getElementById('szEQL').textContent = Math.round(ewL) + 'x' + pilH + ' mm';
-      document.getElementById('szEQR').textContent = Math.round(ewR) + 'x' + pilH + ' mm';
+      document.getElementById('szEQL').textContent = Math.round(epL) + 'x' + pilH + ' mm';
+      document.getElementById('szEQR').textContent = Math.round(epR) + 'x' + pilH + ' mm';
       document.getElementById('szNet').textContent = theight.toFixed(2);
 
       if (activeTab === 'floor') {
@@ -1223,7 +1247,7 @@ if (supportType === "shoebox") {
       var pw = r.W * scale, ph = r.D * scale;
       var spacingMode = r.equalSpacing || document.getElementById('equal').value;
 
-      var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
+      var epLpx = r.epL * scale, epRpx = r.epR * scale;
       var midPanelWpx = r.midPanelW * scale;
       var divTpx = r.divT * scale;
       var doorWpx = r.doorW * scale;
@@ -1241,9 +1265,9 @@ if (supportType === "shoebox") {
       for (var i = 0; i < stallXs.length; i++) {
         var sx = stallXs[i], sw = r.stallWidths[i] * scale;
 
-        if (i === 0 && r.ewL > 0) {
+        if (i === 0 && r.epL > 0) {
           ctx.fillStyle = '#eaeaea'; // Shade 1 for Left wall stall
-        } else if (i === stallXs.length - 1 && r.ewR > 0) {
+        } else if (i === stallXs.length - 1 && r.epR > 0) {
           ctx.fillStyle = '#dedede'; // Shade 2 for Right wall stall
         } else {
           ctx.fillStyle = '#f5f5f5'; // Shade 0 for Centre standard stall
@@ -1320,7 +1344,7 @@ if (supportType === "shoebox") {
         var dxL;
         var spacingMode = r.equalSpacing || 'equal';
         if (spacingMode === 'unequal') {
-          var gap = (r.ewL || 0) * scale;
+          var gap = (r.epL || 0) * scale;
           dxL = sx + gap;
           if (dxL + doorWpx > sx + sw) {
             dxL = Math.max(sx, sx + sw - doorWpx);
@@ -1361,15 +1385,15 @@ if (supportType === "shoebox") {
       //   dimLine(ctx, sx, oy - 38, sx + sw, oy - 38, Math.round(r.stallWidths[i]) + 'mm', '#7a7a7a', -1);
       // }
       dimLine(ctx, ox + pw + 18, oy, ox + pw + 18, oy + ph, Math.round(r.D) + 'mm', '#5a5a5a', 1);
-      dimLine(ctx, ox, oy + ph + 20, ox + ewLpx, oy + ph + 20, Math.round(r.ewL) + 'mm', '#7a7a7a', 1);
-      dimLine(ctx, ox + pw - ewRpx, oy + ph + 20, ox + pw, oy + ph + 20, Math.round(r.ewR) + 'mm', '#7a7a7a', 1);
+      dimLine(ctx, ox, oy + ph + 20, ox + epLpx, oy + ph + 20, Math.round(r.epL) + 'mm', '#7a7a7a', 1);
+      dimLine(ctx, ox + pw - epRpx, oy + ph + 20, ox + pw, oy + ph + 20, Math.round(r.epR) + 'mm', '#7a7a7a', 1);
 
       if (stallXs.length > 0) {
         var sx = stallXs[0], sw = r.stallWidths[0] * scale;
         var dxL;
         var spacingMode = r.equalSpacing || 'equal';
         if (spacingMode === 'unequal') {
-          dxL = sx + ((r.ewL || 0) * scale);
+          dxL = sx + ((r.epL || 0) * scale);
           if (dxL + doorWpx > sx + sw) dxL = Math.max(sx, sx + sw - doorWpx);
         } else {
           dxL = sx + (sw - doorWpx) / 2;
@@ -1592,8 +1616,8 @@ if (supportType === "shoebox") {
       var pw = r.W * scale, ph = r.pilH * scale;
       var floorY = oy + ph;
 
-      var ewLpx = r.ewL * scale, ewRpx = r.ewR * scale;
-      var displayMidPanelW = r.n > 1 ? Math.max(0, (r.W - r.ewL - r.ewR - (r.n * r.doorW)) / (r.n - 1)) : 0;
+      var epLpx = r.epL * scale, epRpx = r.epR * scale;
+      var displayMidPanelW = r.n > 1 ? Math.max(0, (r.W - r.epL - r.epR - (r.n * r.doorW)) / (r.n - 1)) : 0;
       var midPanelWpx = displayMidPanelW * scale;
       var pilHpx = r.pilH * scale, divHpx = r.dH * scale;
       var doorHpx = r.doorH * scale, doorWpx = r.doorW * scale;
@@ -1604,8 +1628,8 @@ if (supportType === "shoebox") {
       var frontX = ox;
       var doorRects = [];
       var midRects = [];
-      var leftEndRect = { x: frontX, w: ewLpx };
-      frontX += ewLpx;
+      var leftEndRect = { x: frontX, w: epLpx };
+      frontX += epLpx;
 
       for (var i = 0; i < r.n; i++) {
         doorRects.push({ x: frontX, w: doorWpx, label: 'STALL ' + (i + 1) });
@@ -1617,7 +1641,7 @@ if (supportType === "shoebox") {
         }
       }
 
-      var rightEndRect = { x: ox + pw - ewRpx, w: ewRpx };
+      var rightEndRect = { x: ox + pw - epRpx, w: epRpx };
       ctx.strokeStyle = '#1c1c2e';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1690,11 +1714,21 @@ if (supportType === "shoebox") {
         var topRailX = leftEndRect.x;
         var topRailW = (rightEndRect.x + rightEndRect.w) - topRailX;
         ctx.fillStyle = topRailShade;
-        ctx.fillRect(topRailX, oy - topRailH, topRailW, topRailH);
-        ctx.strokeStyle = '#4a4a4a';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(topRailX, oy - topRailH, topRailW, topRailH);
-        leader(ctx, topRailX , oy - topRailH / 2, topRailX - 60, oy - topRailH / 2, 'TOP RAIL', '#4a4a4a');
+       var topRailOffset = (r.supportType === 'shoebox')
+    ? 100 * scale
+    : 0;
+
+var topRailY = oy + topRailOffset - topRailH;
+
+ctx.fillRect(topRailX, topRailY, topRailW, topRailH);
+
+ctx.strokeRect(topRailX, topRailY, topRailW, topRailH);
+// top rail
+leader(    ctx,    topRailX, topRailY + topRailH / 2, topRailX - 60,
+    topRailY + topRailH / 2,
+    'TOP RAIL',
+    '#4a4a4a'
+);
       }
       // leg / shoebox support
       if (r.supportType === 'shoebox') {
@@ -1733,8 +1767,6 @@ if (supportType === "shoebox") {
       } else {
         // No support - just draw the panels without legs or shoeboxes
       }
-     
-
       for (var i = 0; i < doorRects.length; i++) {
         var d = doorRects[i];
         var dTop = floorY - doorHpx;
@@ -1820,12 +1852,33 @@ if (supportType === "shoebox") {
           doorRects[0].w / 3, floorY - doorHpx + 30, doorRects[0].x - 80, floorY - doorHpx + 30,
           'DOOR', '#4a4a4a');
       }
-      //      // Start at knob position
-      const kx = knobX;
-      const ky = knobY;
-
-      // Use leader to draw line + arrow + text
-      leader(ctx, kx, ky, knobX + 90, knobY, "KNOB", "#444");
+  //  knob position
+     if (doorRects.length > 0) {
+    var firstDoor = doorRects[0];
+    var firstKnobX = firstDoor.x + firstDoor.w - Math.max(8, 15 * scale);
+    var firstKnobY = (floorY - doorHpx) + (doorHpx * 0.55);
+    leader(        ctx,firstKnobX,
+        firstKnobY,
+        ox - 20,
+        firstKnobY,
+        "KNOB",
+        "#444"
+    );
+}
+if (doorRects.length > 0) {
+    var lastDoor = doorRects[doorRects.length - 1];
+    var rightLockX = lastDoor.x + lastDoor.w + Math.max(8, 15 * scale);
+    var rightLockY = (floorY - doorHpx) + (doorHpx * 0.55);
+    leader(
+        ctx,
+        rightLockX,
+        rightLockY,
+        ox + pw + 50,   // text position to right of elevation
+        rightLockY,
+        "LOCK",
+        "#444"
+    );
+}
       // Middle hinge coordinates
       var hingeX = d.x - hingeW / 2;
       var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
@@ -1851,8 +1904,8 @@ if (supportType === "shoebox") {
       //enpanel
       var bY1 = floorY + 18, bY2 = floorY + 36, bY4 = floorY + 72;
       bY1 = bY1 + 5;
-      dimLine(ctx, leftEndRect.x, bY1, leftEndRect.x + leftEndRect.w, bY1, Math.round(r.ewL) + 'mm', '#4a4a4a', 1);
-      dimLine(ctx, rightEndRect.x, bY1, rightEndRect.x + rightEndRect.w, bY1, Math.round(r.ewR) + 'mm', '#4a4a4a', 1);
+      dimLine(ctx, leftEndRect.x, bY1, leftEndRect.x + leftEndRect.w, bY1, Math.round(r.epL) + 'mm', '#4a4a4a', 1);
+      dimLine(ctx, rightEndRect.x, bY1, rightEndRect.x + rightEndRect.w, bY1, Math.round(r.epR) + 'mm', '#4a4a4a', 1);
       //door
       for (var i = 0; i < doorRects.length; i++) {
         dimLine(ctx, doorRects[i].x, bY2 + 5, doorRects[i].x + doorRects[i].w, bY2 + 5, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
@@ -1867,48 +1920,30 @@ if (supportType === "shoebox") {
         leftEndRect.x - 40, floorY - pilHpx / 2 , 'END PANEL', '#4a4a4a');
     }
 
-  function downloadFloor() {
-  var cv = document.getElementById('cvFloor');
-  if (!cv) {
-    alert("Canvas element not found!");
-    return;
-  }
-
-  var fileName = prompt("Enter file name:", "FloorPlan");
-  if (!fileName) return; // stop if user cancels or leaves blank
-
-  var link = document.createElement('a');
-  link.download = fileName.trim() + '.png';
-  link.href = cv.toDataURL('image/png');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
  function downloadFloor() {
-      var cv = document.getElementById('cvFloor');
-      var link = document.createElement('a');
-      var name = prompt('Eneter file name');
+  var cv = document.getElementById('cvFloor');
+  var link = document.createElement('a');
+    var name = prompt('Enter file name');
       if(!name) return;
   // Use the given name, or fall back to a default if empty
-      link.download =  name+'.png';
-      link.href = cv.toDataURL('image/png');
-      link.click();
-    }
+  link.download =  name+'.png';
+  link.href = cv.toDataURL('image/png');
+  link.click();
+}
 
    function downloadElevation() {
   var cv = document.getElementById('cvElev');
   var link = document.createElement('a');
-    var name = prompt('Eneter file name');
+    var name = prompt('Enter file name');
       if(!name) return;
   // Use the given name, or fall back to a default if empty
   link.download =  name+'.png';
-  
   link.href = cv.toDataURL('image/png');
   link.click();
 }
     buildStallInputs();
     buildPalette();
+    calculate();
   </script>
 </body>
 </html>
