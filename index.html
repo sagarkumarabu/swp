@@ -157,9 +157,7 @@
         <input type="hidden" id="pilasterShade" value="#b5b5b5">
         <input type="hidden" id="topRailShade" value="#8f8f8f">
       </div>
-      
-      <button class="calcbtn" onclick="calculate()">Calculate</button>
-     
+      <button class="calcbtn" onclick="calculate()">Calculate</button>  
       <form id="dataForm" onsubmit="submitProject(event)" style="margin-top: 15px;">
         <div class="fg"><label>Name</label><input type="text" id="userName" required></div>
         <div class="fg"><label>Email</label><input type="text" id="userEmail" required></div>
@@ -219,7 +217,6 @@
           <button onclick="exportExcel()" class="summary-btn">
             Download Excel</button>
           <table id="summaryTable" >
-           
             <tbody id="summaryTbody">
             </tbody>
           </table>
@@ -255,8 +252,6 @@
 
     function onSpacingChange() { buildStallInputs(); }
     function onStallCountChange() { buildStallInputs(); }
-
-
     // AREA MANAGEMENT FUNCTIONS
     function addArea() {
       const width = parseFloat(document.getElementById('totalwidth').value) || 2000;
@@ -290,17 +285,10 @@ if (topRail === "yes") {
 }
 // Finally update the input field
 document.getElementById('pilasterHeight').value = pilH;
-  
       if (umpq < 1 && numCubicles < 1) {
         alert("Enter a valid number of cubicles");
         return;
       }
-
-      // if (numCubicles < 1) {
-      //   alert("Enter a valid number of cubicles.");
-      //   return;
-      // }
-
       if (ewEqual) {
         const cubicleSpace = width / numCubicles;
         const remaincubiclespace = cubicleSpace - doorW;
@@ -380,14 +368,39 @@ document.getElementById('pilasterHeight').value = pilH;
       }
     }
 
-    function selectArea(index) {
-      currentArea = areas[index] || null;
-      renderAreasUI();
-      if (!currentArea) return;
-      if (activeTab === 'floor') drawFloor(currentArea);
-      if (activeTab === 'elev') drawElev(currentArea);
-    }
+   function selectArea(index) {
+  currentArea = areas[index] || null;
+  renderAreasUI();
+  if (!currentArea) return;
+  // Populate form fields with currentArea values
+  document.getElementById('totalwidth').value = currentArea.width;
+  document.getElementById('depth').value = currentArea.depth;
+  document.getElementById('numStalls').value = currentArea.numCubicles;
+  document.getElementById('doorWidth').value = currentArea.doorW;
+  document.getElementById('doorHeight').value = currentArea.doorH;
+  document.getElementById('dividerHeight').value = currentArea.dH;
+  document.getElementById('pilasterHeight').value = currentArea.pilH;
+  document.getElementById('supportType').value = currentArea.supportType;
+  document.getElementById('topRail').value = currentArea.topRail;
+  document.getElementById('wall').value = currentArea.wallType;
+  document.getElementById('doorShade').value = currentArea.doorShade;
+  document.getElementById('pilasterShade').value = currentArea.pilasterShade;
+  document.getElementById('topRailShade').value = currentArea.topRailShade;
+  document.getElementById('umph').value = currentArea.umph;
+  document.getElementById('umpw').value = currentArea.umpw;
+  document.getElementById('umpq').value = currentArea.umpq;
+  document.getElementById('endpanelLeft').value = currentArea.epL;
+  document.getElementById('endpanelRight').value = currentArea.epR;
+  // If stall widths are editable individually
+  currentArea.stallWidths.forEach((sw, i) => {
+    const el = document.getElementById('sw_' + (i + 1));
+    if (el) el.value = sw;
+  });
 
+  // Redraw based on active tab
+  if (activeTab === 'floor') drawFloor(currentArea);
+  if (activeTab === 'elev') drawElev(currentArea);
+}
     function renderAreasUI() {
       const container = document.getElementById('areasContainer');
       if (!container) return;
@@ -554,9 +567,7 @@ document.getElementById('pilasterHeight').value = pilH;
             break;
           }
         }
-
         if (placed) continue;
-
         const candidateSheets = availableSheets.filter(sheetType => {
           return (
             (part.finalW <= sheetType.width && part.finalH <= sheetType.height) ||
@@ -1783,6 +1794,7 @@ leader(    ctx,    topRailX, topRailY + topRailH / 2, topRailX - 60,
         ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.15), hingeW, hingeH);
         ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.50) - hingeH / 2, hingeW, hingeH);
         ctx.fillRect(d.x - hingeW / 2, dTop + (doorHpx * 0.85) - hingeH, hingeW, hingeH);
+     
         //===========knob
         var knobX = d.x + d.w - Math.max(8, 15 * scale);
         var knobY = dTop + (doorHpx * 0.55);
@@ -1865,29 +1877,24 @@ leader(    ctx,    topRailX, topRailY + topRailH / 2, topRailX - 60,
         "#444"
     );
 }
+// Example: annotate the middle hinge
 if (doorRects.length > 0) {
+var hingeW = Math.max(6, 4 * scale);
+var hingeH = Math.max(12, 15 * scale);
+// Middle hinge coordinates
+var hingeX = d.x - hingeW / 2;
+var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
+// Center point of hinge
+const cx = hingeX + hingeW / 2;
+const cy = hingeY + hingeH / 2;
+// Use leader function to draw line + arrow + text
+leader(    ctx,    cx, cy,   ox + pw + 50, cy,     // text position to right of elevation
+    "HINGE", "#444");
     var lastDoor = doorRects[doorRects.length - 1];
     var rightLockX = lastDoor.x + lastDoor.w + Math.max(8, 15 * scale);
     var rightLockY = (floorY - doorHpx) + (doorHpx * 0.55);
-    leader(
-        ctx,
-        rightLockX,
-        rightLockY,
-        ox + pw + 50,   // text position to right of elevation
-        rightLockY,
-        "LOCK",
-        "#444"
-    );
-}
-      // Middle hinge coordinates
-      var hingeX = d.x - hingeW / 2;
-      var hingeY = dTop + (doorHpx * 0.50) - hingeH / 2;
-
-      //  hinge
-      const cx = hingeX + hingeW / 2;
-      const cy = hingeY + hingeH / 2;
-      // Use leader function to draw line + arrow + text
-      leader(ctx, cx, cy, hingeX + 150, hingeY , "HINGE", "#444");
+    leader(ctx,  rightLockX,  rightLockY,   ox + pw + 50,   // text position to right of elevation
+        rightLockY,"LOCK","#444"  );}  
 
       var vx1 = ox + pw + 18, vx2 = ox + pw + 36, vx3 = ox + pw + 56;
       //  dimLine(ctx, vx1, floorY - pilHpx, vx1, floorY, Math.round(r.pilH) + 'mm', '#5a5a5a', 1);
@@ -1925,12 +1932,10 @@ if (doorRects.length > 0) {
   var link = document.createElement('a');
     var name = prompt('Enter file name');
       if(!name) return;
-  // Use the given name, or fall back to a default if empty
   link.download =  name+'.png';
   link.href = cv.toDataURL('image/png');
   link.click();
 }
-
    function downloadElevation() {
   var cv = document.getElementById('cvElev');
   var link = document.createElement('a');
