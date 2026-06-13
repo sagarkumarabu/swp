@@ -1,9 +1,9 @@
 
 // Redirect unauthenticated users away from protected pages,
 // but don't redirect when already on the login page.
-if (!localStorage.getItem('authToken') && !/\/?login\.html$/.test(window.location.pathname)) {
-  window.location.href = 'login.html';
-}
+// if (!localStorage.getItem('authToken') && !/\/?login\.html$/.test(window.location.pathname)) {
+//   window.location.href = 'login.html';
+// }
 
 (function () {
   const STORAGE_KEY = 'hplFontScale';
@@ -33,37 +33,39 @@ if (!localStorage.getItem('authToken') && !/\/?login\.html$/.test(window.locatio
   window.changeFontSize = changeFontSize;
   applyFontScale(getCurrentScale());
 })();
-function exportExcel() {
+
+ function exportExcel() {
   var table = document.getElementById("summaryTable");
   var rows = table.querySelectorAll("tr");
   var csv = [];
 
- for (var i = 0; i < rows.length; i++) {
-        var row = [];
-        var cols = rows[i].querySelectorAll("td, th");
+  for (var i = 0; i < rows.length; i++) {
+    var cols = rows[i].querySelectorAll("td, th");
+    var row = [];
 
-        for (var j = 0; j < cols.length; j++) {
-
-            var input = cols[j].querySelector("input");
-
-            var data = input
-                ? input.value
-                : cols[j].innerText;
-
-            row.push('"' + data.replace(/"/g, '""') + '"');
-        }
-
-        csv.push(row.join(","));
+    for (var j = 0; j < cols.length; j++) {
+      var input = cols[j].querySelector("input");
+      var data;
+      if (input) {
+        // Combine static text with input value
+        var text = cols[j].innerText.replace(input.value, "").trim();
+        data = text + " " + input.value;
+      } else {
+        data = cols[j].innerText;
+      }
+      row.push('"' + data.replace(/"/g, '""') + '"');
     }
+
+    csv.push(row.join(","));
+  }
 
   var csvString = csv.join("\n");
   var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
   var url = URL.createObjectURL(blob);
 
-  // Ask user for file name
   var fileName = prompt("Enter file name:");
   if (!fileName) {
-  return; // fallback if user cancels or leaves blank
+    return; // stop if user cancels
   }
 
   var link = document.createElement("a");
@@ -74,6 +76,7 @@ function exportExcel() {
   link.click();
   document.body.removeChild(link);
 }
+
 
 // Dynamically update navigation for authenticated users
 document.addEventListener('DOMContentLoaded', () => {
