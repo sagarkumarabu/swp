@@ -825,6 +825,7 @@ if (activeTab === 'elev') {
       var sheetsReq = 0;
       var usedArea = 0;
       var totalArea = 0;
+      var shoelength =0;
       var remainingParts = [];
 
       var plans = areaPlans || [];
@@ -836,6 +837,8 @@ if (activeTab === 'elev') {
          totalMid += area.countMid || 0;
          totalEnd += area.countEnd || 0;
          totalUmp += area.umpq || 0;
+        shoelength += (area.midPanelW || 0) * (area.countMid || 0);
+        shoelength += (area.endPanelW || 0) * (area.countEnd || 0);
          coatHookCount += (area.countDoors || 0);
          hingeCount += (area.countDoors || 0) * 3;
          lockCount += (area.countDoors || 0);
@@ -895,8 +898,19 @@ if (activeTab === 'elev') {
       var epLdim = formatDim(firstArea.epL, firstArea.pilH);
       var epRdim = formatDim(firstArea.epR, firstArea.pilH);
       var netDim = (typeof firstArea.theight !== 'undefined') ? firstArea.theight.toFixed(2) : '';
-     var toprailLengthStr = toprailLength >= 3660 ? (toprailLength /3660).toFixed(2) + 
-     'mm' : toprailLength + ' mm';
+     const pieceLength = 3660;
+let pieces = Math.floor(toprailLength / pieceLength);
+let remainder = toprailLength % pieceLength;
+
+let toprailLengthStr;
+if (pieces >= 1) {
+  toprailLengthStr = pieces + ' piece';
+  if (remainder > 0) {
+    toprailLengthStr += ' + ' + remainder + ' mm';
+  }
+} else {
+  toprailLengthStr = toprailLength + ' mm';
+}
       var umpCount = plans.reduce(function (sum, entry) {
         return sum + ((entry.areaResult && entry.areaResult.umpq) || 0);
       }, 0); 
@@ -923,18 +937,24 @@ var count14x6 = counts["14 x 6 feet"] || 0;
 var count12x6 = counts["12 x 6 feet"] || 0;
 var count8x4  = counts["8 x 4 feet"] || 0;
 var count8x6  = counts["8 x 6 feet"] || 0;
-    var fastner = 0, sidecover = 0, frontcover = 0;
+    var fastner = 0, sidecover = 0, frontcover = 0, rfrontcover = 0;
 if (supportType === "shoebox") {
   fastner = totalDoors;
   sidecover = (totalEnd + totalMid) * 2;
-  frontcover = totalEnd  * 2;}
+  frontcover = shoelength / 1800; 
+  rfrontcover = parseFloat(frontcover.toFixed(2));
+}
       var html = `
       <tr>
   <td>Client Name: </td>
   <td><input type="text" > </td>
   <td>Address:</td>
   <td>  <input type="text" > </td>
-  <td> Number: <input type="number" > </td>
+  <td> Mobile:<input type="tel" 
+         pattern="[6-9][0-9]{9}" 
+         maxlength="10" 
+         required 
+        > </td>
 </tr>
         <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th></tr>
         <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td><td><input type="text"></td>
@@ -962,7 +982,7 @@ if (supportType === "shoebox") {
         <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td></td><td>${endWallDim}</td></tr>
         <tr><td>Floor fastner</td><td>${fastner}</td><td></td><td></td><td></td></tr>
         <tr><td>Side Cover</td><td>${sidecover}</td><td></td></tr>
-        <tr><td>Front cover 1800</td><td>${frontcover}</td><td></td></tr>
+        <tr><td>Front cover 1800</td><td>${rfrontcover}</td><td></td></tr>
         <tr><td>Notes</td><td> <input type="text" name="" id=""></td><td></td></tr>  `;
       tbody.innerHTML = html;    }
     async function submitProject(event) {
@@ -1032,7 +1052,7 @@ if (supportType === "shoebox") {
       b.textContent = msg;
       b.className = msg ? 'err show' : 'err';
     }
-    ////end=============================================================================
+    ////end==================================
     function calculate() {
       showErr('');
       var n = Math.max(1, parseInt(document.getElementById('numStalls').value)|| 2 );
@@ -1051,8 +1071,7 @@ if (supportType === "shoebox") {
       var umph = parseFloat(document.getElementById('umph').value) || 900;
       var umpw = parseFloat(document.getElementById('umpw').value) || 450;
       var umpq = parseInt(document.getElementById('umpq').value) || 0;
-     
-
+  
 if (supportType === "shoebox") {
   pilH = doorH + 100;
 } else if (supportType === "legs") {
@@ -1066,9 +1085,6 @@ if (topRail === "yes") {
 }
 // Finally update the input field
 document.getElementById('pilasterHeight').value = pilH;
-
-
-      
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
       var divT = 25;
@@ -2026,7 +2042,7 @@ leader(    ctx,    cx, cy,   ox + pw + 50, cy,     // text position to right of 
 }
     buildStallInputs();
     buildPalette();
-   // calculate();
+    calculate();
   </script>
 </body>
 </html>
