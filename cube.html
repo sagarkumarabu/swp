@@ -166,7 +166,8 @@
   <input type="checkbox" id="shadeWiseNesting">
   Shade Wise Nesting
 </label>
-      <button class="calcbtn" onclick="calculate()">Calculate</button>  
+      <button class="calcbtn" onclick="calculate()">Calculate</button> 
+      <button onclick="updateArea(selectedIndex)">Save</button>
       <form id="dataForm" onsubmit="submitProject(event)" style="margin-top: 15px;">
         <div class="fg"><label>Name</label><input type="text" id="userName" required></div>
         <div class="fg"><label>Email</label><input type="text" id="userEmail" required></div>
@@ -376,10 +377,10 @@ document.getElementById('pilasterHeight').value = pilH;
         if (activeTab === 'elev') drawElev(currentArea);
       }
     }
-
+    let selectedIndex = null;
  function selectArea(index) {
+      selectedIndex = index;   // remember which area is active
   currentArea = areas[index] || null;
-  currentIndex = index; // remember which area is active
   renderAreasUI();
   if (!currentArea) return;
 
@@ -416,6 +417,68 @@ document.getElementById('pilasterHeight').value = pilH;
   if (activeTab === 'elev') {
     drawElev(currentArea);
   }
+}
+function updateArea(index) {
+  if (index == null || !areas[index]) return;
+
+  const area = areas[index];
+  area.width = parseFloat(document.getElementById('totalwidth').value) || 0;
+  area.W = area.width;
+  area.depth = parseFloat(document.getElementById('depth').value) || 0;
+  area.D = area.depth;
+  area.numCubicles = parseInt(document.getElementById('numStalls').value) || 0;
+  area.n = area.numCubicles;
+  area.doorW = parseFloat(document.getElementById('doorWidth').value) || 0;
+  area.doorH = parseFloat(document.getElementById('doorHeight').value) || 0;
+  area.dH = parseFloat(document.getElementById('dividerHeight').value) || 0;
+  area.pilH = parseFloat(document.getElementById('pilasterHeight').value) || 0;
+  area.supportType = document.getElementById('supportType').value;
+  area.topRail = document.getElementById('topRail').value;
+  area.wallType = document.getElementById('wall').value;
+  area.doorShade = document.getElementById('doorShade').value;
+  area.pilasterShade = document.getElementById('pilasterShade').value;
+  area.topRailShade = document.getElementById('topRailShade').value;
+  area.umph = parseFloat(document.getElementById('umph').value) || 0;
+  area.umpw = parseFloat(document.getElementById('umpw').value) || 0;
+  area.umpq = parseInt(document.getElementById('umpq').value) || 0;
+  area.epL = parseFloat(document.getElementById('endpanelLeft').value) || area.epL;
+  area.epR = parseFloat(document.getElementById('endpanelRight').value) || area.epR;
+   // rebuild stall widths
+const spacing = document.getElementById('equal').value;
+
+if (spacing === 'equal') {
+    area.stallWidths = [];
+    const sw = area.width / area.numCubicles;
+
+    for (let i = 0; i < area.numCubicles; i++) {
+        area.stallWidths.push(sw);
+    }
+} else {
+    area.stallWidths = [];
+
+    for (let i = 1; i <= area.numCubicles; i++) {
+        const el = document.getElementById('sw_' + i);
+        area.stallWidths.push(
+            parseFloat(el?.value) || 1000
+        );
+    }
+}
+// update drawing values
+area.divT = 25;
+area.pilT = 40;
+// recalculate panel sizes
+const remain = (area.width / area.numCubicles) - area.doorW;
+area.midPanelW = area.epL + remain;
+currentArea = area;
+renderAreasUI();
+// force redraw
+calculate();
+if (activeTab === 'floor') {
+    drawFloor(currentArea);
+}
+if (activeTab === 'elev') {
+    drawElev(currentArea);
+} 
 }
 
     function renderAreasUI() {
@@ -922,40 +985,60 @@ Object.keys(sheetSummary).forEach(key => {
     </tr>
     `;
 });
-
-    var fastner = 0, sidecover = 0, frontcover = 0;
+ var fastner = 0, sidecover = 0, frontcover = 0, rfrontcover = 0;
 if (supportType === "shoebox") {
   fastner = totalDoors;
   sidecover = (totalEnd + totalMid) * 2;
-  frontcover = (totalEnd + totalMid) * 2;}
+  frontcover = shoelength / 1800; 
+  rfrontcover = parseFloat(frontcover.toFixed(2));
+}
+   var toprailHeight = 50, legHeight =150;
+pilH = firstArea.pilH;
+
+if (supportType === "legs") {
+  // Height = leg + pilaster height + top rail
+  cubicleHeight = (legHeight || 0) + (pilH || 0) + (toprailHeight || 0);
+} else if (supportType === "shoebox") {
+  // Height = pilaster height + top rail
+  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
+} else {
+  // Without legs, only pilaster height (and top rail if present)
+  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
+}
+  
       var html = `
-        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th></tr>
-        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td></tr>
-        <tr>    <th>Sheet Size</th>    <th>Part Type</th>    <th>Shade</th>    <th>Qty</th></tr>
-            ${summaryRows}
-        <tr><th >Particulars</th> <th >Qty</th> <th > Dimension</th> <th>Rate</th>  <th>Amount </th></tr>
-        <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td></tr>
-        <tr><td>Ump Hardware set</td><td>${umpCount}</td><td></td></tr>
-        <tr><td>Top Rail</td><td>${toprailLengthStr}</td><td></td></tr>
-        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
-        <tr><td>Doorstopper-channel</td><td>${dsc}</td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
-        <tr><td>F-channel</td><td>${endWallCount}</td><td><input type="text" name="" id="" value="6 feet"></td></tr>
-        <tr><td>Dividers</td><td>${totalDividers}</td><td>${dividerDim}</td></tr>
-        <tr><td>Mid panels</td><td>${totalMid}</td><td>${midPanelDim}</td></tr>
-        <tr><td>first panels</td><td>1</td><td>${epLdim}</td></tr>
-        <tr><td>End panels</td><td>1</td><td>${epRdim}</td></tr>
-        <tr><td>Doors</td><td>${totalDoors}</td><td>${doorDim}</td></tr>
-        <tr><td>End Walls</td><td>${endWallCount}</td><td>${endWallDim}</td></tr>
-        <tr><td>Floor fastner</td><td>${fastner}</td><td></td></tr>
+      <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td>
+         <td> <input type="text" > </td> <td> 
+           </td><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
+  <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td></tr>
+        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th><td>Door:</td> <td> ${firstArea.doorH} </td></tr>
+        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td>
+          <td><input type="text"></td><td>Depth:</td> <td> ${firstArea.D}</td></tr>
+        <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th>
+          <td>Overall height:</td> <td>${cubicleHeight} </td></tr>
+        ${summaryRows}
+        <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td><td></td><td><input type="text"></td></tr>
+        <tr><td>Ump Hardware set</td><td>${umpCount}</td><td></td><td></td><td><input type="text"></td></tr>
+        <tr><td>Top Rail</td><td>${toprailLengthStr}</td><td></td><td></td><td><input type="text"></td></tr>
+        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
+        <tr><td>Doorstopper-channel</td><td>${dsc}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
+        <tr><td>F-channel</td><td>${endWallCount}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr>
+        <tr><td>Dividers</td><td>${totalDividers}</td><td></td><td></td><td>${dividerDim}</td></tr>
+        <tr><td>Mid panels</td><td>${totalMid}</td><td></td><td></td><td>${midPanelDim}</td></tr>
+        <tr><td>first panels</td><td>1</td><td></td><td></td><td>${epLdim}</td></tr>
+        <tr><td>End panels</td><td>1</td><td></td><td></td><td>${epRdim}</td></tr>
+        <tr><td>Doors</td><td>${totalDoors}</td><td></td><td></td><td>${doorDim}</td></tr>
+        <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td></td><td>${endWallDim}</td></tr>
+        <tr><td>Floor fastner</td><td>${fastner}</td><td></td><td></td><td></td></tr>
         <tr><td>Side Cover</td><td>${sidecover}</td><td></td></tr>
-        <tr><td>Front cover 1800</td><td>${frontcover}</td><td></td></tr>
+        <tr><td>Front cover 1800</td><td>${rfrontcover}</td><td></td></tr>
         <tr><td>Notes</td><td> <input type="text" name="" id=""></td><td></td></tr>  `;
 
       // Stock management: remaining pieces table
       remainingParts.sort(function (a, b) { return b.area - a.area; });
       if (remainingParts.length > 0) {
-        html += `<tr><th colspan="5" style="background:#fef3c7;padding:6px">📦 Remaining Sheet Pieces — Stock Management</th></tr>`;
-        html += `<tr style="background:#fef9ee"><th>Sheet</th><th>Shade</th><th>W × H (mm)</th><th>Area (m²)</th><th>Swatch</th></tr>`;
+        html += `<tr><th colspan="5" style="background:#fef3c7;padding:6px">Remaining Sheet Stock</th></tr>`;
+        html += `<tr style="background:#fef9ee"><th>Sheet</th><th>Shade</th><th>W x H (mm)</th><th>Area (m²)</th><th>Swatch</th></tr>`;
         remainingParts.forEach(function(rp) {
           const areaSqm = (rp.area / 1e6).toFixed(3);
           const swatchStyle = rp.shadeColor && rp.shadeColor !== 'Mixed'
