@@ -806,7 +806,7 @@ if (activeTab === 'elev') {
       }
       calculate();
     }
-   
+   let cubicleHeight;
     function renderSummary(areaPlans, combinedPlan) {
       var tbody = document.getElementById('summaryTbody');
       if (!tbody) return;
@@ -851,7 +851,6 @@ if (activeTab === 'elev') {
       });
 
       var activePlan = combinedPlan || (plans[0] && plans[0].plan);
-
       if (activePlan) {
          sheetsReq = activePlan.sheetCount || 0;
          activePlan.sheets.forEach(function (s, si) {
@@ -870,10 +869,8 @@ if (activeTab === 'elev') {
       remainingParts.forEach(function (part) {
          remainArea = Math.max(remainArea, part.area);
       });
-      
       var wallMap = { l: 1, c: 0, s: 2 };
       var endWallCount = wallMap[document.getElementById('wall').value] || 0;
-
       // Compute dimension strings (match the sizing-box values)
       var allStallWidths = plans.reduce(function (acc, entry) {
           if (entry && entry.areaResult && entry.areaResult.stallWidths) {
@@ -944,27 +941,33 @@ if (supportType === "shoebox") {
   frontcover = shoelength / 1800; 
   rfrontcover = parseFloat(frontcover.toFixed(2));
 }
+
+var toprailHeight = 50, legHeight =150;
+pilH = firstArea.pilH;
+
+if (supportType === "legs") {
+  // Height = leg + pilaster height + top rail
+  cubicleHeight = (legHeight || 0) + (pilH || 0) + (toprailHeight || 0);
+} else if (supportType === "shoebox") {
+  // Height = pilaster height + top rail
+  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
+} else {
+  // Without legs, only pilaster height (and top rail if present)
+  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
+}
+
       var html = `
-      <tr>
-  <td>Client Name: </td>
-  <td><input type="text" > </td>
-  <td>Address:</td>
-  <td>  <input type="text" > </td>
-  <td> Mobile:<input type="tel" 
-         pattern="[6-9][0-9]{9}" 
-         maxlength="10" 
-         required 
-        > </td>
-</tr>
-        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th></tr>
-        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td><td><input type="text"></td>
-</tr>
-        <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th></tr>
-      <tr>
-        <td>14 x 6 feet-HPL</td>
-        <td>${count14x6 }</td>
-        <td></td><td>
-          </td><td><input type="text"></td></tr>
+      <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td>
+         <td> <input type="text" > </td> <td> 
+           </td><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
+  <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td></tr>
+        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th><td>Door:</td> <td> ${firstArea.doorH} </td></tr>
+        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td>
+          <td><input type="text"></td><td>Depth:</td> <td> ${firstArea.D}</td></tr>
+        <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th>
+          <td>Overall height:</td> <td>${cubicleHeight} </td></tr>
+          <tr> <td>14 x 6 feet-HPL</td><td>${count14x6 }</td> <td></td>
+            <td></td> <td> </td><td>Shade:</td></tr>
         <tr><td>12 x 6 feet-HPL</td><td>${count12x6}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>8 x 4 feet-HPL</td><td>${count8x4}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>8 x 6 feet-BOILO</td><td>${count8x6 }</td><td></td><td></td><td><input type="text"></td></tr>
@@ -1141,7 +1144,16 @@ document.getElementById('pilasterHeight').value = pilH;
       var countEnd = 2;
       var endPanelW = epL;
       // Structural square meter accounting equations
-      var legH = supportType === 'none' ? 0 : 150;
+     let legH;
+
+if (supportType === 'none') {
+  legH = 0;
+} else if (supportType === 'shoebox') {
+  legH = 0;   // special case for shoebox
+} else {
+  legH = 150;  // default legs height
+}
+
       var theight = pilH + legH;
       
       var grossArea = theight * 1.12;
@@ -1244,7 +1256,7 @@ document.getElementById('pilasterHeight').value = pilH;
       document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
       document.getElementById('szEQL').textContent = Math.round(epL) + 'x' + pilH + ' mm';
       document.getElementById('szEQR').textContent = Math.round(epR) + 'x' + pilH + ' mm';
-      document.getElementById('szNet').textContent = theight.toFixed(2);
+      document.getElementById('szNet').textContent = cubicleHeight;
 
       if (activeTab === 'floor') {
         var drawTarget = currentArea || (areas.length ? areas[areas.length - 1] : result);
