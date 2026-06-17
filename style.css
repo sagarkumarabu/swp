@@ -208,8 +208,7 @@
     .calcbtn {
      margin-top: 5px;
       width: 100%;
-      padding: 9px;
-      border: none;
+      padding: 1px;
       border-radius: 6px;
       background: #1560c8;
       color: #fff;
@@ -220,7 +219,7 @@
     }
 
     .calcbtn:hover {
-      background: #0d4fa8
+      background: #04b321
     }
 
     .err {
@@ -351,4 +350,6 @@
 #r{background-color: red; color: white;}
  table td {
     text-align: center;
+    width:auto ;
   }
+ .btn{margin-top: 5px; border-radius: 5px;}

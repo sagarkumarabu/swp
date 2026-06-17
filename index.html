@@ -82,7 +82,6 @@
           <input type="number" id="endpanelRight" value="200" min="50">
         </div>
       </div>
-
       <div class="row2">
         <div class="fg"><label>Door width (mm)</label><input type="number" id="doorWidth" value="600" min="400"></div>
         <div class="fg"><label>Door ht (mm)</label><input type="number" id="doorHeight" value="1790" min="1000"></div>
@@ -211,8 +210,7 @@
         <div class="tab" id="tab-elev" onclick="switchTab('elev')">Elevation</div>
         <div class="tab" id="tab-nesting" onclick="switchTab('nesting')">Nesting Plan</div>
         <div class="tab" id="tab-summary" onclick="switchTab('summary')">Summary</div>
-       <div class="tab" id="tab-settings" onclick="switchTab('settings')"> ump</div>
-        <div id="image-container"></div>
+       <div class="tab" id="upp" onclick="switchTab('upp')"> ump</div>
       </div>
       <div class="drawing-area">
         <div style="position: relative;">
@@ -235,7 +233,10 @@
             </tbody>
           </table>
         </div>
+        <canvas id="canva" width="300" height="300" style="display:none"></canvas>
+      <button id="downloadBtn">Download Image</button>
       </div>
+
       <div class="sizing-box">
         <div class="sz">Cubicle width: <span id="szCW">-</span></div>
         <div class="sz">Divider (W x H): <span id="szDiv">-</span></div>
@@ -263,7 +264,6 @@
       document.getElementById('endpanelFields').classList.toggle('hidden', !isU);
       document.getElementById('endpanelEqualField').style.display = isU ? 'none' : '';
     }
-
     function onSpacingChange() { buildStallInputs(); calculate(); }
     function onStallCountChange() { buildStallInputs(); calculate(); }
     // AREA MANAGEMENT FUNCTIONS
@@ -840,15 +840,8 @@ function createSheet(stock, shade, shadeType) {
     document.getElementById('sheetLayouts').style.display = tab === 'nesting' ? 'block' : 'none';
     document.getElementById('summaryArea').style.display = tab === 'summary' ? 'block' : 'none';
     if (tab !== 'nesting') {
-      document.getElementById('sheetLayouts').innerHTML = '';
-    }
-    // Show image when "settings" tab is clicked
-    if (tab === 'settings') {
-      document.getElementById('image-container').innerHTML =
-        `<img src="upp.webp" alt="ump image" style="max-width:300px;">`;
-    } else {
-      document.getElementById('image-container').innerHTML = '';
-    }
+      document.getElementById('sheetLayouts').innerHTML = '';    }
+    document.getElementById('canva').style.display = tab === 'upp' ? 'block' : 'none';
     calculate();
   }
    
@@ -891,7 +884,7 @@ function createSheet(stock, shade, shadeType) {
             totalShoeboxCount += (area.epL > 0 ? 1 : 0) + (area.epR > 0 ? 1 : 0) + (area.countMid || 0);
          }
       });
-
+      
       var activePlan = combinedPlan || (plans[0] && plans[0].plan);
 
       if (activePlan) {
@@ -915,16 +908,13 @@ function createSheet(stock, shade, shadeType) {
              });
          });
       }
-
       remainingParts.sort(function (a, b) { return b.area - a.area; });
       var remainArea = 0;
       remainingParts.forEach(function (part) {
          remainArea = Math.max(remainArea, part.area);
       });
-      
       var wallMap = { l: 1, c: 0, s: 2 };
       var endWallCount = wallMap[document.getElementById('wall').value] || 0;
-
       // Compute dimension strings (match the sizing-box values)
       var allStallWidths = plans.reduce(function (acc, entry) {
           if (entry && entry.areaResult && entry.areaResult.stallWidths) {
@@ -950,6 +940,7 @@ function createSheet(stock, shade, shadeType) {
       var epRdim = formatDim(firstArea.epR, firstArea.pilH);
       var netDim = (typeof firstArea.theight !== 'undefined') ? firstArea.theight.toFixed(2) + ' mm' : '';
      var toprailLengthStr = toprailLength > 0   ? ( (toprailLength / 304.8).toFixed(1) + ' ft')   : '0 ft';
+     var shoelength = firstArea.epL + firstArea.epR + (firstArea.midPanelW * totalMid);
       var umpCount = plans.reduce(function (sum, entry) {
         return sum + ((entry.areaResult && entry.areaResult.umpq) || 0);
       }, 0); 
@@ -970,7 +961,7 @@ activePlan.sheets.forEach(sheet => {
     const key =
         sheet.stock.name +
         "||" +
-        sheet.shadeType +
+        "pilaster divider" +
         "||" +
         sheet.shadeName;
     if (!sheetSummary[key]) {
@@ -980,7 +971,6 @@ activePlan.sheets.forEach(sheet => {
 });
 
 let summaryRows = "";
-
 Object.keys(sheetSummary).forEach(key => {
     const data = key.split("||");
     summaryRows += `
@@ -1012,33 +1002,33 @@ if (supportType === "legs") {
   // Without legs, only pilaster height (and top rail if present)
   cubicleHeight = (pilH || 0) + (toprailHeight || 0);
 }
-  
       var html = `
       <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td>
          <td> <input type="text" > </td> <td> 
            </td><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
   <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td></tr>
-        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th><td>Door:</td> <td> ${firstArea.doorH} </td></tr>
+        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th><td>Door:</td> <td> ${firstArea.doorW} </td></tr>
         <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td>
           <td><input type="text"></td><td>Depth:</td> <td> ${firstArea.D}</td></tr>
+<tr><th>sheet </th> <th>Item</th><th>Shade</th><th>Quantity</th></tr>
+         ${summaryRows}
         <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th>
           <td>Overall height:</td> <td>${cubicleHeight} </td></tr>
-        ${summaryRows}
         <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>Ump Hardware set</td><td>${umpCount}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>Top Rail</td><td>${toprailLengthStr}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>U-channel</td><td>${totalDoors * 2}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
         <tr><td>Doorstopper-channel</td><td>${dsc}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
         <tr><td>F-channel</td><td>${endWallCount}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr>
+        <tr><td>Floor fastner</td><td>${fastner}</td><td></td><td></td><td></td></tr>
+        <tr><td>Side Cover</td><td>${sidecover}</td><td></td></tr>
+        <tr><td>Front cover 1800</td><td>${rfrontcover}</td><td></td></tr>
         <tr><td>Dividers</td><td>${totalDividers}</td><td></td><td></td><td>${dividerDim}</td></tr>
         <tr><td>Mid panels</td><td>${totalMid}</td><td></td><td></td><td>${midPanelDim}</td></tr>
         <tr><td>first panels</td><td>1</td><td></td><td></td><td>${epLdim}</td></tr>
         <tr><td>End panels</td><td>1</td><td></td><td></td><td>${epRdim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td></td><td></td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td></td><td>${endWallDim}</td></tr>
-        <tr><td>Floor fastner</td><td>${fastner}</td><td></td><td></td><td></td></tr>
-        <tr><td>Side Cover</td><td>${sidecover}</td><td></td></tr>
-        <tr><td>Front cover 1800</td><td>${rfrontcover}</td><td></td></tr>
         <tr><td>Notes</td><td> <input type="text" name="" id=""></td><td></td></tr>  `;
 
       // Stock management: remaining pieces table
@@ -1254,6 +1244,7 @@ if (supportType === "legs") {
     ////end=============================================================================
     function calculate() {
       showErr('');
+      try {
       var n = Math.max(1, parseInt(document.getElementById('numStalls').value)|| 2 );
       var W = parseFloat(document.getElementById('totalwidth').value)|| 2000;
       var D = parseFloat(document.getElementById('depth').value) || 1500;
@@ -1270,6 +1261,34 @@ if (supportType === "legs") {
       var umph = parseFloat(document.getElementById('umph').value) || 900;
       var umpw = parseFloat(document.getElementById('umpw').value) || 450;
       var umpq = parseInt(document.getElementById('umpq').value) || 0;
+       const canvas = document.getElementById("canva");
+const ctx = canvas.getContext("2d");
+const shadeInput = document.getElementById("topRailShade");
+const img = new Image();
+img.src = "upp.webp"; // your image
+// Draw image once it loads
+img.onload = function() {
+  drawCanvas();
+};
+// Function to draw background + image
+function drawCanvas() {
+  const shade = shadeInput.value;
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+  const x = (canvas.width / 2) - (img.width * scale / 2);
+  const y = (canvas.height / 2) - (img.height * scale / 2);
+  ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+}
+
+// Download only when user clicks
+document.getElementById("downloadBtn").addEventListener("click", function() {
+  drawCanvas(); // redraw with current shade
+  const link = document.createElement("a");
+  link.download = "image.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
 if (supportType === "shoebox") {
   pilH = doorH + 100;
 } else if (supportType === "legs") {
@@ -1465,7 +1484,19 @@ if (uiDiv) {   uiDiv.textContent = (countDividers === 0) ? '0' : D + ' x ' + dH 
       } else if (activeTab === 'nesting' && areas.length === 0) {
         generateNestingPlan(result);
       }
-    }    
+      } catch (e) {
+        console.error(e);
+        showErr('Calculation error: ' + (e && e.message ? e.message : e));
+        // attempt to still draw if possible
+        try {
+          var drawTarget = currentArea || (areas.length ? areas[areas.length - 1] : result);
+          if (activeTab === 'floor' && drawTarget) drawFloor(drawTarget);
+          if (activeTab === 'elev' && drawTarget) drawElev(drawTarget);
+        } catch (innerErr) {
+          console.error(innerErr);
+        }
+      }
+    }
     /* ── Drawing helpers ─────────────────────────────── */
     function cadClear(ctx) {
       ctx.fillStyle = '#ffffff';
@@ -2036,7 +2067,6 @@ if (uiDiv) {   uiDiv.textContent = (countDividers === 0) ? '0' : D + ' x ' + dH 
       var ctx = cv.getContext('2d');
       var CW = cv.width, CH = cv.height;
       cadClear(ctx);
-
       var mL = 50, mR = 70, mT = 50, mB = 85;
       var dW = CW - mL - mR, dH2 = CH - mT - mB;
       var scale = Math.min(dW / r.W, dH2 / r.pilH);
@@ -2051,8 +2081,7 @@ if (uiDiv) {   uiDiv.textContent = (countDividers === 0) ? '0' : D + ' x ' + dH 
       var doorHpx = r.doorH * scale, doorWpx = r.doorW * scale;
       var doorShade = r.doorShade || '#dedede';
       var pilasterShade = r.pilasterShade || '#b5b5b5';
-      var topRailShade = r.topRailShade || '#8f8f8f';
-      var pilasterShade = r.pilasterShade || '#cfcfcf';
+      var topRailShade =  '#8f8f8f';
 
       var frontX = ox;
       var doorRects = [];
@@ -2148,9 +2177,7 @@ if (uiDiv) {   uiDiv.textContent = (countDividers === 0) ? '0' : D + ' x ' + dH 
     : 0;
 
 var topRailY = oy + topRailOffset - topRailH;
-
 ctx.fillRect(topRailX, topRailY, topRailW, topRailH);
-
 ctx.strokeRect(topRailX, topRailY, topRailW, topRailH);
 // top rail
 leader(    ctx,    topRailX, topRailY + topRailH / 2, topRailX - 60,
@@ -2305,10 +2332,11 @@ leader(    ctx,    cx, cy,   ox + pw + 50, cy,  "HINGE", "#444");
 
       if (doorRects.length > 0) {
         var dTop = floorY - doorHpx;
-        // dimLine(ctx, vx3, dTop, vx3, floorY, Math.round(r.doorH) + 'mm', '#4a4a4a', 1);
+         dimLine(ctx, ox, dTop, gapX, floorY, Math.round(r.doorH) + 'mm', '#4a4a4a', 1);
         //GAP DIM
         var topGapVal = Math.round(r.pilH - r.doorH);
-        if (topGapVal > 2) dimLine(ctx, vx3, floorY - pilHpx, vx3, dTop, topGapVal + 'mm', 'red', 1);
+        var gapX = doorRects[0].x + doorRects[0].w / 2;
+        if (topGapVal > 2) //dimLine(ctx, ox, floorY - pilHpx,ox, dTop, topGapVal + 'mm', 'black', 1);
       }
       // top
       dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
