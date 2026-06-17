@@ -47,7 +47,7 @@
           <input type="number" id="totalwidth" value="0" min="1000">
         </div>
         <div class="fg"><label>Area Depth </label>
-          <input type="number" id="depth" value="0" min="800"></div>
+          <input type="number" id="depth" value="0" min="1000"></div>
         <div class="fg">
         <label>Cubicles</label>
         <input type="number" id="numStalls" value="0" min="1" max="15" oninput="onStallCountChange()">
@@ -142,17 +142,12 @@
         </div>
         <div class="fg">
           <label><input type="radio" name="colorTarget" value="pilasterShade"
-            oninput="calculate()" onchange="calculate()">Pilaster</label>
+            oninput="calculate()" onchange="calculate()">Panels</label>
         </div>
         <div class="fg">
           <label><input type="radio" name="colorTarget" value="topRailShade" 
-            oninput="calculate()" onchange="calculate()">Top rail</label>
+            oninput="calculate()" onchange="calculate()">Ump</label>
         </div>
-        <div class="fg"><label>
-    <input type="radio" name="colorTarget" value="dividerShade"    oninput="calculate()"    onchange="calculate()">
-    Divider
-  </label>
-</div>
       </div>
       <div class="fg">
         <div id="shadePalette" style="display: flex;
@@ -160,21 +155,28 @@
         <input type="hidden" id="doorShade" value="#dedede">
         <input type="hidden" id="pilasterShade" value="#b5b5b5">
         <input type="hidden" id="topRailShade" value="#8f8f8f">
-<input type="hidden" id="dividerShade" value="#cfcfcf">
       </div>
        <label>
   <input type="checkbox" id="shadeWiseNesting">
   Shade Wise Nesting
 </label>
       <button class="calcbtn" onclick="calculate()">Calculate</button> 
-      <button onclick="updateArea(selectedIndex)">Save</button>
+      <button onclick="updateArea(selectedIndex)" class="btn">Update</button>
       <form id="dataForm" onsubmit="submitProject(event)" style="margin-top: 15px;">
         <div class="fg"><label>Name</label><input type="text" id="userName" required></div>
         <div class="fg"><label>Email</label><input type="text" id="userEmail" required></div>
         <div class="fg"><label>Notes</label><textarea id="userNotes" rows="3" style="width:100%; padding:8px; border:1px solid #c8cad4; border-radius:5px;"></textarea></div>
-        <button type="submit" class="calcbtn" style="background:#1976d2;">Submit to Database</button>
+        <button type="submit" class="calcbtn" style="background:#1976d2;">Save Project</button>
         <div class="err" id="formMsg" style="margin-top:8px; padding:8px; display:none;"></div>
       </form>
+      <div class="section-title" style="margin-top:18px;">Search &amp; Load</div>
+      <div class="fg">
+        <label>Search (name, email, notes)</label>
+        <input type="text" id="searchQuery" placeholder="Type and press Search or Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();searchProjects();}">
+      </div>
+      <button type="button" class="calcbtn" onclick="searchProjects()" style="background:#555; margin-bottom:8px;">Search</button>
+      <button type="button" class="calcbtn" onclick="searchProjects(true)" style="background:#777; margin-bottom:8px;">Show All</button>
+      <div id="searchResults" style="max-height:220px; overflow-y:auto; border:1px solid #ccc; border-radius:5px; padding:6px;"></div>
     </div>
 
     <div class="main">
@@ -187,10 +189,10 @@
           <div class="val" id="kMid">-</div>
           <div class="lbl">Mid panels</div>
         </div>
-        <div class="kpi">
+        <!-- <div class="kpi">
           <div class="val" id="kEnd">-</div>
-          <div class="lbl">End panels</div>
-        </div>
+          <div class="lbl">panels</div>
+        </div> -->
         <div class="kpi">
           <div class="val" id="kDoors">-</div>
           <div class="lbl">Doors</div>
@@ -240,8 +242,8 @@
         <div class="sz">Door (W x H): <span id="szDoor">-</span></div>
         <div class="sz">End wall (W x H): <span id="szEP">-</span></div>
         <div class="sz">Mid panel (W x H): <span id="szMP">-</span></div>
-        <div class="sz">End panel L: <span id="szEQL">-</span></div>
-        <div class="sz">End panel R: <span id="szEQR">-</span></div>
+        <div class="sz">First panel : <span id="szEQL">-</span></div>
+        <div class="sz">End panel : <span id="szEQR">-</span></div>
         <div class="sz">Overall height: <span id="szNet">-</span> mm</div>
       </div>
     </div>
@@ -306,13 +308,12 @@ document.getElementById('pilasterHeight').value = pilH;
         const remaincubiclespace = cubicleSpace - doorW;
         const derivedEndPanel = remaincubiclespace / 2;
         epL = epR = Math.max(0, derivedEndPanel);
-        midPanelW = derivedEndPanel * 2;
+        midPanelW = epL + epR;
       } else {
         epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
         epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
-        midPanelW = epL + remaincubiclespace; 
+        midPanelW = epL + epR;
       }
-
       const stallWidths = [];
       if (equalSpacing === 'equal') {
         const sw = width / numCubicles;
@@ -325,10 +326,7 @@ document.getElementById('pilasterHeight').value = pilH;
       }
       const countEndWalls = ({ l: 1, c: 0, s: 2 })[wallType] || 0;
       currentArea = {
-        n: numCubicles,
-        W: width,
-        width,
-        depth,
+        n: numCubicles,  W: width, width, depth,
         numCubicles,
         equalSpacing,
         ewEqual,
@@ -347,7 +345,7 @@ document.getElementById('pilasterHeight').value = pilH;
         doorShade: document.getElementById('doorShade').value,
         pilasterShade: document.getElementById('pilasterShade').value,
         topRailShade: document.getElementById('topRailShade').value,
-        dividerShade: document.getElementById('dividerShade').value,
+        pilasterShade: document.getElementById('pilasterShade').value,
         countEndWalls,
         umph,
         umpw,
@@ -470,7 +468,7 @@ area.divT = 25;
 area.pilT = 40;
 // recalculate panel sizes
 const remain = (area.width / area.numCubicles) - area.doorW;
-area.midPanelW = area.epL + remain;
+area.midPanelW = area.epL + area.epR;
 currentArea = area;
 renderAreasUI();
 // force redraw
@@ -520,7 +518,7 @@ if (activeTab === 'elev') {
     label: `A${areaIndex+1}-DIV${i+1}`,
     finalW: r.D,
     finalH: r.dH,
-    shade: r.dividerShade,
+    shade: r.pilasterShade,
     shadeType: "Divider"
 });
       }
@@ -538,7 +536,7 @@ if (activeTab === 'elev') {
           label: `A${areaIndex + 1}-EW${i + 1}`,
           finalW: r.D,
           finalH: r.dH,
-         shade: r.dividerShade,
+         shade: r.pilasterShade,
 shadeType: "Divider"
         });
       }
@@ -1064,41 +1062,109 @@ if (supportType === "legs") {
       }
 
       tbody.innerHTML = html;    }
-    async function submitProject(event) {
-      event.preventDefault();
-      var messageBox = document.getElementById('formMsg');
-      
-      var payload = {
+    function collectProjectData() {
+      return {
         wallType: document.getElementById('wall').value,
-        areaWidth: parseInt(document.getElementById('totalwidth').value) || null,
-        areaDepth: parseInt(document.getElementById('depth').value) || null,
-        numCubicles: parseInt(document.getElementById('numStalls').value) || null,
+        sheetType: document.getElementById('sheet').value,
+        areaWidth: parseInt(document.getElementById('totalwidth').value, 10) || null,
+        areaDepth: parseInt(document.getElementById('depth').value, 10) || null,
+        numCubicles: parseInt(document.getElementById('numStalls').value, 10) || null,
         cubicleSpacing: document.getElementById('equal').value,
         endPanelDistribution: document.getElementById('endpanelEqual').value,
-        endPanelSize: parseInt(document.getElementById('endpanelSize').value) || null,
-        endPanelLeft: parseInt(document.getElementById('endpanelLeft').value) || null,
-        endPanelRight: parseInt(document.getElementById('endpanelRight').value) || null,
-        doorWidth: parseInt(document.getElementById('doorWidth').value) || null,
-        doorHeight: parseInt(document.getElementById('doorHeight').value) || null,
-        dividerHeight: parseInt(document.getElementById('dividerHeight').value) || null,
-        pilasterHeight: parseInt(document.getElementById('pilasterHeight').value) || null,
-        umpHeight: parseInt(document.getElementById('umph').value) || null,
-        umpWidth: parseInt(document.getElementById('umpw').value) || null,
-        umpQuantity: parseInt(document.getElementById('umpq').value) || null,
+        endPanelSize: parseInt(document.getElementById('endpanelSize').value, 10) || null,
+        endPanelLeft: parseInt(document.getElementById('endpanelLeft').value, 10) || null,
+        endPanelRight: parseInt(document.getElementById('endpanelRight').value, 10) || null,
+        doorWidth: parseInt(document.getElementById('doorWidth').value, 10) || null,
+        doorHeight: parseInt(document.getElementById('doorHeight').value, 10) || null,
+        dividerHeight: parseInt(document.getElementById('dividerHeight').value, 10) || null,
+        pilasterHeight: parseInt(document.getElementById('pilasterHeight').value, 10) || null,
+        umpHeight: parseInt(document.getElementById('umph').value, 10) || null,
+        umpWidth: parseInt(document.getElementById('umpw').value, 10) || null,
+        umpQuantity: parseInt(document.getElementById('umpq').value, 10) || null,
         supportType: document.getElementById('supportType').value,
         topRail: document.getElementById('topRail').value,
+        profile: document.getElementById('profile').value,
+        doorStopper: document.getElementById('ds').value,
         doorShade: document.getElementById('doorShade').value,
         pilasterShade: document.getElementById('pilasterShade').value,
         topRailShade: document.getElementById('topRailShade').value,
+        pilasterShade: document.getElementById('pilasterShade').value,
+        shadeWiseNesting: document.getElementById('shadeWiseNesting').checked,
+        areas: areas,
         userName: document.getElementById('userName').value.trim(),
         userEmail: document.getElementById('userEmail').value.trim(),
         userNotes: document.getElementById('userNotes').value.trim()
       };
+    }
+
+    function applyProjectData(data) {
+      if (!data) return;
+      var setVal = function (id, value) {
+        var el = document.getElementById(id);
+        if (el && value !== undefined && value !== null) el.value = value;
+      };
+      var setChecked = function (id, value) {
+        var el = document.getElementById(id);
+        if (el) el.checked = !!value;
+      };
+
+      setVal('wall', data.wallType);
+      setVal('sheet', data.sheetType);
+      setVal('totalwidth', data.areaWidth);
+      setVal('depth', data.areaDepth);
+      setVal('numStalls', data.numCubicles);
+      setVal('equal', data.cubicleSpacing);
+      setVal('endpanelEqual', data.endPanelDistribution);
+      setVal('endpanelSize', data.endPanelSize);
+      setVal('endpanelLeft', data.endPanelLeft);
+      setVal('endpanelRight', data.endPanelRight);
+      setVal('doorWidth', data.doorWidth);
+      setVal('doorHeight', data.doorHeight);
+      setVal('dividerHeight', data.dividerHeight);
+      setVal('pilasterHeight', data.pilasterHeight);
+      setVal('umph', data.umpHeight);
+      setVal('umpw', data.umpWidth);
+      setVal('umpq', data.umpQuantity);
+      setVal('supportType', data.supportType);
+      setVal('topRail', data.topRail);
+      setVal('profile', data.profile);
+      setVal('ds', data.doorStopper);
+      setVal('doorShade', data.doorShade);
+      setVal('pilasterShade', data.pilasterShade);
+      setVal('topRailShade', data.topRailShade);
+      setVal('pilasterShade', data.pilasterShade);
+      setChecked('shadeWiseNesting', data.shadeWiseNesting);
+      setVal('userName', data.userName);
+      setVal('userEmail', data.userEmail);
+      setVal('userNotes', data.userNotes);
+
+      areas = Array.isArray(data.areas) ? data.areas.slice() : [];
+      selectedIndex = areas.length ? areas.length - 1 : null;
+      currentArea = areas.length ? areas[selectedIndex] : null;
+
+      toggleEndpanel();
+      buildStallInputs();
+      renderAreasUI();
+      calculate();
+      if (currentArea) {
+        if (activeTab === 'floor') drawFloor(currentArea);
+        if (activeTab === 'elev') drawElev(currentArea);
+      }
+    }
+
+    function showFormMessage(message, isError) {
+      var messageBox = document.getElementById('formMsg');
+      messageBox.textContent = message;
+      messageBox.style.display = 'block';
+      messageBox.style.color = isError ? '#b00020' : '#1b5e20';
+    }
+
+    async function submitProject(event) {
+      event.preventDefault();
+      var payload = collectProjectData();
 
       if (!payload.userName || !payload.userEmail) {
-        messageBox.textContent = 'Name and email are required.';
-        messageBox.style.display = 'block';
-        messageBox.style.color = '#b00020';
+        showFormMessage('Name and email are required.', true);
         return;
       }
       try {
@@ -1110,20 +1176,74 @@ if (supportType === "legs") {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          messageBox.textContent = 'Saved successfully.';
-          messageBox.style.display = 'block';
-          messageBox.style.color = '#1b5e20';
-          document.getElementById('dataForm').reset();
+          showFormMessage('Saved successfully (ID: ' + data.id + ').', false);
+          searchProjects(true);
         } else {
-          messageBox.textContent = data.error || 'Unable to save data.';
-          messageBox.style.display = 'block';
-          messageBox.style.color = '#b00020';
+          showFormMessage(data.error || 'Unable to save data.', true);
         }
       } catch (error) {
-        messageBox.textContent = 'Network error: ' + error.message;
-        messageBox.style.display = 'block';
-        messageBox.style.color = '#b00020';
+        showFormMessage('Network error: ' + error.message, true);
       }
+    }
+
+    async function searchProjects(showAll) {
+      var box = document.getElementById('searchResults');
+      var query = showAll ? '' : document.getElementById('searchQuery').value.trim();
+      box.innerHTML = '<p style="color:#666; padding:8px;">Searching...</p>';
+      try {
+        var url = '/api/search' + (query ? '?q=' + encodeURIComponent(query) : '');
+        var response = await fetch(url);
+        var data = await response.json();
+        if (!response.ok || !data.success) {
+          box.innerHTML = '<p style="color:#b00020; padding:8px;">Search failed.</p>';
+          return;
+        }
+        if (!data.results.length) {
+          box.innerHTML = '<p style="color:#666; padding:8px;">No records found.</p>';
+          return;
+        }
+        box.innerHTML = data.results.map(function (row) {
+          var note = row.notes ? row.notes.slice(0, 60) : '';
+          if (row.notes && row.notes.length > 60) note += '...';
+          var when = row.updated_at ? row.updated_at.replace('T', ' ').slice(0, 19) : '';
+          return '<div style="border-bottom:1px solid #ddd; padding:8px;">' +
+            '<div style="font-weight:bold;">' + escapeHtml(row.name) + ' &lt;' + escapeHtml(row.email) + '&gt;</div>' +
+            (note ? '<div style="font-size:12px; color:#555;">' + escapeHtml(note) + '</div>' : '') +
+            '<div style="font-size:11px; color:#888; margin-top:4px;">ID ' + row.id + (when ? ' · ' + when : '') + '</div>' +
+            '<button type="button" class="calcbtn" style="margin-top:6px; background:#1976d2; padding:4px 10px; font-size:12px;" onclick="loadProjectById(' + row.id + ')">Load</button>' +
+            '</div>';
+        }).join('');
+      } catch (error) {
+        box.innerHTML = '<p style="color:#b00020; padding:8px;">Network error: ' + escapeHtml(error.message) + '</p>';
+      }
+    }
+
+    async function loadProjectById(projectId) {
+      try {
+        var response = await fetch('/api/load/' + projectId);
+        var data = await response.json();
+        if (!response.ok || !data.success) {
+          showFormMessage(data.error || 'Unable to load project.', true);
+          return;
+        }
+        var project = data.project;
+        var payload = project.project_data || {};
+        payload.userName = project.name || payload.userName;
+        payload.userEmail = project.email || payload.userEmail;
+        payload.userNotes = project.notes || payload.userNotes;
+        applyProjectData(payload);
+        showFormMessage('Loaded project ID ' + projectId + '.', false);
+      } catch (error) {
+        showFormMessage('Network error: ' + error.message, true);
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function showErr(msg) {
@@ -1150,8 +1270,6 @@ if (supportType === "legs") {
       var umph = parseFloat(document.getElementById('umph').value) || 900;
       var umpw = parseFloat(document.getElementById('umpw').value) || 450;
       var umpq = parseInt(document.getElementById('umpq').value) || 0;
-     
-
 if (supportType === "shoebox") {
   pilH = doorH + 100;
 } else if (supportType === "legs") {
@@ -1164,60 +1282,65 @@ if (topRail === "yes") {
   pilH += 40; // add 40 if top rail
 }
 // Finally update the input field
-document.getElementById('pilasterHeight').value = pilH;
-
-
-      
+document.getElementById('pilasterHeight').value = pilH;  
       // pilT and divT represent cosmetic thicknesses for the 2D drawing lines
       var pilT = 40;
       var divT = 25;
-
       var ewEqual = document.getElementById('endpanelEqual').value === 'equal';
       var epL, epR, midPanelW;
       var remaincubiclespace = W - doorW;
-      if (ewEqual) {
-        // 1. Calculate space allocated per single cubicle basket
-        var cubicleSpace = W / n;
-        // 2. Subtract door width from that space to find total facing panel allowance
-        var remaincubiclespace = cubicleSpace - doorW;
-        // 3. End panel takes exactly half of a single cubicle's remaining facing allowance
-        var derivedEndPanel = remaincubiclespace / 2;
+// 1. Establish your End Panels first
+if (ewEqual) {
+  var cubicleSpace = W / n;
+  var remaincubiclespace = cubicleSpace - doorW;
+  var derivedEndPanel = remaincubiclespace / 2;
+  epL = epR = Math.max(0, derivedEndPanel);
 
-        epL = epR = Math.max(0, derivedEndPanel);
-        // 4. The shared mid panel is the combination of two adjacent cubicle allowances
-        midPanelW = derivedEndPanel * 2;
+  // Sync to UI
+  var uiField = document.getElementById('endpanelSize');
+  if (uiField) uiField.value = Math.round(epL);
+} else {
+  epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
+  epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
+}
 
-        // Sync calculated value out to the UI text box safely
-        var uiField = document.getElementById('endpanelSize');
-        if (uiField) uiField.value = Math.round(epL);
-      } else {
-        epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
-        epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
-        // For unequal stalls, the panel segment near the door should equal left end-panel width.
-        midPanelW = epL + remaincubiclespace ;
-      }
+// 2. Build your array of Stall Widths (Total footprint per cubicle)
+var stallWidths = [];
+var spacing = document.getElementById('equal').value;
 
-      // The true physical open space span per stall for the canvas loop to map positions
-      var availableW = W - epL - epR;
-      var spacing = document.getElementById('equal').value;
-      var stallWidths = [];
+if (spacing === 'equal') {
+  var sw = W / n;
+  for (var i = 0; i < n; i++) stallWidths.push(sw);
+} else {
+  var sum = 0;
+  for (var i = 1; i <= n; i++) {
+    var el = document.getElementById('sw_' + i);
+    var v = parseFloat(el ? el.value : 1000) || 1000;
+    stallWidths.push(v);
+    sum += v;
+  }
+  if (Math.abs(sum - W) > 5) {
+    showErr('Stall widths sum (' + Math.round(sum) + 'mm) must equal total room width (' + Math.round(W) + 'mm).');
+    return;
+  }
+}
 
-      if (spacing === 'equal') {
-        var sw = W / n; // Each stall spans exactly W / n (e.g., 1000mm)
-        for (var i = 0; i < n; i++) stallWidths.push(sw);
-      } else {
-        var sum = 0;
-        for (var i = 1; i <= n; i++) {
-          var el = document.getElementById('sw_' + i);
-          var v = parseFloat(el ? el.value : 1000) || 1000;
-          stallWidths.push(v);
-          sum += v;
-        }
-        if (Math.abs(sum - W) > 5) {
-          showErr('Stall widths sum (' + Math.round(sum) + 'mm) must equal total room width (' + Math.round(W) + 'mm).');
-          return;
-        }
-      }
+var midPanels = []; 
+for (var i = 0; i < n - 1; i++) {
+  var currentStallW = stallWidths[i];
+  var nextStallW = stallWidths[i + 1];
+  
+  // Left allowance: If it's the first stall, subtract epL. Otherwise, it shares space.
+  var leftAllocation = (i === 0) ? (currentStallW - doorW - epL) : (currentStallW - doorW) / 2;
+  
+  // Right allowance: If it's the last stall, subtract epR. Otherwise, it shares space.
+  var rightAllocation = (i + 1 === n - 1) ? (nextStallW - doorW - epR) : (nextStallW - doorW) / 2;
+  
+  var dynamicMid = leftAllocation + rightAllocation;
+  midPanels.push(Math.max(0, dynamicMid));
+}
+var midPanelW = midPanels.length > 0 ? midPanels[0] : 0;
+// For your rendering engine, midPanels[0] is the panel between Stall 1 and Stall 2.
       // Count matrices for material takeoffs
       var countDoors = n;
       var countDividers = n - 1;
@@ -1228,11 +1351,9 @@ document.getElementById('pilasterHeight').value = pilH;
       // Structural square meter accounting equations
       var legH = supportType === 'none' ? 0 : 150;
       var theight = pilH + legH;
-      
       var grossArea = theight * 1.12;
-
       result = {
-        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, wallType, doorShade, pilasterShade, topRailShade, dividerShade: document.getElementById('dividerShade').value, epL, epR, ewEqual, stallWidths,
+        n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, wallType, doorShade, pilasterShade, topRailShade, pilasterShade: document.getElementById('pilasterShade').value, epL, epR, ewEqual, stallWidths,
         countDoors, countDividers, countEndWalls, countMid, countEnd, endPanelW, midPanelW, theight, grossArea, umph, umpw, umpq
       };
 
@@ -1258,7 +1379,7 @@ document.getElementById('pilasterHeight').value = pilH;
           doorShade: area.doorShade || '#dedede',
           pilasterShade: area.pilasterShade || '#b5b5b5',
           topRailShade: area.topRailShade || '#8f8f8f',
-          dividerShade: area.dividerShade || '#cfcfcf',
+          pilasterShade: area.pilasterShade || '#cfcfcf',
           epL: area.epL,
           epR: area.epR,
           ewEqual: area.ewEqual,
@@ -1318,19 +1439,22 @@ document.getElementById('pilasterHeight').value = pilH;
       // Update UI DOM dashboard readouts
       document.getElementById('kDividers').textContent = countDividers;
       document.getElementById('kMid').textContent = countMid;
-      document.getElementById('kEnd').textContent = countEnd;
+      // document.getElementById('kEnd').textContent = countEnd;
       document.getElementById('kDoors').textContent = countDoors;
       document.getElementById('kendwall').textContent = code;
       document.getElementById('kump').textContent = umpq;
       var minW = Math.min.apply(null, stallWidths), maxW = Math.max.apply(null, stallWidths);
-      document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
-      document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';
+       document.getElementById('szCW').textContent = minW === maxW ? Math.round(minW) + ' mm' : Math.round(minW) + '-' + Math.round(maxW) + ' mm';
+      var uiDiv = document.getElementById('szDiv');
+if (uiDiv) {   uiDiv.textContent = (countDividers === 0) ? '0' : D + ' x ' + dH + ' mm';}
+     if (countDividers == 0) {document.getElementById('szDiv').textContent = 0;}else{ document.getElementById('szDiv').textContent = D + ' x ' + dH + ' mm';}
       document.getElementById('szDoor').textContent = doorW + ' x ' + doorH + ' mm';
-      document.getElementById('szEP').textContent = Math.round(D) + ' x ' + dH + ' mm';
-      document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';
+    if (code == 0) { }else{ document.getElementById('szEP').textContent = Math.round(D) + ' x ' + dH + ' mm';}
+    if (countDividers == 0) { document.getElementById('szMP').textContent = 0;}else{
+       document.getElementById('szMP').textContent = Math.round(midPanelW) + ' x ' + pilH + ' mm';}
       document.getElementById('szEQL').textContent = Math.round(epL) + 'x' + pilH + ' mm';
       document.getElementById('szEQR').textContent = Math.round(epR) + 'x' + pilH + ' mm';
-      document.getElementById('szNet').textContent = theight.toFixed(2);
+      document.getElementById('szNet').textContent = cubicleHeight;
 
       if (activeTab === 'floor') {
         var drawTarget = currentArea || (areas.length ? areas[areas.length - 1] : result);
@@ -1341,7 +1465,7 @@ document.getElementById('pilasterHeight').value = pilH;
       } else if (activeTab === 'nesting' && areas.length === 0) {
         generateNestingPlan(result);
       }
-    }   
+    }    
     /* ── Drawing helpers ─────────────────────────────── */
     function cadClear(ctx) {
       ctx.fillStyle = '#ffffff';
@@ -1427,7 +1551,7 @@ document.getElementById('pilasterHeight').value = pilH;
     }
 
     /* /* ── Floor Plan ──────────────────────────────────── */
-    function drawFloor(r) {
+     function drawFloor(r) {
       var cv = document.getElementById('cvFloor');
       var ctx = cv.getContext('2d');
       var CW = cv.width, CH = cv.height;
@@ -1545,16 +1669,13 @@ document.getElementById('pilasterHeight').value = pilH;
         } else {
           dxL = sx + (sw - doorWpx) / 2;
         }
-
         // Front Static Fascias (Dark Charcoal Accent Profiles)
         ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(sx, oy + ph); ctx.lineTo(dxL, oy + ph); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(dxL + doorWpx, oy + ph); ctx.lineTo(sx + sw, oy + ph); ctx.stroke();
-
         // Active Swinging Doors (Rendered open 90-degrees inward)
         ctx.strokeStyle = '#5a5a5a'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(dxL, oy + ph); ctx.lineTo(dxL, oy + ph - doorWpx); ctx.stroke();
-
         // Trajectory Swing Arc 
         ctx.beginPath(); ctx.strokeStyle = '#9e9e9e'; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3]);
         ctx.arc(dxL, oy + ph, doorWpx, -Math.PI / 2, 0, false); ctx.stroke(); ctx.setLineDash([]);
@@ -1571,12 +1692,6 @@ document.getElementById('pilasterHeight').value = pilH;
         ctx.fillText(Math.round(r.stallWidths[i]) + 'mm', sx + sw / 2, labelY + 14);
       }
 
-      /* === DIMENSION LINES === */
-      // dimLine(ctx, ox, oy - 20, ox + pw, oy - 20, Math.round(r.W) + 'mm', '#5a5a5a', -1);
-      // for (var i = 0; i < stallXs.length; i++) {
-      //   var sx = stallXs[i], sw = r.stallWidths[i] * scale;
-      //   dimLine(ctx, sx, oy - 38, sx + sw, oy - 38, Math.round(r.stallWidths[i]) + 'mm', '#7a7a7a', -1);
-      // }
       dimLine(ctx, ox + pw + 18, oy, ox + pw + 18, oy + ph, Math.round(r.D) + 'mm', '#5a5a5a', 1);
       dimLine(ctx, ox, oy + ph + 20, ox + epLpx, oy + ph + 20, Math.round(r.epL) + 'mm', '#7a7a7a', 1);
       dimLine(ctx, ox + pw - epRpx, oy + ph + 20, ox + pw, oy + ph + 20, Math.round(r.epR) + 'mm', '#7a7a7a', 1);
@@ -1602,10 +1717,6 @@ document.getElementById('pilasterHeight').value = pilH;
         right = Math.min(ox + pw, right);
         dimLine(ctx, left, oy + ph + 60, right, oy + ph + 60, Math.round(r.midPanelW) + 'mm', '#7a7a7a', 1);
       }
-
-      /* Footer Layout Blocks & Monochromatic Legend */
-      // ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'left';
-      // ctx.fillText('FLOOR PLAN', ox, CH - 22);
       ctx.font = '9px monospace'; ctx.fillStyle = '#7a7d8c'; ctx.textAlign = 'right';
       ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
 
@@ -1618,8 +1729,6 @@ document.getElementById('pilasterHeight').value = pilH;
         ctx.font = '7px monospace'; ctx.fillStyle = '#555'; ctx.textAlign = 'left';
         ctx.fillText(sw2[i].t, ox + i * 135 + 11, CH - 4);
       }
-
-
     }
     //-----------sheet
     function drawSheetDiagram(canvas, sheet, scale, kerf = 2) {
@@ -1943,7 +2052,7 @@ document.getElementById('pilasterHeight').value = pilH;
       var doorShade = r.doorShade || '#dedede';
       var pilasterShade = r.pilasterShade || '#b5b5b5';
       var topRailShade = r.topRailShade || '#8f8f8f';
-      var dividerShade = r.dividerShade || '#cfcfcf';
+      var pilasterShade = r.pilasterShade || '#cfcfcf';
 
       var frontX = ox;
       var doorRects = [];
@@ -2019,7 +2128,7 @@ document.getElementById('pilasterHeight').value = pilH;
       // midpanel
       for (var i = 0; i < midRects.length; i++) {
         drawPanel(midRects[i], pilasterShade, '#4a4a4a', 2);
-        ctx.strokeStyle = 'dividerShade';
+        ctx.strokeStyle = 'pilasterShade';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - divHpx);
