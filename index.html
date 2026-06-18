@@ -939,7 +939,11 @@ function createSheet(stock, shade, shadeType) {
       var epLdim = formatDim(firstArea.epL, firstArea.pilH);
       var epRdim = formatDim(firstArea.epR, firstArea.pilH);
       var netDim = (typeof firstArea.theight !== 'undefined') ? firstArea.theight.toFixed(2) + ' mm' : '';
-     var toprailLengthStr = toprailLength > 0   ? ( (toprailLength / 304.8).toFixed(1) + ' ft')   : '0 ft';
+     var pieces = Math.floor(toprailLength / 3660);
+var remainderMM = toprailLength % 3660;
+var toprailLengthStr = pieces >= 1 
+  ? pieces + ' piece' + (pieces > 1 ? 's ' : ' ') + remainderMM + 'mm' 
+  : toprailLength + 'mm';
      var shoelength = firstArea.epL + firstArea.epR + (firstArea.midPanelW * totalMid);
       var umpCount = plans.reduce(function (sum, entry) {
         return sum + ((entry.areaResult && entry.areaResult.umpq) || 0);
