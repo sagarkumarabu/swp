@@ -188,10 +188,6 @@
           <div class="val" id="kMid">-</div>
           <div class="lbl">Mid panels</div>
         </div>
-        <!-- <div class="kpi">
-          <div class="val" id="kEnd">-</div>
-          <div class="lbl">panels</div>
-        </div> -->
         <div class="kpi">
           <div class="val" id="kDoors">-</div>
           <div class="lbl">Doors</div>
@@ -253,7 +249,7 @@
   <script src="main.js"></script>
   <script>
     var result = null;
-    var activeTab = 'floor';
+    var activeTab = 'elevation';
     var areas = []; // Array to store all cubicle areas
     var allResults = []; // Array to store results for each area
     var currentArea = null;
@@ -361,6 +357,7 @@ document.getElementById('pilasterHeight').value = pilH;
         document.getElementById("totalwidth").value = 0;
         document.getElementById("depth").value = 0;
         document.getElementById("numStalls").value = 0;
+        buildPalette();
         drawElev(currentArea);
         drawFloor(currentArea);
     }
@@ -993,19 +990,7 @@ if (supportType === "shoebox") {
   frontcover = shoelength / 1800; 
   rfrontcover = parseFloat(frontcover.toFixed(2));
 }
-   var toprailHeight = 50, legHeight =150;
-pilH = firstArea.pilH;
-
-if (supportType === "legs") {
-  // Height = leg + pilaster height + top rail
-  cubicleHeight = (legHeight || 0) + (pilH || 0) + (toprailHeight || 0);
-} else if (supportType === "shoebox") {
-  // Height = pilaster height + top rail
-  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
-} else {
-  // Without legs, only pilaster height (and top rail if present)
-  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
-}
+   
       var html = `
       <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td>
          <td> <input type="text" > </td> <td> 
@@ -1265,6 +1250,17 @@ if (supportType === "legs") {
       var umph = parseFloat(document.getElementById('umph').value) || 900;
       var umpw = parseFloat(document.getElementById('umpw').value) || 450;
       var umpq = parseInt(document.getElementById('umpq').value) || 0;
+      var toprailHeight = 50, legHeight =150;
+      if (supportType === "legs") {
+  // Height = leg + pilaster height + top rail
+  cubicleHeight = (legHeight || 0) + (pilH || 0) + (toprailHeight || 0);
+} else if (supportType === "shoebox") {
+  // Height = pilaster height + top rail
+  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
+} else {
+  // Without legs, only pilaster height (and top rail if present)
+  cubicleHeight = (pilH || 0) + (toprailHeight || 0);
+}
        const canvas = document.getElementById("canva");
 const ctx = canvas.getContext("2d");
 const shadeInput = document.getElementById("topRailShade");

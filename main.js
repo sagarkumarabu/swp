@@ -68,13 +68,20 @@
     return; // stop if user cancels
   }
 
+  // If running as an EXE (pywebview), use the Python Bridge for reliable saving
+  if (window.pywebview && window.pywebview.api) {
+    window.pywebview.api.save_file(csvString, fileName + ".csv");
+    return;
+  }
+
   var link = document.createElement("a");
   link.setAttribute("href", url);
   link.setAttribute("download", fileName + ".csv");
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  // Delay removal slightly to ensure the browser registers the download
+  setTimeout(() => document.body.removeChild(link), 100);
 }
 
 
@@ -133,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function buildPalette() {
       const paletteContainer = document.getElementById('shadePalette');
       if (!paletteContainer) return;
+      paletteContainer.innerHTML = '';
       solids.forEach(solid => {
         const swatch = document.createElement('div');
         swatch.style.width = '24px';
@@ -147,6 +155,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const target = document.querySelector('input[name="colorTarget"]:checked');
           if (target) {
             document.getElementById(target.value).value = solid.color;
+            // Update currentArea with new color values if it exists
+            if (typeof currentArea !== 'undefined' && currentArea) {
+              if (target.value === 'doorShade') {
+                currentArea.doorShade = solid.color;
+              } else if (target.value === 'pilasterShade') {
+                currentArea.pilasterShade = solid.color;
+              } else if (target.value === 'topRailShade') {
+                currentArea.topRailShade = solid.color;
+              }
+            }
             calculate();
           }
         };
