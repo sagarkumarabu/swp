@@ -159,7 +159,7 @@
         <input type="hidden" id="topRailShade" value="#8f8f8f">
       </div>
       <label>
-        <input type="checkbox" id="shadeWiseNesting">
+        <input type="checkbox" id="shadeWiseNesting" onchange="calculate();">
         Shade Wise Nesting
       </label>
       <div class="fg" style="margin-top: 8px; margin-bottom: 8px;">
@@ -266,7 +266,7 @@
   <script src="main.js?v=1.1"></script>
   <script>
     var result = null;
-    var activeTab = 'elevation';
+    var activeTab = 'floor';
     var areas = []; // Array to store all cubicle areas
     var allResults = []; // Array to store results for each area
     var currentArea = null;
@@ -1044,7 +1044,7 @@
         const key =
           sheet.stock.name +
           "||" +
-          "pilaster divider" +
+          sheet.stock.type +
           "||" +
           sheet.shadeName;
         if (!sheetSummary[key]) {
