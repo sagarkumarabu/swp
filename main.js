@@ -195,3 +195,4 @@ if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'functio
 } else {
   console.warn('Supabase client not initialized. Include the CDN script before main.js or import createClient.');
 }
+window.supabaseClient = supabaseClient;

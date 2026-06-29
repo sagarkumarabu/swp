@@ -263,7 +263,7 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="main.js?v=1.1"></script>
+  <script src="main.js?v=1.2"></script>
   <script>
     var result = null;
     var activeTab = 'floor';
@@ -317,10 +317,15 @@
         return;
       }
       if (ewEqual) {
-        const cubicleSpace = width / numCubicles;
-        const remaincubiclespace = cubicleSpace - doorW;
-        const derivedEndPanel = remaincubiclespace / 2;
-        epL = epR = Math.max(0, derivedEndPanel);
+        const inputVal = parseFloat(document.getElementById('endpanelSize').value);
+        if (!isNaN(inputVal) && inputVal > 0) {
+          epL = epR = inputVal;
+        } else {
+          const cubicleSpace = width / numCubicles;
+          const remaincubiclespace = cubicleSpace - doorW;
+          const derivedEndPanel = remaincubiclespace / 2;
+          epL = epR = Math.max(0, derivedEndPanel);
+        }
         midPanelW = epL + epR;
       } else {
         epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
@@ -415,8 +420,11 @@
       document.getElementById('umph').value = currentArea.umph;
       document.getElementById('umpw').value = currentArea.umpw;
       document.getElementById('umpq').value = currentArea.umpq;
+      document.getElementById('endpanelEqual').value = (currentArea.ewEqual !== false) ? 'equal' : 'unequal';
+      document.getElementById('endpanelSize').value = currentArea.epL;
       document.getElementById('endpanelLeft').value = currentArea.epL;
       document.getElementById('endpanelRight').value = currentArea.epR;
+      toggleEndpanel();
 
       // If stall widths are editable individually
       currentArea.stallWidths.forEach((sw, i) => {
@@ -455,8 +463,15 @@
       area.umph = parseFloat(document.getElementById('umph').value) || 0;
       area.umpw = parseFloat(document.getElementById('umpw').value) || 0;
       area.umpq = parseInt(document.getElementById('umpq').value) || 0;
-      area.epL = parseFloat(document.getElementById('endpanelLeft').value) || area.epL;
-      area.epR = parseFloat(document.getElementById('endpanelRight').value) || area.epR;
+      const ewEqual = document.getElementById('endpanelEqual').value === 'equal';
+      if (ewEqual) {
+        area.epL = area.epR = parseFloat(document.getElementById('endpanelSize').value) || 200;
+        area.ewEqual = true;
+      } else {
+        area.epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
+        area.epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
+        area.ewEqual = false;
+      }
       // rebuild stall widths
       const spacing = document.getElementById('equal').value;
 
@@ -1231,22 +1246,38 @@
         showFormMessage('Name and email are required.', true);
         return;
       }
+      if (!window.supabaseClient) {
+        showFormMessage('Supabase client is not initialized. Please check your network connection or CDN configuration.', true);
+        return;
+      }
       try {
-        const response = await fetch('/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
+        const projectDataObj = { ...payload };
+        delete projectDataObj.userName;
+        delete projectDataObj.userEmail;
+        delete projectDataObj.userNotes;
 
-        if (response.ok && data.success) {
-          showFormMessage('Saved successfully (ID: ' + data.id + ').', false);
+        const { data, error } = await window.supabaseClient
+          .from('projects')
+          .insert([
+            {
+              name: payload.userName,
+              email: payload.userEmail,
+              notes: payload.userNotes,
+              project_data: projectDataObj
+            }
+          ])
+          .select();
+
+        if (error) {
+          showFormMessage(error.message || 'Unable to save data.', true);
+        } else if (data && data.length > 0) {
+          showFormMessage('Saved successfully (ID: ' + data[0].id + ').', false);
           searchProjects(true);
         } else {
-          showFormMessage(data.error || 'Unable to save data.', true);
+          showFormMessage('Unable to save data.', true);
         }
       } catch (error) {
-        showFormMessage('Network error: ' + error.message, true);
+        showFormMessage('Error: ' + error.message, true);
       }
     }
 
@@ -1254,19 +1285,28 @@
       var box = document.getElementById('searchResults');
       var query = showAll ? '' : document.getElementById('searchQuery').value.trim();
       box.innerHTML = '<p style="color:#666; padding:8px;">Searching...</p>';
+      if (!window.supabaseClient) {
+        box.innerHTML = '<p style="color:#b00020; padding:8px;">Supabase client not initialized. Cannot load project list.</p>';
+        return;
+      }
       try {
-        var url = '/api/search' + (query ? '?q=' + encodeURIComponent(query) : '');
-        var response = await fetch(url);
-        var data = await response.json();
-        if (!response.ok || !data.success) {
-          box.innerHTML = '<p style="color:#b00020; padding:8px;">Search failed.</p>';
+        let selectQuery = window.supabaseClient.from('projects').select('*');
+        if (query) {
+          selectQuery = selectQuery.or(`name.ilike.%${query}%,email.ilike.%${query}%,notes.ilike.%${query}%`);
+        }
+        selectQuery = selectQuery.order('updated_at', { ascending: false });
+
+        const { data, error } = await selectQuery;
+
+        if (error) {
+          box.innerHTML = '<p style="color:#b00020; padding:8px;">Search failed: ' + escapeHtml(error.message) + '</p>';
           return;
         }
-        if (!data.results.length) {
+        if (!data || !data.length) {
           box.innerHTML = '<p style="color:#666; padding:8px;">No records found.</p>';
           return;
         }
-        box.innerHTML = data.results.map(function (row) {
+        box.innerHTML = data.map(function (row) {
           var note = row.notes ? row.notes.slice(0, 60) : '';
           if (row.notes && row.notes.length > 60) note += '...';
           var when = row.updated_at ? row.updated_at.replace('T', ' ').slice(0, 19) : '';
@@ -1283,22 +1323,29 @@
     }
 
     async function loadProjectById(projectId) {
+      if (!window.supabaseClient) {
+        showFormMessage('Supabase client is not initialized.', true);
+        return;
+      }
       try {
-        var response = await fetch('/api/load/' + projectId);
-        var data = await response.json();
-        if (!response.ok || !data.success) {
-          showFormMessage(data.error || 'Unable to load project.', true);
+        const { data, error } = await window.supabaseClient
+          .from('projects')
+          .select('*')
+          .eq('id', projectId)
+          .single();
+
+        if (error || !data) {
+          showFormMessage(error ? error.message : 'Unable to load project.', true);
           return;
         }
-        var project = data.project;
-        var payload = project.project_data || {};
-        payload.userName = project.name || payload.userName;
-        payload.userEmail = project.email || payload.userEmail;
-        payload.userNotes = project.notes || payload.userNotes;
+        var payload = data.project_data || {};
+        payload.userName = data.name || payload.userName;
+        payload.userEmail = data.email || payload.userEmail;
+        payload.userNotes = data.notes || payload.userNotes;
         applyProjectData(payload);
         showFormMessage('Loaded project ID ' + projectId + '.', false);
       } catch (error) {
-        showFormMessage('Network error: ' + error.message, true);
+        showFormMessage('Error: ' + error.message, true);
       }
     }
 
@@ -1393,14 +1440,19 @@
         var remaincubiclespace = W - doorW;
         // 1. Establish your End Panels first
         if (ewEqual) {
-          var cubicleSpace = W / n;
-          var remaincubiclespace = cubicleSpace - doorW;
-          var derivedEndPanel = remaincubiclespace / 2;
-          epL = epR = Math.max(0, derivedEndPanel);
-
-          // Sync to UI
           var uiField = document.getElementById('endpanelSize');
-          if (uiField) uiField.value = Math.round(epL);
+          var userVal = uiField ? parseFloat(uiField.value) : NaN;
+          if (isNaN(userVal) || userVal <= 0) {
+            var cubicleSpace = W / n;
+            var remaincubiclespace = cubicleSpace - doorW;
+            var derivedEndPanel = remaincubiclespace / 2;
+            epL = epR = Math.max(0, derivedEndPanel);
+
+            // Sync to UI
+            if (uiField) uiField.value = Math.round(epL);
+          } else {
+            epL = epR = userVal;
+          }
         } else {
           epL = parseFloat(document.getElementById('endpanelLeft').value) || 200;
           epR = parseFloat(document.getElementById('endpanelRight').value) || 200;
@@ -1769,16 +1821,17 @@
       /* 5. FRONT INLINE FASCIAS AND ACTIVE DOORS */
       for (var i = 0; i < stallXs.length; i++) {
         var sx = stallXs[i], sw = r.stallWidths[i] * scale;
-        var dxL;
-        var spacingMode = r.equalSpacing || 'equal';
-        if (spacingMode === 'unequal') {
-          var gap = (r.epL || 0) * scale;
-          dxL = sx + gap;
-          if (dxL + doorWpx > sx + sw) {
-            dxL = Math.max(sx, sx + sw - doorWpx);
-          }
+        var gap;
+        if (i === 0) {
+          gap = r.epL;
+        } else if (i === r.n - 1) {
+          gap = r.stallWidths[i] - r.doorW - r.epR;
         } else {
-          dxL = sx + (sw - doorWpx) / 2;
+          gap = (r.stallWidths[i] - r.doorW) / 2;
+        }
+        var dxL = sx + Math.max(0, gap) * scale;
+        if (dxL + doorWpx > sx + sw) {
+          dxL = Math.max(sx, sx + sw - doorWpx);
         }
         // Front Static Fascias (Dark Charcoal Accent Profiles)
         ctx.strokeStyle = '#4a4a4a'; ctx.lineWidth = 3;
@@ -1809,14 +1862,9 @@
 
       if (stallXs.length > 0) {
         var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        var dxL;
-        var spacingMode = r.equalSpacing || 'equal';
-        if (spacingMode === 'unequal') {
-          dxL = sx + ((r.epL || 0) * scale);
-          if (dxL + doorWpx > sx + sw) dxL = Math.max(sx, sx + sw - doorWpx);
-        } else {
-          dxL = sx + (sw - doorWpx) / 2;
-        }
+        var gap = r.epL;
+        var dxL = sx + Math.max(0, gap) * scale;
+        if (dxL + doorWpx > sx + sw) dxL = Math.max(sx, sx + sw - doorWpx);
         dimLine(ctx, dxL, oy + ph + 40, dxL + doorWpx, oy + ph + 40, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
       }
       if (stallXs.length > 1) {
@@ -2235,7 +2283,7 @@
       // midpanel
       for (var i = 0; i < midRects.length; i++) {
         drawPanel(midRects[i], pilasterShade, '#4a4a4a', 2);
-        ctx.strokeStyle = 'pilasterShade';
+        ctx.strokeStyle = pilasterShade;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(midRects[i].x + midRects[i].w / 2, floorY - divHpx);
@@ -2458,6 +2506,7 @@
     buildStallInputs();
     buildPalette();
     calculate();
+    searchProjects(true);
   </script>
 </body>
 
