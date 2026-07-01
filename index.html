@@ -75,7 +75,7 @@
       </div>
       <div class="fg" id="endpanelEqualField">
         <label>End panel width (mm)</label>
-        <input type="number" id="endpanelSize" value="200" min="50">
+        <input type="number" id="endpanelSize" value="200" min="50" onchange="calculate()">
       </div>
       <div class="sub-fields hidden" id="endpanelFields">
         <div class="fg"><label>First panel (mm)</label>
@@ -180,7 +180,7 @@
         <button type="submit" class="calcbtn" style="background:#1976d2;">Save Project</button>
         <div class="err" id="formMsg" style="margin-top:8px; padding:8px; display:none;"></div>
       </form>
-      <div class="section-title" style="margin-top:18px;">Search &amp; Load</div>
+      <div class="section-title" style="margin-top:18px;">Search & Load</div>
       <div class="fg">
         <label>Search (name, email, notes)</label>
         <input type="text" id="searchQuery" placeholder="Type and press Search or Enter"
@@ -521,8 +521,8 @@
       areas.forEach((area, index) => {
         const isActive = currentArea === area;
         html += `
-          <div style="border-bottom: 1px solid #ddd; padding: 10px 10px; margin-bottom: 10px; background: ${isActive ? '#e8f4ff' : '#f9f9f9'}; border-radius: 3px;">
-            <div style="font-weight: bold; margin-bottom: 5px;">Area ${index + 1}${isActive ? ' (active)' : ''}</div>
+          <div style="border-bottom: 1px solid #ddd; padding: 10px 10px; margin-bottom: 10px; background: ${isActive ? '#e8f5e9' : '#f9f9f9'}; border-radius: 3px; border-left: 4px solid ${isActive ? '#4caf50' : 'transparent'};">
+            <div style="font-weight: bold; margin-bottom: 5px; color: ${isActive ? '#2e7d32' : 'inherit'};">Area ${index + 1}${isActive ? ' (active)' : ''}</div>
             <div>Cubicles: ${area.numCubicles} — ${area.width} x ${area.depth} mm</div>
             <div>Ump: ${area.umpq} x ${area.umpw} x ${area.umph} mm</div>
             <button type="button" onclick="selectArea(${index})">Show</button>
@@ -1088,6 +1088,19 @@
         rfrontcover = parseFloat(frontcover.toFixed(2));
       }
 
+      var pilasterShadeDisplay = '';
+      if (firstArea.pilasterShade) {
+        var found = solids.find(function (s) { return s.color === firstArea.pilasterShade; });
+        var name = found ? found.name : '';
+        pilasterShadeDisplay = `<span style="display:inline-block;width:14px;height:14px;background:${firstArea.pilasterShade};border:1px solid #888;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>` + (name ? `<span>${name}</span>` : '');
+      }
+      var doorShadeDisplay = '';
+      if (firstArea.doorShade) {
+        var found = solids.find(function (s) { return s.color === firstArea.doorShade; });
+        var name = found ? found.name : '';
+        doorShadeDisplay = `<span style="display:inline-block;width:14px;height:14px;background:${firstArea.doorShade};border:1px solid #888;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>` + (name ? `<span>${name}</span>` : '');
+      }
+
       var html = `
       <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td>
          <td> <input type="text" > </td> <td> 
@@ -1109,12 +1122,12 @@
         <tr><td>Floor fastner</td><td>${fastner}</td><td></td><td></td><td></td></tr>
         <tr><td>Side Cover</td><td>${sidecover}</td><td></td></tr>
         <tr><td>Front cover 1800</td><td>${rfrontcover}</td><td></td></tr>
-        <tr><td>Dividers</td><td>${totalDividers}</td><td></td><td></td><td>${dividerDim}</td></tr>
-        <tr><td>Mid panels</td><td>${totalMid}</td><td></td><td></td><td>${midPanelDim}</td></tr>
-        <tr><td>first panels</td><td>1</td><td></td><td></td><td>${epLdim}</td></tr>
-        <tr><td>End panels</td><td>1</td><td></td><td></td><td>${epRdim}</td></tr>
-        <tr><td>Doors</td><td>${totalDoors}</td><td></td><td></td><td>${doorDim}</td></tr>
-        <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td></td><td>${endWallDim}</td></tr>
+        <tr><td>Dividers</td><td>${totalDividers}</td><td></td><td>${pilasterShadeDisplay}</td><td>${dividerDim}</td></tr>
+        <tr><td>Mid panels</td><td>${totalMid}</td><td></td><td>${pilasterShadeDisplay}</td><td>${midPanelDim}</td></tr>
+        <tr><td>first panels</td><td>1</td><td></td><td>${pilasterShadeDisplay}</td><td>${epLdim}</td></tr>
+        <tr><td>End panels</td><td>1</td><td></td><td>${pilasterShadeDisplay}</td><td>${epRdim}</td></tr>
+        <tr><td>Doors</td><td>${totalDoors}</td><td></td><td>${doorShadeDisplay}</td><td>${doorDim}</td></tr>
+        <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td>${pilasterShadeDisplay}</td><td>${endWallDim}</td></tr>
         <tr><td>Notes</td><td> <input type="text" name="" id=""></td><td></td></tr>  `;
 
       // Stock management: remaining pieces table
@@ -1408,7 +1421,7 @@
           link.href = canvas.toDataURL("image/png");
           link.click();
         });
-        var toprailHeight = 50, legHeight = 150;
+        var toprailHeight = 25, legHeight = 150;
         if (supportType === "legs") {
           // Height = leg + pilaster height + top rail
           cubicleHeight = (legHeight || 0) + (pilH || 0) + (toprailHeight || 0);
