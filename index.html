@@ -41,8 +41,7 @@
       </div>
 
       <div class="section-title">Areas Configuration</div>
-      <button class="calcbtn" onclick="addArea()" style="margin-bottom: 10px; width: 100%; background: #4CAF50;">+ Add
-        Area</button>
+      <button class="calcbtn" onclick="addArea()" style="background: #4CAF50;">+ AddArea</button>
       <div id="areasContainer"> </div>
       <div class="row3">
         <div class="fg"><label>Area width</label>
@@ -1007,8 +1006,9 @@
       remainingParts.forEach(function (part) {
         remainArea = Math.max(remainArea, part.area);
       });
-      var wallMap = { l: 1, c: 0, s: 2 };
-      var endWallCount = wallMap[document.getElementById('wall').value] || 0;
+      var endWallCount = plans.reduce(function (acc, entry) {
+        return acc + ((entry.areaResult && entry.areaResult.countEndWalls) || 0);
+      }, 0);
       // Compute dimension strings (match the sizing-box values)
       var allStallWidths = plans.reduce(function (acc, entry) {
         if (entry && entry.areaResult && entry.areaResult.stallWidths) {
@@ -1107,7 +1107,7 @@
            </td><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
   <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td></tr>
         <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th><td>Door:</td> <td> ${firstArea.doorW} </td></tr>
-        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Date().toLocaleDateString()}</td>
+        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Intl.DateTimeFormat('en-GB').format(new Date())}</td>
           <td><input type="text"></td><td>Depth:</td> <td> ${firstArea.D}</td></tr>
 <tr><th>sheet </th> <th>Item</th><th>Shade</th><th>Quantity</th></tr>
          ${summaryRows}
@@ -1116,7 +1116,7 @@
         <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>Ump Hardware set</td><td>${umpCount}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>Top Rail</td><td>${toprailLengthStr}</td><td></td><td></td><td><input type="text"></td></tr>
-        <tr><td>U-channel</td><td>${totalDoors * 2}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
+        <tr><td>U-channel</td><td>${(totalDoors * 2.1).toFixed(2)}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
         <tr><td>Doorstopper-channel</td><td>${dsc}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr> 
         <tr><td>F-channel</td><td>${endWallCount}</td><td></td><td></td><td><input type="text" name="" id="" value="6 feet"></td></tr>
         <tr><td>Floor fastner</td><td>${fastner}</td><td></td><td></td><td></td></tr>
@@ -1881,13 +1881,24 @@
         dimLine(ctx, dxL, oy + ph + 40, dxL + doorWpx, oy + ph + 40, Math.round(r.doorW) + 'mm', '#4a4a4a', 1);
       }
       if (stallXs.length > 1) {
-        var sx = stallXs[0], sw = r.stallWidths[0] * scale;
-        var midWidthPx = r.midPanelW * scale;
-        var left = sx + sw - midWidthPx / 2;
-        var right = sx + sw + midWidthPx / 2;
-        left = Math.max(ox, left);
-        right = Math.min(ox + pw, right);
-        dimLine(ctx, left, oy + ph + 60, right, oy + ph + 60, Math.round(r.midPanelW) + 'mm', '#7a7a7a', 1);
+        var sx_0 = stallXs[0], sw_0 = r.stallWidths[0] * scale;
+        var gap_0 = r.epL;
+        var dxL_0 = sx_0 + Math.max(0, gap_0) * scale;
+        if (dxL_0 + doorWpx > sx_0 + sw_0) dxL_0 = Math.max(sx_0, sx_0 + sw_0 - doorWpx);
+        var left = dxL_0 + doorWpx;
+
+        var sx_1 = stallXs[1], sw_1 = r.stallWidths[1] * scale;
+        var gap_1;
+        if (1 === r.n - 1) {
+          gap_1 = r.stallWidths[1] - r.doorW - r.epR;
+        } else {
+          gap_1 = (r.stallWidths[1] - r.doorW) / 2;
+        }
+        var dxL_1 = sx_1 + Math.max(0, gap_1) * scale;
+        if (dxL_1 + doorWpx > sx_1 + sw_1) dxL_1 = Math.max(sx_1, sx_1 + sw_1 - doorWpx);
+        var right = dxL_1;
+
+        dimLine(ctx, left, oy + ph + 60, right, oy + ph + 60, Math.round((right - left) / scale) + 'mm', '#7a7a7a', 1);
       }
       ctx.font = '9px monospace'; ctx.fillStyle = '#7a7d8c'; ctx.textAlign = 'right';
       ctx.fillText('SCALE 1:' + Math.round(1 / scale * 10) + '  |  ' + r.n + ' STALLS', ox + pw, CH - 22);
