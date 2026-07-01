@@ -134,6 +134,16 @@
             <option value="no">No</option>
           </select>
         </div>
+        <div class="fg">
+          <label>Series</label>
+          <select id="series" onchange="calculate()">
+            <option value="onex">onex</option>
+            <option value="neon">neon</option>
+            <option value="premia">Premia</option>
+            <option value="silvera">silvera</option>
+            <option value="swing lite">swing lite</option>
+          </select>
+        </div>
       </div>
       <div class="section-title">Elevation Shades</div>
       <div class="row4">
@@ -1100,19 +1110,17 @@
         var name = found ? found.name : '';
         doorShadeDisplay = `<span style="display:inline-block;width:14px;height:14px;background:${firstArea.doorShade};border:1px solid #888;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>` + (name ? `<span>${name}</span>` : '');
       }
-
+      var series = document.getElementById("series").value;
       var html = `
-      <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td>
-         <td> <input type="text" > </td> <td> 
-           </td><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
-  <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td></tr>
-        <tr><th>${profile}</th><th>Cubicle </th><th>Ump</th><th>Date</th><th>Project Name:</th><td>Door:</td> <td> ${firstArea.doorW} </td></tr>
-        <tr><td>working qty</td><td>${totalDoors}</td><td>${umpCount}</td><td>${new Intl.DateTimeFormat('en-GB').format(new Date())}</td>
-          <td><input type="text"></td><td>Depth:</td> <td> ${firstArea.D}</td></tr>
+      <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td><td> <input type="text" > </td> <th> Date</th><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
+  <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td>
+    <td>${new Intl.DateTimeFormat('en-GB').format(new Date())}</td><td>Door:</td> <td> ${firstArea.doorW} </td></tr>
+        <tr><th>${profile}</th><th>Series</th><th>Cubicle </th><th>Ump</th><th>Project Name:</th><td>Depth:</td> <td> ${firstArea.D}</td></tr>
+        <tr><td>working qty</td><td>${series}</td>  <td>${totalDoors}</td><td>${umpCount}</td>
+          <td><input type="text"></td> <td>Overall height:</td> <td>${cubicleHeight} </td></tr>
 <tr><th>sheet </th> <th>Item</th><th>Shade</th><th>Quantity</th></tr>
          ${summaryRows}
-        <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th>
-          <td>Overall height:</td> <td>${cubicleHeight} </td></tr>
+        <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th>   <td></td> <td></td></tr>
         <tr><td>Hardware set ${message}</td><td>${totalDoors}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>Ump Hardware set</td><td>${umpCount}</td><td></td><td></td><td><input type="text"></td></tr>
         <tr><td>Top Rail</td><td>${toprailLengthStr}</td><td></td><td></td><td><input type="text"></td></tr>
