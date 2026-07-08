@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Locker</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"> </script>
 
-    <style> 
-        .summary { 
-            float: right; 
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"> </script>
+    <style>
+        .summary {
+            float: right;
             border: solid 2px;
             height: 400px;
             width: 500px;
@@ -20,10 +21,29 @@
             box-sizing: border-box;
             overflow-y: auto;
         }
-        .sheet-result{margin-top:12px;}
-        .sheet-card{border-top:1px solid #ccc; padding-top:8px; margin-top:10px;}
-        .sheet-card h4{margin:0 0 4px;}
-        .sheet-canvas{border:1px solid #333; background:#fff; margin:6px 0; width:100%; max-width:360px; height:auto;}
+
+        .sheet-result {
+            margin-top: 12px;
+        }
+
+        .sheet-card {
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+            margin-top: 10px;
+        }
+
+        .sheet-card h4 {
+            margin: 0 0 4px;
+        }
+
+        .sheet-canvas {
+            border: 1px solid #333;
+            background: #fff;
+            margin: 6px 0;
+            width: 100%;
+            max-width: 360px;
+            height: auto;
+        }
     </style>
     <nav>
         <a href="index.html">Cubicle</a>
@@ -39,7 +59,7 @@
         <h3>Locker Configuration</h3>
         <table>
             <tr>
-              <td><label for="lh">Height:</label></td>
+                <td><label for="lh">Height:</label></td>
                 <td><input type="number" id="lh" value="1800" min="1000"></td>
             </tr>
             <tr>
@@ -57,7 +77,7 @@
             <tr>
                 <td><label for="zshape">Z-shape:</label></td>
                 <td>
-                    <input type="checkbox" id="zshape"> 
+                    <input type="checkbox" id="zshape">
                     <label for="zcol">for col (0=All):</label>
                     <input type="number" id="zcol" value="1" min="0" style="width:40px">
                 </td>
@@ -88,45 +108,56 @@
                 </td>
             </tr>
             <tr>
-                <td>Color:</td><td><div id="color"></div></td></tr>
+                <td>Color:</td>
+                <td>
+                    <div id="color"></div>
+                    <div id="selectedShadeName" style="font-size:11px;color:#555;margin-top:4px;font-weight:bold;">
+                    </div>
+                </td>
+            </tr>
         </table>
     </form>
-    <table><tr><td>
-    <canvas id="cv" width="500" height="400">    </canvas>
-
-    </td>
-    <td><div class="summary">
-       <button type="button" onclick="exportExcel();">Download</button>
-       <table style="width: 100%; border-collapse: collapse; text-align: left;">
-           <thead>
-               <tr style="background: #f1f1f1;">
-                   <th style="border: 1px solid #ccc; padding: 6px;">Item</th>
-                   <th style="border: 1px solid #ccc; padding: 6px;">Qty</th>
-                   <th style="border: 1px solid #ccc; padding: 6px;">Dimension (W x H)</th>
-                   <th style="border: 1px solid #ccc; padding: 6px;">Thickness</th>
-               </tr>
-           </thead>
-           <tbody id="summaryTable">
-           </tbody>
-       </table>
-       <div id="sheetResult" class="sheet-result"></div>
-    </div></td></tr></table>
+    <table>
+        <tr>
+            <td style="vertical-align: top;">
+                <div id="canvasContainer" style="display: flex; flex-wrap: wrap; gap: 15px; max-width: 600px;"></div>
+            </td>
+            <td>
+                <div class="summary">
+                    <button type="button" onclick="exportExcel();">Download</button>
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background: #f1f1f1;">
+                                <th style="border: 1px solid #ccc; padding: 6px;">Item</th>
+                                <th style="border: 1px solid #ccc; padding: 6px;">Qty</th>
+                                <th style="border: 1px solid #ccc; padding: 6px;">Dimension (W x H)</th>
+                                <th style="border: 1px solid #ccc; padding: 6px;">Thickness</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTable">
+                        </tbody>
+                    </table>
+                    <div id="sheetResult" class="sheet-result"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
     </div>
     <script src="main.js"></script>
     <script>
-   
-        
 
-         const sheets9mm = [
-        { name: "12 x 6 feet", width: 3670, height: 1860 },
-        { name: "14 x 6 feet", width: 4300, height: 1860 },
-        { name: "8 x 4 feet", width: 2438, height: 1219 }
-      ];
-       const sheets3mm = [
-        { name: "12 x 6 feet", width: 3670, height: 1860 },
-        { name: "8 x 4 feet", width: 2438, height: 1219 },
-        { name: "14 x 6 feet", width: 4300, height: 1860 }
-      ];
+
+
+        const sheets9mm = [
+            { name: "12 x 6 feet", width: 3670, height: 1860 },
+            { name: "14 x 6 feet", width: 4300, height: 1860 },
+            { name: "8 x 4 feet", width: 2438, height: 1219 }
+        ];
+        const sheets3mm = [
+            { name: "12 x 6 feet", width: 3670, height: 1860 },
+            { name: "8 x 4 feet", width: 2438, height: 1219 },
+            { name: "14 x 6 feet", width: 4300, height: 1860 }
+        ];
         let currentColor = '#e9ecef';
         let lockerColors = {};
 
@@ -135,7 +166,7 @@
             shade.style.display = 'flex';
             shade.style.flexWrap = 'wrap';
             shade.style.gap = '4px';
-            
+
             solids.forEach((solid, index) => {
                 let swatch = document.createElement('div');
                 swatch.style.width = '24px';
@@ -150,17 +181,25 @@
                     currentColor = solid.color;
                     swatch.style.outline = '2px solid #333';
                     swatch.style.transform = 'scale(1.1)';
+                    // Show initial shade name
+                    setTimeout(function () {
+                        var lbl = document.getElementById('selectedShadeName');
+                        if (lbl) lbl.textContent = 'Selected: ' + solid.name;
+                    }, 0);
                 }
 
                 swatch.onclick = () => {
-                    Array.from(shade.children).forEach(child => {
+                    Array.from(shade.querySelectorAll('.shade-swatch')).forEach(child => {
                         child.style.outline = 'none';
                         child.style.transform = 'scale(1)';
                     });
                     swatch.style.outline = '2px solid #333';
                     swatch.style.transform = 'scale(1.1)';
                     currentColor = solid.color;
+                    var lbl = document.getElementById('selectedShadeName');
+                    if (lbl) lbl.textContent = 'Selected: ' + solid.name;
                 };
+                swatch.className = 'shade-swatch';
                 shade.appendChild(swatch);
             });
         }
@@ -175,132 +214,52 @@
             var skirting = parseFloat(document.getElementById('skirting').value) || 0;
             var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
             var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
-            
-            var cv = document.getElementById('cv');
-            var ctx = cv.getContext('2d');
-            ctx.clearRect(0, 0, cv.width, cv.height);
-            
+
+            var container = document.getElementById('canvasContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
             if (lh > 0 && lw > 0 && lc > 0 && lr > 0) {
                 var lockerH = Math.max(0, lh - skirting);
                 var colCount = customColumns.length > 0 ? customColumns.length : lc;
                 var rw = lw / colCount;
                 var rh = lockerH / lr;
 
-                // Calculate scale and padding to fit drawing into the canvas
-                var padding = 50;
-                var scale = Math.min((cv.width - padding * 2) / lw, (cv.height - padding * 2) / lh);
-
-                var startX = (cv.width - (lw * scale)) / 2;
-                var startY = (cv.height - (lh * scale)) / 2;
-
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-
-                if (customColumns.length > 0) {
-                    for (var c = 0; c < customColumns.length; c++) {
-                        var columnRows = customColumns[c];
-                        var customRh = lockerH / columnRows;
-                        var x = startX + c * rw * scale;
-                        var w = rw * scale;
-
-                        if (zshape && (zcol === 0 || c === zcol - 1)) {
-                            drawZDoor(ctx, x, startY, w, lockerH * scale, scale, lockerColors['custom-' + c + '-0'] || '#e9ecef', lockerColors['custom-' + c + '-1'] || '#e9ecef');
-                        } else {
-                            for (var r = 0; r < columnRows; r++) {
-                                var rowY = startY + r * customRh * scale;
-                                var h = customRh * scale;
-                                drawNormalDoor(ctx, x, rowY, w, h, scale, lockerColors['custom-' + c + '-' + r] || '#e9ecef');
-                            }
-                        }
-                    }
-                } else {
-                    for (var c = 0; c < lc; c++) {
-                        var x = startX + c * rw * scale;
-                        var w = rw * scale;
-                        var fullH = lockerH * scale;
-
-                        if (zshape && (zcol === 0 || c === zcol - 1)) {
-                        drawZDoor(ctx, x, startY, w, fullH, scale, lockerColors[c + '-0'] || '#e9ecef', lockerColors[c + '-1'] || '#e9ecef');
-                        } else {
-                        // Draw multiple rows for this column
-                        for (var r = 0; r < lr; r++) {
-                            var rowY = startY + r * rh * scale;
-                            var h = rh * scale;
-
-                            drawNormalDoor(ctx, x, rowY, w, h, scale, lockerColors[c + '-' + r] || '#e9ecef');
-                        }
-                        }
-                    }
-                }
-                
-                // Draw skirting
-                if (skirting > 0) {
-                    ctx.fillStyle = '#4a4e4a';
-                    ctx.fillRect(startX, startY + lockerH * scale, lw * scale, skirting * scale);
-                    ctx.strokeRect(startX, startY + lockerH * scale, lw * scale, skirting * scale);
+                // Split columns into modules of at most 4 columns
+                var modules = [];
+                var remaining = colCount;
+                var colIndex = 0;
+                while (remaining > 0) {
+                    var size = Math.min(4, remaining);
+                    modules.push({
+                        startIndex: colIndex,
+                        colCount: size
+                    });
+                    colIndex += size;
+                    remaining -= size;
                 }
 
-                var depth = 450;
-                ctx.fillStyle = '#333';
-                ctx.font = '14px Roboto, sans-serif';
-                ctx.fillText('Overall dimension: ' + lw + 'W x ' + lh + 'H', startX, startY + (lh * scale) + 25);
-                if (customColumns.length > 0) {
-                    ctx.fillText('Custom columns: ' + customColumns.join(', ') + ' lockers | Col W ' + rw.toFixed(1), startX, startY + (lh * scale) + 45);
-                } else {
-                    ctx.fillText('Locker dimension: ' + 
-                    rw.toFixed(1) + 'W x ' + rh.toFixed(1) + 
-                    'H x ' + depth + ' Depth', startX, startY + (lh * scale) + 45);
-                }
-
-                // Generate Summary
-                var topQty = 1;
-                var bottomQty = 1;
-                var sidesQty = 2;
-                var backboardQty = 1;
-                var dividerQty = colCount - 1;
-                
-                var shelfQty = 0;
-                var normalDoorsQty = 0;
-                var zDoorsQty = 0;
-                
-                if (customColumns.length > 0) {
-                    for (var c = 0; c < customColumns.length; c++) {
-                        var isCustomZ = zshape && (zcol === 0 || c === zcol - 1);
-                        if (isCustomZ) {
-                            zDoorsQty += 2;
-                            shelfQty += 2;
-                        } else {
-                            normalDoorsQty += customColumns[c];
-                            shelfQty += Math.max(0, customColumns[c] - 1);
-                        }
-                    }
-                } else {
-                    for (var c = 0; c < lc; c++) {
-                        var isZ = zshape && (zcol === 0 || c === zcol - 1);
-                        if (isZ) {
-                            zDoorsQty += 2;
-                            shelfQty += 2;
-                        } else {
-                            shelfQty += Math.max(0, lr - 1);
-                            normalDoorsQty += lr;
-                        }
-                    }
-                }
-                
-                var totalDoors = normalDoorsQty + zDoorsQty;
-                var summaryHtml = '';
                 var panelParts = [];
-                
+                var globalSummary = {};
+
                 function addSummaryRow(item, qty, dim, thickness, partW, partH) {
                     if (qty > 0) {
-                        summaryHtml += '<tr>';
-                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + item + '</td>';
-                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + qty + '</td>';
-                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + dim + '</td>';
-                        summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + (thickness || '-') + '</td>';
-                        summaryHtml += '</tr>';
+                        var key = item + '||' + (thickness || '-');
+                        if (!globalSummary[key]) {
+                            globalSummary[key] = {
+                                item: item,
+                                qty: 0,
+                                dims: [],
+                                thickness: thickness || '-'
+                            };
+                        }
+                        globalSummary[key].qty += qty;
+                        if (dim && dim !== '-') {
+                            globalSummary[key].dims.push(dim);
+                        }
+
                         if (thickness && partW > 0 && partH > 0) {
-                            for (var i = 0; i < qty; i++) {
+                            for (var k = 0; k < qty; k++) {
                                 panelParts.push({
                                     label: item,
                                     w: partW,
@@ -311,36 +270,218 @@
                         }
                     }
                 }
-                
-                addSummaryRow('Top', topQty, lw.toFixed(1) + ' x ' + depth, '9 mm', lw, depth);
-                addSummaryRow('Bottom', bottomQty, lw.toFixed(1) + ' x ' + depth, '9 mm', lw, depth);
-                addSummaryRow('Sides', sidesQty, depth + ' x ' + lh.toFixed(1), '3 mm', depth, lh);
-                addSummaryRow('Backboard', backboardQty, lw + ' x ' + (lh - skirting), '3 mm', lw, lh - skirting);
-                addSummaryRow('Divider', dividerQty, depth + ' x ' + lockerH.toFixed(1), '3 mm', depth, lockerH);
-                addSummaryRow('Shelf', shelfQty, rw.toFixed(1) + ' x ' + depth, '9 mm', rw, depth);
-                if (customColumns.length > 0) {
-                    var customDoorGroups = {};
-                    customColumns.forEach(function(rows, c) {
-                        if (zshape && (zcol === 0 || c === zcol - 1)) return;
 
-                        var doorH = (lockerH / rows).toFixed(1);
-                        var key = rw.toFixed(1) + ' x ' + doorH;
-                        customDoorGroups[key] = (customDoorGroups[key] || 0) + rows;
+                modules.forEach(function (module, i) {
+                    // Create canvas for this module
+                    var canvas = document.createElement('canvas');
+                    canvas.height = 400;
+
+                    var padding = 50;
+                    var scale = (canvas.height - padding * 2) / lh;
+                    var mw = module.colCount * rw;
+                    canvas.width = mw * scale + padding * 2;
+                    container.appendChild(canvas);
+
+                    var ctx = canvas.getContext('2d');
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+
+                    var startX = padding;
+                    var startY = padding;
+
+                    // Draw the columns in this module
+                    for (var localCol = 0; localCol < module.colCount; localCol++) {
+                        var c = module.startIndex + localCol;
+                        var x = startX + localCol * rw * scale;
+                        var w = rw * scale;
+
+                        if (customColumns.length > 0) {
+                            var columnRows = customColumns[c];
+                            var customRh = lockerH / columnRows;
+                            if (zshape && (zcol === 0 || c === zcol - 1)) {
+                                drawZDoor(ctx, x, startY, w, lockerH * scale, scale, lockerColors['custom-' + c + '-0'] || '#e9ecef', lockerColors['custom-' + c + '-1'] || '#e9ecef');
+                            } else {
+                                for (var r = 0; r < columnRows; r++) {
+                                    var rowY = startY + r * customRh * scale;
+                                    var h = customRh * scale;
+                                    drawNormalDoor(ctx, x, rowY, w, h, scale, lockerColors['custom-' + c + '-' + r] || '#e9ecef');
+                                }
+                            }
+                        } else {
+                            var fullH = lockerH * scale;
+                            if (zshape && (zcol === 0 || c === zcol - 1)) {
+                                drawZDoor(ctx, x, startY, w, fullH, scale, lockerColors[c + '-0'] || '#e9ecef', lockerColors[c + '-1'] || '#e9ecef');
+                            } else {
+                                for (var r = 0; r < lr; r++) {
+                                    var rowY = startY + r * rh * scale;
+                                    var h = rh * scale;
+                                    drawNormalDoor(ctx, x, rowY, w, h, scale, lockerColors[c + '-' + r] || '#e9ecef');
+                                }
+                            }
+                        }
+                    }
+
+                    // Draw skirting
+                    if (skirting > 0) {
+                        ctx.fillStyle = '#4a4e4a';
+                        ctx.fillRect(startX, startY + lockerH * scale, mw * scale, skirting * scale);
+                        ctx.strokeRect(startX, startY + lockerH * scale, mw * scale, skirting * scale);
+                    }
+
+                    // Draw overall dimension for this module
+                    ctx.fillStyle = '#333';
+                    ctx.font = '13px Roboto, sans-serif';
+                    ctx.fillText('Locker Layout: ' + mw.toFixed(0) + 'W x ' + lh.toFixed(0) + 'H', startX, startY + (lh * scale) + 25);
+                    if (customColumns.length > 0) {
+                        var subCols = customColumns.slice(module.startIndex, module.startIndex + module.colCount);
+                        ctx.fillText('Cols: ' + subCols.join(', ') + ' lockers | Col W ' + rw.toFixed(0), startX, startY + (lh * scale) + 42);
+                    } else {
+                        ctx.fillText(module.colCount + ' Cols | Col W ' + rw.toFixed(0) + ' x H ' + rh.toFixed(0), startX, startY + (lh * scale) + 42);
+                    }
+
+                    // Add click handler to the canvas for coloring
+                    canvas.addEventListener('click', function (e) {
+                        var rect = canvas.getBoundingClientRect();
+                        var clickX = e.clientX - rect.left;
+                        var clickY = e.clientY - rect.top;
+
+                        if (clickX >= startX && clickX <= startX + (mw * scale) && clickY >= startY && clickY <= startY + (lockerH * scale)) {
+                            var localCol = Math.floor((clickX - startX) / (rw * scale));
+                            localCol = Math.max(0, Math.min(module.colCount - 1, localCol));
+                            var globalCol = module.startIndex + localCol;
+
+                            if (customColumns.length > 0) {
+                                var isCustomZ = zshape && (zcol === 0 || globalCol === zcol - 1);
+                                if (isCustomZ) {
+                                    var zRow = getZDoorIndex(clickX, clickY, startX + localCol * rw * scale, startY, rw * scale, lockerH * scale);
+                                    lockerColors['custom-' + globalCol + '-' + zRow] = currentColor;
+                                    calculate();
+                                    return;
+                                }
+                                var columnRows = customColumns[globalCol];
+                                var customRh = lockerH / columnRows;
+                                var row = Math.floor((clickY - startY) / (customRh * scale));
+                                row = Math.max(0, Math.min(columnRows - 1, row));
+                                lockerColors['custom-' + globalCol + '-' + row] = currentColor;
+                                calculate();
+                                return;
+                            }
+
+                            var isZ = zshape && (zcol === 0 || globalCol === zcol - 1);
+                            var r;
+                            if (isZ) {
+                                r = getZDoorIndex(clickX, clickY, startX + localCol * rw * scale, startY, rw * scale, lockerH * scale);
+                            } else {
+                                r = Math.floor((clickY - startY) / (rh * scale));
+                                r = Math.max(0, Math.min(lr - 1, r));
+                            }
+                            lockerColors[globalCol + '-' + r] = currentColor;
+                            calculate();
+                        }
                     });
-                    Object.keys(customDoorGroups).forEach(function(dim) {
-                        var parts = dim.split(' x ');
-                        addSummaryRow('Shutter', customDoorGroups[dim], dim, '9 mm', parseFloat(parts[0]), parseFloat(parts[1]));
+
+                    // --- QUANTITIES & ITEMS FOR THIS MODULE ---
+                    var depth = 450;
+                    var mTopQty = 1;
+                    var mBottomQty = 1;
+                    var mSidesQty = 0;
+                    if (modules.length === 1) {
+                        mSidesQty = 2;
+                    } else {
+                        if (i === 0 || i === modules.length - 1) {
+                            mSidesQty = 1;
+                        }
+                    }
+                    var mBackboardQty = 1;
+                    var mDividerQty = module.colCount - 1 + (i < modules.length - 1 ? 1 : 0);
+
+                    var mShelfQty = 0;
+                    var mNormalDoorsQty = 0;
+                    var mZDoorsQty = 0;
+
+                    for (var localCol = 0; localCol < module.colCount; localCol++) {
+                        var c = module.startIndex + localCol;
+                        if (customColumns.length > 0) {
+                            var columnRows = customColumns[c];
+                            var isCustomZ = zshape && (zcol === 0 || c === zcol - 1);
+                            if (isCustomZ) {
+                                mZDoorsQty += 2;
+                                mShelfQty += 2;
+                            } else {
+                                mNormalDoorsQty += columnRows;
+                                mShelfQty += Math.max(0, columnRows - 1);
+                            }
+                        } else {
+                            var isZ = zshape && (zcol === 0 || c === zcol - 1);
+                            if (isZ) {
+                                mZDoorsQty += 2;
+                                mShelfQty += 2;
+                            } else {
+                                mShelfQty += Math.max(0, lr - 1);
+                                mNormalDoorsQty += lr;
+                            }
+                        }
+                    }
+
+                    var mTotalDoors = mNormalDoorsQty + mZDoorsQty;
+
+                    addSummaryRow('Top', mTopQty, mw.toFixed(1) + ' x ' + depth, '9 mm', mw, depth);
+                    addSummaryRow('Bottom', mBottomQty, mw.toFixed(1) + ' x ' + depth, '9 mm', mw, depth);
+                    addSummaryRow('Sides', mSidesQty, depth + ' x ' + lh.toFixed(1), '3 mm', depth, lh);
+                    addSummaryRow('Backboard', mBackboardQty, mw.toFixed(1) + ' x ' + (lh - skirting).toFixed(1), '3 mm', mw, lh - skirting);
+                    addSummaryRow('Divider', mDividerQty, depth + ' x ' + lockerH.toFixed(1), '3 mm', depth, lockerH);
+                    addSummaryRow('Shelf', mShelfQty, rw.toFixed(1) + ' x ' + depth, '9 mm', rw, depth);
+
+                    if (customColumns.length > 0) {
+                        var customDoorGroups = {};
+                        for (var localCol = 0; localCol < module.colCount; localCol++) {
+                            var c = module.startIndex + localCol;
+                            if (zshape && (zcol === 0 || c === zcol - 1)) continue;
+
+                            var rows = customColumns[c];
+                            var doorH = (lockerH / rows).toFixed(1);
+                            var key = rw.toFixed(1) + ' x ' + doorH;
+                            customDoorGroups[key] = (customDoorGroups[key] || 0) + rows;
+                        }
+                        Object.keys(customDoorGroups).forEach(function (dim) {
+                            var parts = dim.split(' x ');
+                            addSummaryRow('Shutter', customDoorGroups[dim], dim, '9 mm', parseFloat(parts[0]), parseFloat(parts[1]));
+                        });
+                    } else if (mNormalDoorsQty > 0) {
+                        addSummaryRow('Shutter', mNormalDoorsQty, rw.toFixed(1) + ' x ' + rh.toFixed(1), '9 mm', rw, rh);
+                    }
+                    if (mZDoorsQty > 0) {
+                        addSummaryRow('Z-Shutter', mZDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1), '9 mm', rw, lockerH * 0.65);
+                    }
+
+                    addSummaryRow('Lock', mTotalDoors, '-');
+                    addSummaryRow('Hinges', mTotalDoors * 2, '-');
+                    
+                    var channelColCount = (i === 0) ? (module.colCount + 1) : module.colCount;
+                    addSummaryRow('front-channel', channelColCount, '-');
+                    addSummaryRow('back-channel', channelColCount, '-');
+                    addSummaryRow('Half-round', channelColCount * 4, '-');
+                });
+
+                var summaryHtml = '';
+                Object.keys(globalSummary).forEach(function (key) {
+                    var row = globalSummary[key];
+                    var uniqueDims = [];
+                    row.dims.forEach(function (d) {
+                        if (uniqueDims.indexOf(d) === -1) {
+                            uniqueDims.push(d);
+                        }
                     });
-                } else if (normalDoorsQty > 0) {
-                    addSummaryRow('Shutter', normalDoorsQty, rw.toFixed(1) + ' x ' + rh.toFixed(1), '9 mm', rw, rh);
-                }
-                if (zDoorsQty > 0) addSummaryRow('Z-Shutter', zDoorsQty, rw.toFixed(1) + ' x ' + (lockerH * 0.65).toFixed(1), '9 mm', rw, lockerH * 0.65);
-                addSummaryRow('Lock', totalDoors, '-');
-                addSummaryRow('Hinges', totalDoors * 2, '-');
-                addSummaryRow('front-channel', (colCount + 1), '-');
-                addSummaryRow('back-channel', (colCount + 1), '-');
-                addSummaryRow('Half-round', (colCount +1)*4, '-');
-                
+                    var dimStr = uniqueDims.length > 0 ? uniqueDims.join(', ') : '-';
+
+                    summaryHtml += '<tr>';
+                    summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + row.item + '</td>';
+                    summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + row.qty + '</td>';
+                    summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + dimStr + '</td>';
+                    summaryHtml += '<td style="border: 1px solid #ccc; padding: 6px;">' + row.thickness + '</td>';
+                    summaryHtml += '</tr>';
+                });
+
                 var summaryTable = document.getElementById('summaryTable');
                 if (summaryTable) summaryTable.innerHTML = summaryHtml;
                 drawRequiredSheets(panelParts);
@@ -351,14 +492,32 @@
             if (!input || input.value.trim() === '') return [];
 
             return input.value.split(',')
-                .map(function(value) { return parseInt(value.trim()); })
-                .filter(function(value) { return value > 0; });
+                .map(function (value) { return parseInt(value.trim()); })
+                .filter(function (value) { return value > 0; });
+        }
+
+        function getShadeNameByColor(hex) {
+            if (typeof solids === 'undefined') return '';
+            var found = solids.find(function (s) { return s.color.toLowerCase() === hex.toLowerCase(); });
+            return found ? found.name : '';
         }
 
         function drawNormalDoor(ctx, x, y, w, h, scale, fillColor) {
-            ctx.fillStyle = fillColor;
+            ctx.fillStyle = fillColor || '#e9ecef';
             ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#333';
             ctx.strokeRect(x, y, w, h);
+            // Show shade name inside the locker cell
+            var sName = getShadeNameByColor(fillColor);
+            if (sName && w > 28 && h > 16) {
+                ctx.save();
+                ctx.font = 'bold 9px monospace';
+                ctx.fillStyle = '#1c1c2e';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(sName, x + w / 2, y + 3);
+                ctx.restore();
+            }
 
             var inset = Math.max(2, 5 * scale);
             ctx.strokeRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
@@ -390,7 +549,7 @@
             var cutY2 = y + fullH * 0.65;
             var inset = Math.max(2, 5 * scale);
 
-            ctx.fillStyle = topFillColor;
+            ctx.fillStyle = topFillColor || '#e9ecef';
             ctx.beginPath();
             ctx.moveTo(x, y);
             ctx.lineTo(x + w, y);
@@ -401,8 +560,11 @@
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
+            // shade name top half
+            var _tn = getShadeNameByColor(topFillColor);
+            if (_tn) { ctx.save(); ctx.font = 'bold 9px monospace'; ctx.fillStyle = '#1c1c2e'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(_tn, x + w * 0.4, y + cutY1 / 2 - y / 2); ctx.restore(); }
 
-            ctx.fillStyle = bottomFillColor;
+            ctx.fillStyle = bottomFillColor || '#e9ecef';
             ctx.beginPath();
             ctx.moveTo(x, cutY1);
             ctx.lineTo(cutX, cutY1);
@@ -479,14 +641,14 @@
 
             container.innerHTML = '<h3 style="text-align:center; margin:8px 0;">Required Sheets</h3>';
             var groups = {};
-            parts.forEach(function(part) {
+            parts.forEach(function (part) {
                 if (!groups[part.thickness]) groups[part.thickness] = [];
                 groups[part.thickness].push(part);
             });
-            
+
             var sheetCounts = {};
 
-            Object.keys(groups).sort().forEach(function(thickness) {
+            Object.keys(groups).sort().forEach(function (thickness) {
                 var availableSheets = getSheetsForThickness(thickness);
                 var packedSheets = getRequiredSheets(groups[thickness], availableSheets);
                 var planStats = getPlanStats(packedSheets);
@@ -494,7 +656,7 @@
                 thicknessTitle.textContent = thickness + ' panels: ' + packedSheets.length + ' sheet(s)';
                 thicknessTitle.style.margin = '10px 0 4px';
                 container.appendChild(thicknessTitle);
-                
+
                 sheetCounts[thickness] = packedSheets.length;
 
                 if (packedSheets.length === 0) {
@@ -512,11 +674,11 @@
                     ' sq.m | Total balance: ' + (planStats.wasteArea / 1000000).toFixed(2) + ' sq.m';
                 container.appendChild(planInfo);
 
-                packedSheets.forEach(function(sheet, index) {
+                packedSheets.forEach(function (sheet, index) {
                     var card = document.createElement('div');
                     card.className = 'sheet-card';
 
-                    var usedArea = sheet.items.reduce(function(total, item) {
+                    var usedArea = sheet.items.reduce(function (total, item) {
                         return total + item.finalW * item.finalH;
                     }, 0);
                     var sheetArea = sheet.stock.width * sheet.stock.height;
@@ -537,16 +699,16 @@
                     container.appendChild(card);
                 });
             });
-            
+
             var summaryTable = document.getElementById('summaryTable');
             if (summaryTable) {
-                Object.keys(sheetCounts).forEach(function(thickness) {
+                Object.keys(sheetCounts).forEach(function (thickness) {
                     if (sheetCounts[thickness] > 0) {
                         var tr = document.createElement('tr');
                         tr.innerHTML = '<td style="border: 1px solid #ccc; padding: 6px;">HPL Sheet ' + thickness + '</td>' +
-                                       '<td style="border: 1px solid #ccc; padding: 6px;">' + sheetCounts[thickness] + '</td>' +
-                                       '<td style="border: 1px solid #ccc; padding: 6px;">-</td>' +
-                                       '<td style="border: 1px solid #ccc; padding: 6px;">' + thickness + '</td>';
+                            '<td style="border: 1px solid #ccc; padding: 6px;">' + sheetCounts[thickness] + '</td>' +
+                            '<td style="border: 1px solid #ccc; padding: 6px;">-</td>' +
+                            '<td style="border: 1px solid #ccc; padding: 6px;">' + thickness + '</td>';
                         summaryTable.appendChild(tr);
                     }
                 });
@@ -560,13 +722,13 @@
         function getRequiredSheets(parts, availableSheets) {
             var candidates = [];
 
-            availableSheets.forEach(function(stock) {
+            availableSheets.forEach(function (stock) {
                 candidates.push(packPanels(parts, [stock]));
             });
 
             candidates.push(packPanels(parts, availableSheets));
 
-            return candidates.reduce(function(best, plan) {
+            return candidates.reduce(function (best, plan) {
                 if (!plan || plan.length === 0) return best;
                 if (!best || isBetterSheetPlan(plan, best)) return plan;
                 return best;
@@ -577,18 +739,18 @@
             var next = getPlanStats(nextPlan);
             var current = getPlanStats(currentPlan);
 
-            if (Math.abs(next.wasteArea - current.wasteArea) > 0.1) {
-                return next.wasteArea < current.wasteArea;
-            }
             if (next.sheetCount !== current.sheetCount) {
                 return next.sheetCount < current.sheetCount;
             }
-            return next.totalArea < current.totalArea;
+            if (next.totalArea !== current.totalArea) {
+                return next.totalArea < current.totalArea;
+            }
+            return next.wasteArea < current.wasteArea;
         }
 
         function getPlanStats(plan) {
-            return plan.reduce(function(stats, sheet) {
-                var usedArea = sheet.items.reduce(function(total, item) {
+            return plan.reduce(function (stats, sheet) {
+                var usedArea = sheet.items.reduce(function (total, item) {
                     return total + item.finalW * item.finalH;
                 }, 0);
                 var sheetArea = sheet.stock.width * sheet.stock.height;
@@ -606,11 +768,11 @@
         }
 
         function packPanels(parts, sheets) {
-            var sortedParts = parts.slice().sort(function(a, b) {
+            var sortedParts = parts.slice().sort(function (a, b) {
                 return (b.w * b.h) - (a.w * a.h);
             });
             var packedSheets = [];
-            var sortedSheets = sheets.slice().sort(function(a, b) {
+            var sortedSheets = sheets.slice().sort(function (a, b) {
                 return (a.width * a.height) - (b.width * b.height);
             });
 
@@ -652,8 +814,8 @@
                 { w: panel.h, h: panel.w, rotated: true }
             ];
 
-            orientations.forEach(function(size) {
-                sheet.freeRects.forEach(function(rect) {
+            orientations.forEach(function (size) {
+                sheet.freeRects.forEach(function (rect) {
                     if (size.w <= rect.w && size.h <= rect.h) {
                         var waste = rect.w * rect.h - size.w * size.h;
                         if (!best || waste < best.waste) {
@@ -676,7 +838,7 @@
             sheet.items.push(placed);
 
             var usedRect = { x: placed.x, y: placed.y, w: placed.finalW, h: placed.finalH };
-            sheet.freeRects = sheet.freeRects.flatMap(function(rect) {
+            sheet.freeRects = sheet.freeRects.flatMap(function (rect) {
                 return splitRect(rect, usedRect);
             });
             sheet.freeRects = pruneRects(sheet.freeRects);
@@ -693,7 +855,7 @@
             if (used.x + used.w < rect.x + rect.w) rects.push({ x: used.x + used.w, y: rect.y, w: rect.x + rect.w - used.x - used.w, h: rect.h });
             if (used.y > rect.y) rects.push({ x: rect.x, y: rect.y, w: rect.w, h: used.y - rect.y });
             if (used.y + used.h < rect.y + rect.h) rects.push({ x: rect.x, y: used.y + used.h, w: rect.w, h: rect.y + rect.h - used.y - used.h });
-            return rects.filter(function(next) { return next.w > 0 && next.h > 0; });
+            return rects.filter(function (next) { return next.w > 0 && next.h > 0; });
         }
 
         function pruneRects(rects) {
@@ -723,7 +885,7 @@
             ctx.lineWidth = 2;
             ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
-            sheet.items.forEach(function(item) {
+            sheet.items.forEach(function (item) {
                 var x = item.x * scale;
                 var y = item.y * scale;
                 var w = item.finalW * scale;
@@ -743,73 +905,12 @@
                 }
             });
         }
-    
+
         // Initialize the color palette
         color();
-
-        // Handle canvas clicks to color individual lockers
-        document.getElementById('cv').addEventListener('click', function(e) {
-            var cv = document.getElementById('cv');
-            var rect = cv.getBoundingClientRect();
-            var clickX = e.clientX - rect.left;
-            var clickY = e.clientY - rect.top;
-
-            var lh = parseFloat(document.getElementById('lh').value);
-            var lw = parseFloat(document.getElementById('lw').value);
-            var lc = parseInt(document.getElementById('lc').value);
-            var lr = parseInt(document.getElementById('lr').value);
-            var customColumns = getCustomColumns();
-            var skirting = parseFloat(document.getElementById('skirting').value) || 0;
-            var zshape = document.getElementById('zshape') ? document.getElementById('zshape').checked : false;
-            var zcol = document.getElementById('zcol') ? parseInt(document.getElementById('zcol').value) : 1;
-            
-            var padding = 50;
-            var scale = Math.min((cv.width - padding * 2) / lw, (cv.height - padding * 2) / lh);
-
-            var startX = (cv.width - (lw * scale)) / 2;
-            var startY = (cv.height - (lh * scale)) / 2;
-            var lockerH = Math.max(0, lh - skirting);
-            var colCount = customColumns.length > 0 ? customColumns.length : lc;
-            var rw = lw / colCount;
-            var rh = lockerH / lr;
-
-            if (clickX >= startX && clickX <= startX + (lw * scale) && clickY >= startY && clickY <= startY + (lockerH * scale)) {
-                if (customColumns.length > 0) {
-                    var col = Math.floor((clickX - startX) / (rw * scale));
-                    col = Math.max(0, Math.min(customColumns.length - 1, col));
-                    var isCustomZ = zshape && (zcol === 0 || col === zcol - 1);
-
-                    if (isCustomZ) {
-                        var zRow = getZDoorIndex(clickX, clickY, startX + col * rw * scale, startY, rw * scale, lockerH * scale);
-                        lockerColors['custom-' + col + '-' + zRow] = currentColor;
-                        calculate();
-                        return;
-                    }
-
-                    var columnRows = customColumns[col];
-                    var customRh = lockerH / columnRows;
-                    var row = Math.floor((clickY - startY) / (customRh * scale));
-                    row = Math.max(0, Math.min(columnRows - 1, row));
-                    lockerColors['custom-' + col + '-' + row] = currentColor;
-                    calculate();
-                    return;
-                }
-
-                var c = Math.floor((clickX - startX) / (rw * scale));
-                var isZ = zshape && (zcol === 0 || c === zcol - 1);
-                var r;
-
-                if (isZ) {
-                    r = getZDoorIndex(clickX, clickY, startX + c * rw * scale, startY, rw * scale, lockerH * scale);
-                } else {
-                    r = Math.floor((clickY - startY) / (rh * scale));
-                }
-
-                lockerColors[c + '-' + r] = currentColor;
-                calculate();
-            }
-        });
+        calculate();
     </script>
 
 </body>
+
 </html>
