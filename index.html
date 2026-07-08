@@ -182,11 +182,24 @@
       <button class="calcbtn" onclick="calculate()">Calculate</button>
       <button onclick="updateArea(selectedIndex)" class="btn">Update</button>
       <form id="dataForm" onsubmit="submitProject(event)" style="margin-top: 15px;">
+        <div id="editingProjectBanner"
+          style="display:none; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 5px; padding: 8px; margin-bottom: 10px; font-size: 12px; color: #2e7d32;">
+          Editing Project ID: <span id="editingProjectId" style="font-weight: bold;"></span>
+          <button type="button" onclick="clearLoadedProject()"
+            style="float: right; background: none; border: none; color: #c62828; cursor: pointer; font-weight: bold; padding: 0;">[Clear]</button>
+        </div>
         <div class="fg"><label>Name</label><input type="text" id="userName" required></div>
         <div class="fg"><label>Email</label><input type="text" id="userEmail" required></div>
         <div class="fg"><label>Notes</label><textarea id="userNotes" rows="3"
             style="width:100%; padding:8px; border:1px solid #c8cad4; border-radius:5px;"></textarea></div>
-        <button type="submit" class="calcbtn" style="background:#1976d2;">Save Project</button>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button type="submit" class="calcbtn"
+            style="background:#1976d2; flex: 1; margin: 0; white-space: nowrap;">Save as New</button>
+          <button type="button" id="updateProjectBtn" onclick="updateProject(event)" class="calcbtn"
+            style="background:#388e3c; flex: 1; display: none; margin: 0; white-space: nowrap;">Update (ID: <span
+              id="updateProjectIdText"></span>)</button>
+        </div>
+
         <div class="err" id="formMsg" style="margin-top:8px; padding:8px; display:none;"></div>
       </form>
       <div class="section-title" style="margin-top:18px;">Search & Load</div>
@@ -967,10 +980,12 @@
       var usedArea = 0;
       var totalArea = 0;
       var remainingParts = [];
+      var areaCount = 0;
 
       var plans = areaPlans || [];
       plans.forEach(function (entry) {
         if (!entry || !entry.areaResult) return;
+        areaCount++;
         var area = entry.areaResult;
         totalDoors += area.countDoors || 0;
         totalDividers += area.countDividers || 0;
@@ -1092,9 +1107,16 @@
       });
       var fastner = 0, sidecover = 0, frontcover = 0, rfrontcover = 0;
       if (supportType === "shoebox") {
-        fastner = totalDoors;
+        var wallVal = document.getElementById('wall').value;
+        var offset = 0;
+        if (wallVal === 'l') {
+          offset = 1;
+        } else if (wallVal === 's') {
+          offset = 2;
+        }
+        fastner = totalEnd + totalMid + offset;
         sidecover = (totalEnd + totalMid) * 2;
-        frontcover = shoelength / 1800;
+        frontcover = (shoelength * 2) / 1800;
         rfrontcover = parseFloat(frontcover.toFixed(2));
       }
 
@@ -1132,8 +1154,8 @@
         <tr><td>Front cover 1800</td><td>${rfrontcover}</td><td></td></tr>
         <tr><td>Dividers</td><td>${totalDividers}</td><td></td><td>${pilasterShadeDisplay}</td><td>${dividerDim}</td></tr>
         <tr><td>Mid panels</td><td>${totalMid}</td><td></td><td>${pilasterShadeDisplay}</td><td>${midPanelDim}</td></tr>
-        <tr><td>first panels</td><td>1</td><td></td><td>${pilasterShadeDisplay}</td><td>${epLdim}</td></tr>
-        <tr><td>End panels</td><td>1</td><td></td><td>${pilasterShadeDisplay}</td><td>${epRdim}</td></tr>
+        <tr><td>first panels</td><td>${areaCount}</td><td></td><td>${pilasterShadeDisplay}</td><td>${epLdim}</td></tr>
+        <tr><td>End panels</td><td>${areaCount}</td><td></td><td>${pilasterShadeDisplay}</td><td>${epRdim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td></td><td>${doorShadeDisplay}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td>${pilasterShadeDisplay}</td><td>${endWallDim}</td></tr>
         <tr><td>Notes</td><td> <input type="text" name="" id=""></td><td></td></tr>  `;
@@ -1293,6 +1315,8 @@
           showFormMessage(error.message || 'Unable to save data.', true);
         } else if (data && data.length > 0) {
           showFormMessage('Saved successfully (ID: ' + data[0].id + ').', false);
+          loadedProjectId = data[0].id;
+          updateProjectUI();
           searchProjects(true);
         } else {
           showFormMessage('Unable to save data.', true);
@@ -1364,7 +1388,78 @@
         payload.userEmail = data.email || payload.userEmail;
         payload.userNotes = data.notes || payload.userNotes;
         applyProjectData(payload);
+        loadedProjectId = projectId;
+        updateProjectUI();
         showFormMessage('Loaded project ID ' + projectId + '.', false);
+      } catch (error) {
+        showFormMessage('Error: ' + error.message, true);
+      }
+    }
+
+    var loadedProjectId = null;
+
+    function updateProjectUI() {
+      const banner = document.getElementById('editingProjectBanner');
+      const updateBtn = document.getElementById('updateProjectBtn');
+      const idSpan = document.getElementById('editingProjectId');
+      const btnIdSpan = document.getElementById('updateProjectIdText');
+      if (loadedProjectId) {
+        if (banner) banner.style.display = 'block';
+        if (updateBtn) updateBtn.style.display = 'inline-block';
+        if (idSpan) idSpan.textContent = loadedProjectId;
+        if (btnIdSpan) btnIdSpan.textContent = loadedProjectId;
+      } else {
+        if (banner) banner.style.display = 'none';
+        if (updateBtn) updateBtn.style.display = 'none';
+        if (idSpan) idSpan.textContent = '';
+        if (btnIdSpan) btnIdSpan.textContent = '';
+      }
+    }
+
+    function clearLoadedProject() {
+      loadedProjectId = null;
+      updateProjectUI();
+      showFormMessage('Cleared loaded project reference.', false);
+    }
+
+    async function updateProject(event) {
+      if (event) event.preventDefault();
+      if (!loadedProjectId) return;
+      var payload = collectProjectData();
+
+      if (!payload.userName || !payload.userEmail) {
+        showFormMessage('Name and email are required.', true);
+        return;
+      }
+      if (!window.supabaseClient) {
+        showFormMessage('Supabase client is not initialized.', true);
+        return;
+      }
+      try {
+        const projectDataObj = { ...payload };
+        delete projectDataObj.userName;
+        delete projectDataObj.userEmail;
+        delete projectDataObj.userNotes;
+
+        const { data, error } = await window.supabaseClient
+          .from('projects')
+          .update({
+            name: payload.userName,
+            email: payload.userEmail,
+            notes: payload.userNotes,
+            project_data: projectDataObj
+          })
+          .eq('id', loadedProjectId)
+          .select();
+
+        if (error) {
+          showFormMessage(error.message || 'Unable to update data.', true);
+        } else if (data && data.length > 0) {
+          showFormMessage('Updated successfully (ID: ' + loadedProjectId + ').', false);
+          searchProjects(true);
+        } else {
+          showFormMessage('Unable to update data.', true);
+        }
       } catch (error) {
         showFormMessage('Error: ' + error.message, true);
       }
