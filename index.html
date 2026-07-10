@@ -2353,12 +2353,90 @@
       }
 
       var rightEndRect = { x: ox + pw - epRpx, w: epRpx };
+      var wallW = 35; // width of the brick wall representation
+      var brickH = 12; // height of each brick row
+      var brickW = 24; // width of each brick
+
+      function drawBrickWall(startX, startY, width, height, isLeft) {
+        ctx.save();
+        // Base fill for brick wall
+        ctx.fillStyle = 'red';
+        ctx.fillRect(startX, startY, width, height);
+
+        // Mortar lines
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 0.8;
+
+        // Horizontal lines
+        for (var currY = startY; currY <= startY + height; currY += brickH) {
+          ctx.beginPath();
+          ctx.moveTo(startX, currY);
+          ctx.lineTo(startX + width, currY);
+          ctx.stroke();
+        }
+
+        // Vertical lines (staggered)
+        var rowIndex = 0;
+        for (var currY = startY; currY < startY + height; currY += brickH) {
+          var offset = (rowIndex % 2) * (brickW / 2);
+          for (var currX = startX - offset; currX < startX + width + brickW; currX += brickW) {
+            if (currX >= startX && currX <= startX + width) {
+              ctx.beginPath();
+              ctx.moveTo(currX, currY);
+              ctx.lineTo(currX, Math.min(currY + brickH, startY + height));
+              ctx.stroke();
+            }
+          }
+          rowIndex++;
+        }
+
+        // Dark border line separating the brick wall from the cubicles
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        if (isLeft) {
+          ctx.moveTo(startX + width, startY);
+          ctx.lineTo(startX + width, startY + height);
+        } else {
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(startX, startY + height);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Calculate support height dynamically (leg/shoebox height)
+      var supportH = 0;
+      if (r.supportType === 'legs' || r.supportType === 'shoebox') {
+        supportH = Math.max(18, 75 * scale);
+      }
+      var wallBottomY = floorY + supportH;
+
+      // Calculate top rail / height top dynamically
+      var wallTopY = oy;
+      if (r.topRail === 'yes') {
+        var topRailH = Math.max(6, 22 * scale);
+        var topRailOffset = (r.supportType === 'shoebox') ? 100 * scale : 0;
+        wallTopY = oy + topRailOffset - topRailH;
+      } else if (r.supportType === 'shoebox') {
+        wallTopY = oy + 100 * scale;
+      }
+
+      var wallHeight = wallBottomY - wallTopY;
+
+      // Draw the left brick wall
+      drawBrickWall(ox - wallW, wallTopY, wallW, wallHeight, true);
+      // Draw the right brick wall
+      drawBrickWall(ox + pw, wallTopY, wallW, wallHeight, false);
+
+      // Floor line representing the ground/legs baseline
       ctx.strokeStyle = '#1c1c2e';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(ox - 15, floorY);
-      ctx.lineTo(ox + pw + 15, floorY);
+      ctx.moveTo(ox - wallW - 15, wallBottomY);
+      ctx.lineTo(ox + pw + wallW + 15, wallBottomY);
       ctx.stroke();
+
 
       function drawPanel(rect, fill, stroke, lineWidth) {
         if (rect.w <= 0) return;
