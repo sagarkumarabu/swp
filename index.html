@@ -1870,7 +1870,64 @@
         }
         ctx.fillRect(sx, oy, sw, ph);
       }
+       /* 2. ARCHITECTURAL PERIMETER BRICK WALLS */
+      var wallType = document.getElementById('wall').value;
+      var wallThickness = 16; // Thickness of the brick wall block
 
+      // A. Create an on-the-fly repeatable Brick Pattern
+      var pcv = document.createElement('canvas');
+      pcv.width = 16;  // Width of a brick tile
+      pcv.height = 8;  // Height of a brick tile
+      var pctx = pcv.getContext('2d');
+      
+      // Base brick red color
+      pctx.fillStyle = '#b33939'; 
+      pctx.fillRect(0, 0, pcv.width, pcv.height);
+      
+      // White grout outlines
+      pctx.strokeStyle = '#ffffff';
+      pctx.lineWidth = 1;
+      pctx.strokeRect(0, 0, pcv.width, pcv.height);
+      // Half-brick stagger line
+      pctx.beginPath();
+      pctx.moveTo(pcv.width / 2, pcv.height / 2);
+      pctx.lineTo(pcv.width / 2, pcv.height);
+      pctx.stroke();
+
+      // B. Assign pattern and outer stroke border
+      var brickPattern = ctx.createPattern(pcv, 'repeat');
+      ctx.fillStyle = brickPattern;
+      ctx.strokeStyle = '#ffffff'; // White outer borders
+      ctx.lineWidth = 2;
+
+      // C. Draw the structural paths based on configuration
+      if (wallType === 'c') {
+        // Left Wall Block
+        ctx.fillRect(ox - wallThickness, oy, wallThickness, ph);
+        ctx.strokeRect(ox - wallThickness, oy, wallThickness, ph);
+        
+        // Right Wall Block
+        ctx.fillRect(ox + pw, oy, wallThickness, ph);
+        ctx.strokeRect(ox + pw, oy, wallThickness, ph);
+        
+        // Back Wall Block (Spans across everything including side thicknesses)
+        ctx.fillRect(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
+        ctx.strokeRect(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
+        
+      } else if (wallType === 'l') {
+        // Left Wall Block
+        ctx.fillRect(ox - wallThickness, oy, wallThickness, ph);
+        ctx.strokeRect(ox - wallThickness, oy, wallThickness, ph);
+        
+      } else if (wallType === 's') {
+        // Left Wall Block
+        ctx.fillRect(ox - wallThickness, oy, wallThickness, ph);
+        ctx.strokeRect(ox - wallThickness, oy, wallThickness, ph);
+        
+        // Right Wall Block
+        ctx.fillRect(ox + pw, oy, wallThickness, ph);
+        ctx.strokeRect(ox + pw, oy, wallThickness, ph);
+      }
       /* 1. BACK WALL LINE (Dark Slate Gray) */
       ctx.strokeStyle = '#2a2e45'; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + pw, oy); ctx.stroke();
@@ -2425,9 +2482,9 @@
       var wallHeight = wallBottomY - wallTopY;
 
       // Draw the left brick wall
-      drawBrickWall(ox - wallW, wallTopY, wallW, wallHeight, true);
+      // drawBrickWall(ox - wallW, wallTopY, wallW, wallHeight, true);
       // Draw the right brick wall
-      drawBrickWall(ox + pw, wallTopY, wallW, wallHeight, false);
+      // drawBrickWall(ox + pw, wallTopY, wallW, wallHeight, false);
 
       // Floor line representing the ground/legs baseline
       ctx.strokeStyle = '#1c1c2e';
