@@ -32,10 +32,17 @@
         </div>
         <div class="fg">
           <label>Wall type</label>
-          <select id="wall">
+          <select id="wall" onchange="toggleWallSideControl(); calculate()">
             <option value="c">C wall</option>
             <option value="l">L wall</option>
             <option value="s">Straight wall</option>
+          </select>
+        </div>
+        <div class="fg" id="wallSideField" style="display:none; margin-top:6px;">
+          <label>L-wall side</label>
+          <select id="wallSide" onchange="calculate()">
+            <option value="left">Left side</option>
+            <option value="right">Right side</option>
           </select>
         </div>
       </div>
@@ -299,6 +306,17 @@
       document.getElementById('endpanelFields').classList.toggle('hidden', !isU);
       document.getElementById('endpanelEqualField').style.display = isU ? 'none' : '';
     }
+    function toggleWallSideControl() {
+      var wallType = document.getElementById('wall').value;
+      var field = document.getElementById('wallSideField');
+      var select = document.getElementById('wallSide');
+      if (!field || !select) return;
+      var isL = wallType === 'l';
+      field.style.display = isL ? '' : 'none';
+      if (!isL) {
+        select.value = 'left';
+      }
+    }
     function onSpacingChange() { buildStallInputs(); calculate(); }
     function onStallCountChange() { buildStallInputs(); calculate(); }
     // AREA MANAGEMENT FUNCTIONS
@@ -317,6 +335,7 @@
       const supportType = document.getElementById('supportType').value;
       const topRail = document.getElementById('topRail').value;
       const wallType = document.getElementById('wall').value;
+      const wallSide = (wallType === 'l' ? (document.getElementById('wallSide').value || 'left') : 'left').toLowerCase();
       const umph = parseFloat(document.getElementById('umph').value) || 900;
       const umpw = parseFloat(document.getElementById('umpw').value) || 450;
       const umpq = parseInt(document.getElementById('umpq').value, 10) || 0;
@@ -382,6 +401,7 @@
         supportType,
         topRail,
         wallType,
+        wallSide,
         doorShade: document.getElementById('doorShade').value,
         pilasterShade: document.getElementById('pilasterShade').value,
         topRailShade: document.getElementById('topRailShade').value,
@@ -436,6 +456,8 @@
       document.getElementById('supportType').value = currentArea.supportType;
       document.getElementById('topRail').value = currentArea.topRail;
       document.getElementById('wall').value = currentArea.wallType;
+      document.getElementById('wallSide').value = currentArea.wallSide || 'left';
+      toggleWallSideControl();
       document.getElementById('doorShade').value = currentArea.doorShade;
       document.getElementById('pilasterShade').value = currentArea.pilasterShade;
       document.getElementById('topRailShade').value = currentArea.topRailShade;
@@ -479,6 +501,7 @@
       area.supportType = document.getElementById('supportType').value;
       area.topRail = document.getElementById('topRail').value;
       area.wallType = document.getElementById('wall').value;
+      area.wallSide = (area.wallType === 'l' ? (document.getElementById('wallSide').value || 'left') : 'left').toLowerCase();
       area.doorShade = document.getElementById('doorShade').value;
       area.pilasterShade = document.getElementById('pilasterShade').value;
       area.topRailShade = document.getElementById('topRailShade').value;
@@ -1870,63 +1893,63 @@
         }
         ctx.fillRect(sx, oy, sw, ph);
       }
-       /* 2. ARCHITECTURAL PERIMETER BRICK WALLS */
-      var wallType = document.getElementById('wall').value;
+       /* 2. ARCHITECTURAL PERIMETER BRICK WALLS ===========================*/
+      var wallType = r.wallType || document.getElementById('wall').value;
+      var wallSide = (r.wallSide || document.getElementById('wallSide').value || 'left').toLowerCase();
       var wallThickness = 16; // Thickness of the brick wall block
 
-      // A. Create an on-the-fly repeatable Brick Pattern
-      var pcv = document.createElement('canvas');
-      pcv.width = 16;  // Width of a brick tile
-      pcv.height = 8;  // Height of a brick tile
-      var pctx = pcv.getContext('2d');
-      
-      // Base brick red color
-      pctx.fillStyle = '#b33939'; 
-      pctx.fillRect(0, 0, pcv.width, pcv.height);
-      
-      // White grout outlines
-      pctx.strokeStyle = '#ffffff';
-      pctx.lineWidth = 1;
-      pctx.strokeRect(0, 0, pcv.width, pcv.height);
-      // Half-brick stagger line
-      pctx.beginPath();
-      pctx.moveTo(pcv.width / 2, pcv.height / 2);
-      pctx.lineTo(pcv.width / 2, pcv.height);
-      pctx.stroke();
+      function drawBrickWallSegment(startX, startY, width, height) {
+        ctx.save();
+        ctx.fillStyle = '#b33939';
+        ctx.fillRect(startX, startY, width, height);
 
-      // B. Assign pattern and outer stroke border
-      var brickPattern = ctx.createPattern(pcv, 'repeat');
-      ctx.fillStyle = brickPattern;
-      ctx.strokeStyle = '#ffffff'; // White outer borders
-      ctx.lineWidth = 2;
+        ctx.strokeStyle = '#f7efe6';
+        ctx.lineWidth = 1;
+        var brickH = 8;
+        var brickW = 16;
 
-      // C. Draw the structural paths based on configuration
+        for (var y = startY; y <= startY + height; y += brickH) {
+          ctx.beginPath();
+          ctx.moveTo(startX, y);
+          ctx.lineTo(startX + width, y);
+          ctx.stroke();
+        }
+
+        var rowIndex = 0;
+        for (var y = startY; y < startY + height; y += brickH) {
+          var offset = (rowIndex % 2) * (brickW / 2);
+          for (var x = startX - offset; x < startX + width + brickW; x += brickW) {
+            if (x + brickW > startX && x < startX + width) {
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              ctx.lineTo(x, Math.min(y + brickH, startY + height));
+              ctx.stroke();
+            }
+          }
+          rowIndex++;
+        }
+
+        ctx.strokeStyle = '#6e2d2d';
+        ctx.lineWidth = 2.2;
+        ctx.strokeRect(startX, startY, width, height);
+        ctx.restore();
+      }
+
       if (wallType === 'c') {
-        // Left Wall Block
-        ctx.fillRect(ox - wallThickness, oy, wallThickness, ph);
-        ctx.strokeRect(ox - wallThickness, oy, wallThickness, ph);
-        
-        // Right Wall Block
-        ctx.fillRect(ox + pw, oy, wallThickness, ph);
-        ctx.strokeRect(ox + pw, oy, wallThickness, ph);
-        
-        // Back Wall Block (Spans across everything including side thicknesses)
-        ctx.fillRect(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
-        ctx.strokeRect(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
-        
+        drawBrickWallSegment(ox - wallThickness, oy, wallThickness, ph);
+        drawBrickWallSegment(ox + pw, oy, wallThickness, ph);
+        drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
       } else if (wallType === 'l') {
-        // Left Wall Block
-        ctx.fillRect(ox - wallThickness, oy, wallThickness, ph);
-        ctx.strokeRect(ox - wallThickness, oy, wallThickness, ph);
-        
+        if (wallSide === 'right') {
+          drawBrickWallSegment(ox + pw, oy, wallThickness, ph);
+          drawBrickWallSegment(ox + pw, oy - wallThickness, wallThickness, wallThickness);
+        } else {
+          drawBrickWallSegment(ox - wallThickness, oy, wallThickness, ph);
+          drawBrickWallSegment(ox - wallThickness, oy - wallThickness, wallThickness, wallThickness);
+        }
       } else if (wallType === 's') {
-        // Left Wall Block
-        ctx.fillRect(ox - wallThickness, oy, wallThickness, ph);
-        ctx.strokeRect(ox - wallThickness, oy, wallThickness, ph);
-        
-        // Right Wall Block
-        ctx.fillRect(ox + pw, oy, wallThickness, ph);
-        ctx.strokeRect(ox + pw, oy, wallThickness, ph);
+        drawBrickWallSegment(ox - wallThickness, oy, wallThickness, ph);
+        drawBrickWallSegment(ox + pw, oy, wallThickness, ph);
       }
       /* 1. BACK WALL LINE (Dark Slate Gray) */
       ctx.strokeStyle = '#2a2e45'; ctx.lineWidth = 4;
