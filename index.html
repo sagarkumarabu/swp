@@ -1156,13 +1156,14 @@
         doorShadeDisplay = `<span style="display:inline-block;width:14px;height:14px;background:${firstArea.doorShade};border:1px solid #888;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>` + (name ? `<span>${name}</span>` : '');
       }
       var series = document.getElementById("series").value;
+      var clientName = document.getElementById('userName').value.trim();
+      var clientEmail = document.getElementById('userEmail').value.trim();
+      var clientNotes = document.getElementById('userNotes').value.trim();
       var html = `
-      <tr> <td>Client Name: </td> <td><input type="text" > </td> <td>Address:</td><td> <input type="text" > </td> <th> Date</th><td>Divider height:</td> <td> ${firstArea.dH}</td></tr>
-  <tr> <td> Mobile:</td><td><input type="tel"maxlength="10" required ></td><td>Site name:</td><td> <input type="text" name="" id=""></td>
-    <td>${new Intl.DateTimeFormat('en-GB').format(new Date())}</td><td>Door:</td> <td> ${firstArea.doorW} </td></tr>
-        <tr><th>${profile}</th><th>Series</th><th>Cubicle </th><th>Ump</th><th>Project Name:</th><td>Depth:</td> <td> ${firstArea.D}</td></tr>
-        <tr><td>working qty</td><td>${series}</td>  <td>${totalDoors}</td><td>${umpCount}</td>
-          <td><input type="text"></td> <td>Overall height:</td> <td>${cubicleHeight} </td></tr>
+      <tr><td>Client Name:</td><td><input type="text" value="${escapeHtml(clientName)}" readonly></td><td>Email:</td><td><input type="text" value="${escapeHtml(clientEmail)}" readonly></td><th>Date</th><td>Divider height:</td><td>${firstArea.dH}</td></tr>
+      <tr><td>Mobile:</td><td><input type="text" value="${escapeHtml(clientEmail)}" readonly></td><td>Site name:</td><td><input type="text" value="${escapeHtml(clientName)}" readonly></td><td>${new Intl.DateTimeFormat('en-GB').format(new Date())}</td><td>Door:</td><td>${firstArea.doorW}</td></tr>
+      <tr><th>${profile}</th><th>Series</th><th>Cubicle </th><th>Ump</th><th>Project Name:</th><td>Depth:</td><td>${firstArea.D}</td></tr>
+      <tr><td>working qty</td><td>${series}</td><td>${totalDoors}</td><td>${umpCount}</td><td><input type="text" value="${escapeHtml(clientName)}" readonly></td><td>Overall height:</td><td>${cubicleHeight}</td></tr>
 <tr><th>sheet </th> <th>Item</th><th>Shade</th><th>Quantity</th></tr>
          ${summaryRows}
         <tr><th>Particulars</th> <th>Qty</th> <th>Rate</th> <th>Amount </th> <th > Dimension</th>   <td></td> <td></td></tr>
@@ -1181,7 +1182,7 @@
         <tr><td>End panels</td><td>${areaCount}</td><td></td><td>${pilasterShadeDisplay}</td><td>${epRdim}</td></tr>
         <tr><td>Doors</td><td>${totalDoors}</td><td></td><td>${doorShadeDisplay}</td><td>${doorDim}</td></tr>
         <tr><td>End Walls</td><td>${endWallCount}</td><td></td><td>${pilasterShadeDisplay}</td><td>${endWallDim}</td></tr>
-        <tr><td>Notes</td><td> <input type="text" name="" id=""></td><td></td></tr>  `;
+        <tr><td>Notes</td><td><input type="text" value="${escapeHtml(clientNotes)}" readonly></td><td></td></tr>`;
 
       // Stock management: remaining pieces table
       remainingParts.sort(function (a, b) { return b.area - a.area; });
@@ -1341,6 +1342,7 @@
           loadedProjectId = data[0].id;
           updateProjectUI();
           searchProjects(true);
+          switchTab('summary');
         } else {
           showFormMessage('Unable to save data.', true);
         }
@@ -1943,13 +1945,16 @@
         if (wallSide === 'right') {
           drawBrickWallSegment(ox + pw, oy, wallThickness, ph);
           drawBrickWallSegment(ox + pw, oy - wallThickness, wallThickness, wallThickness);
+                drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness); 
+
         } else {
           drawBrickWallSegment(ox - wallThickness, oy, wallThickness, ph);
           drawBrickWallSegment(ox - wallThickness, oy - wallThickness, wallThickness, wallThickness);
+                drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness); 
+
         }
       } else if (wallType === 's') {
-        drawBrickWallSegment(ox - wallThickness, oy, wallThickness, ph);
-        drawBrickWallSegment(ox + pw, oy, wallThickness, ph);
+                drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness); 
       }
       /* 1. BACK WALL LINE (Dark Slate Gray) */
       ctx.strokeStyle = '#2a2e45'; ctx.lineWidth = 4;
