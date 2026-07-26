@@ -1,9 +1,7 @@
 
-// Redirect unauthenticated users away from protected pages,
-// but don't redirect when already on the login page.
-// if (!localStorage.getItem('authToken') && !/\/?login\.html$/.test(window.location.pathname)) {
-//   window.location.href = 'login.html';
-// }
+if (!localStorage.getItem('authToken') && !/\/?login\.html$/.test(window.location.pathname)) {
+  window.location.href = 'login.html';
+}
 
 (function () {
   const STORAGE_KEY = 'hplFontScale';
@@ -185,8 +183,8 @@ function buildPalette() {
 }
 // Supabase configuration: ensure the CDN <script> is included in your HTML
 // before this file, or import `createClient` as an ES module instead.
-const supabaseUrl = "https://ijnqtrmhvrphwwwiqhkl.supabase.co";
-const supabaseKey = "sb_publishable_Xs8LhB0UU7-8ttz8lE7iGg_dI_8GEuc";
+const supabaseUrl = "https://iqyjpjpnixldzktkzmly.supabase.co";
+const supabaseKey = "sb_publishable_1Gk_BAY_9x6LqmDO3gBl_Q_phvvQL5_";
 let supabaseClient = null;
 if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'function') {
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
