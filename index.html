@@ -95,6 +95,8 @@
         <div class="fg"><label>Door width (mm)</label><input type="number" id="doorWidth" value="600" min="400"></div>
         <div class="fg"><label>Door ht (mm)</label><input type="number" id="doorHeight" value="1790" min="1000"></div>
       </div>
+      <div class="section-title">Door swing direction</div>
+      <div id="doorDirectionControls" class="door-direction-list"></div>
       <div class="row2">
         <div class="fg"><label>Divider ht (mm)</label>
           <input type="number" id="dividerHeight" value="1790" min="1000">
@@ -317,8 +319,74 @@
         select.value = 'left';
       }
     }
-    function onSpacingChange() { buildStallInputs(); calculate(); }
-    function onStallCountChange() { buildStallInputs(); calculate(); }
+    function onSpacingChange() { buildStallInputs(); buildDoorDirectionControls(); calculate(); }
+    function onStallCountChange() { buildStallInputs(); buildDoorDirectionControls(); calculate(); }
+
+    function getDoorDirections(count) {
+      const container = document.getElementById('doorDirectionControls');
+      const doorCount = Math.max(0, parseInt(count, 10) || 0);
+      if (container) {
+        const inputs = Array.from(container.querySelectorAll('input[data-door-index]'));
+        if (inputs.length) {
+          const res = inputs.map(input => (input.checked ? 'left' : 'right'));
+          while (res.length < doorCount) res.push('right');
+          return res.slice(0, doorCount);
+        }
+      }
+      if (currentArea && Array.isArray(currentArea.doorDirections) && currentArea.doorDirections.length) {
+        const saved = currentArea.doorDirections.slice(0, doorCount);
+        while (saved.length < doorCount) saved.push('right');
+        return saved;
+      }
+      return Array.from({ length: doorCount }, () => 'right');
+    }
+
+    function syncDoorDirectionsToActiveArea(directions) {
+      const normalized = Array.isArray(directions) ? directions : [];
+      if (selectedIndex !== null && Array.isArray(areas) && areas[selectedIndex]) {
+        areas[selectedIndex].doorDirections = normalized.slice();
+      }
+      if (currentArea && currentArea !== result) {
+        currentArea.doorDirections = normalized.slice();
+      }
+      return normalized;
+    }
+
+    function buildDoorDirectionControls(explicitDirections) {
+      const container = document.getElementById('doorDirectionControls');
+      if (!container) return;
+      const count = Math.max(0, parseInt(document.getElementById('numStalls').value, 10) || 0);
+      
+      if (!count) {
+        container.innerHTML = '<div class="door-direction-empty">Enter the cubicle count to set door swing directions.</div>';
+        return;
+      }
+
+      const directions = explicitDirections || getDoorDirections(count);
+      container.innerHTML = '';
+      const fragment = document.createElement('div');
+      directions.forEach((direction, index) => {
+        const row = document.createElement('label');
+        row.className = 'door-direction-row';
+        row.innerHTML = `<input type="checkbox" data-door-index="${index}" 
+        ${direction === 'left' ? 'checked' : ''} onchange="updateDoorDirectionControls()"> Door ${index + 1} opens left`;
+        fragment.appendChild(row);
+      });
+      container.appendChild(fragment);
+    }
+
+    function updateDoorDirectionControls() {
+      const count = Math.max(0, parseInt(document.getElementById('numStalls').value, 10) || 0);
+      const directions = getDoorDirections(count);
+      syncDoorDirectionsToActiveArea(directions);
+      buildDoorDirectionControls(directions);
+      if (currentArea) {
+        if (activeTab === 'floor') drawFloor(currentArea);
+        if (activeTab === 'elev') drawElev(currentArea);
+      }
+      calculate();
+      return directions;
+    }
     // AREA MANAGEMENT FUNCTIONS
     function addArea() {
       const width = parseFloat(document.getElementById('totalwidth').value) || 2000;
@@ -389,6 +457,7 @@
         numCubicles,
         equalSpacing,
         ewEqual,
+        doorDirections: getDoorDirections(numCubicles),
         epL,
         epR,
         midPanelW,
@@ -415,6 +484,7 @@
       areas.push(currentArea);
       selectedIndex = areas.length - 1;
       renderAreasUI();
+      buildDoorDirectionControls();
       alert('Area added: ' + currentArea.numCubicles + ' cubicles, ' + currentArea.width + 'x' + currentArea.depth
         + ' ,' + currentArea.umpq + ' ump ' + currentArea.umpw + 'x' + currentArea.umph);
       document.getElementById("umph").value = 0;
@@ -469,6 +539,7 @@
       document.getElementById('endpanelLeft').value = currentArea.epL;
       document.getElementById('endpanelRight').value = currentArea.epR;
       toggleEndpanel();
+      buildDoorDirectionControls();
 
       // If stall widths are editable individually
       currentArea.stallWidths.forEach((sw, i) => {
@@ -540,11 +611,13 @@
       // update drawing values
       area.divT = 25;
       area.pilT = 40;
+      area.doorDirections = getDoorDirections(area.numCubicles);
       // recalculate panel sizes
       const remain = (area.width / area.numCubicles) - area.doorW;
       area.midPanelW = area.epL + area.epR;
       currentArea = area;
       renderAreasUI();
+      buildDoorDirectionControls();
       // force redraw
       calculate();
       if (activeTab === 'floor') {
@@ -1291,6 +1364,7 @@
       toggleEndpanel();
       buildStallInputs();
       renderAreasUI();
+      buildDoorDirectionControls();
       calculate();
       if (currentArea) {
         if (activeTab === 'floor') drawFloor(currentArea);
@@ -1303,6 +1377,41 @@
       messageBox.textContent = message;
       messageBox.style.display = 'block';
       messageBox.style.color = isError ? '#b00020' : '#1b5e20';
+    }
+
+    async function getNextProjectId() {
+      if (!window.supabaseClient) {
+        return null;
+      }
+
+      const { data, error } = await window.supabaseClient
+        .from('projects')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        throw error;
+      }
+
+      const latestId = data && data.length ? Number(data[0].id) : 0;
+      return Number.isFinite(latestId) ? latestId + 1 : 1;
+    }
+
+    async function buildProjectRecord(payload, projectDataObj) {
+      const record = {
+        name: payload.userName,
+        email: payload.userEmail,
+        notes: payload.userNotes,
+        project_data: projectDataObj
+      };
+
+      const nextId = await getNextProjectId();
+      if (nextId !== null) {
+        record.id = nextId;
+      }
+
+      return record;
     }
 
     async function submitProject(event) {
@@ -1319,20 +1428,16 @@
       }
       try {
         const projectDataObj = { ...payload };
+        delete projectDataObj.id;
         delete projectDataObj.userName;
         delete projectDataObj.userEmail;
         delete projectDataObj.userNotes;
 
+        const record = await buildProjectRecord(payload, projectDataObj);
+
         const { data, error } = await window.supabaseClient
           .from('projects')
-          .insert([
-            {
-              name: payload.userName,
-              email: payload.userEmail,
-              notes: payload.userNotes,
-              project_data: projectDataObj
-            }
-          ])
+          .insert([record])
           .select();
 
         if (error) {
@@ -1636,6 +1741,7 @@
         // Count matrices for material takeoffs
         var countDoors = n;
         var countDividers = n - 1;
+        var doorDirections = getDoorDirections(n);
         var countEndWalls = ({ l: 1, c: 0, s: 2 })[wallType] || 0;
         var countMid = n > 1 ? n - 1 : 0;
         var countEnd = 2;
@@ -1646,7 +1752,7 @@
         var grossArea = theight * 1.12;
         result = {
           n, W, D, dH, doorH, doorW, pilH, pilT, divT, supportType, topRail, wallType, doorShade, pilasterShade, topRailShade, pilasterShade: document.getElementById('pilasterShade').value, epL, epR, ewEqual, stallWidths,
-          countDoors, countDividers, countEndWalls, countMid, countEnd, endPanelW, midPanelW, theight, grossArea, umph, umpw, umpq
+          countDoors, countDividers, countEndWalls, countMid, countEnd, endPanelW, midPanelW, theight, grossArea, umph, umpw, umpq, doorDirections
         };
 
         function buildAreaResult(area) {
@@ -1682,6 +1788,7 @@
             countEndWalls,
             endPanelW: area.epL,
             midPanelW: area.midPanelW,
+            doorDirections: Array.isArray(area.doorDirections) ? area.doorDirections : getDoorDirections(n),
             umph: area.umph,
             umpw: area.umpw,
             umpq: area.umpq,
@@ -1895,7 +2002,7 @@
         }
         ctx.fillRect(sx, oy, sw, ph);
       }
-       /* 2. ARCHITECTURAL PERIMETER BRICK WALLS ===========================*/
+      /* 2. ARCHITECTURAL PERIMETER BRICK WALLS ===========================*/
       var wallType = r.wallType || document.getElementById('wall').value;
       var wallSide = (r.wallSide || document.getElementById('wallSide').value || 'left').toLowerCase();
       var wallThickness = 16; // Thickness of the brick wall block
@@ -1945,16 +2052,16 @@
         if (wallSide === 'right') {
           drawBrickWallSegment(ox + pw, oy, wallThickness, ph);
           drawBrickWallSegment(ox + pw, oy - wallThickness, wallThickness, wallThickness);
-                drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness); 
+          drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
 
         } else {
           drawBrickWallSegment(ox - wallThickness, oy, wallThickness, ph);
           drawBrickWallSegment(ox - wallThickness, oy - wallThickness, wallThickness, wallThickness);
-                drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness); 
+          drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
 
         }
       } else if (wallType === 's') {
-                drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness); 
+        drawBrickWallSegment(ox - wallThickness, oy - wallThickness, pw + (wallThickness * 2), wallThickness);
       }
       /* 1. BACK WALL LINE (Dark Slate Gray) */
       ctx.strokeStyle = '#2a2e45'; ctx.lineWidth = 4;
@@ -2023,6 +2130,7 @@
       for (var i = 0; i < stallXs.length; i++) {
         var sx = stallXs[i], sw = r.stallWidths[i] * scale;
         var gap;
+        var doorDirection = (Array.isArray(r.doorDirections) && r.doorDirections[i]) ? r.doorDirections[i] : 'right';
         if (i === 0) {
           gap = r.epL;
         } else if (i === r.n - 1) {
@@ -2040,10 +2148,19 @@
         ctx.beginPath(); ctx.moveTo(dxL + doorWpx, oy + ph); ctx.lineTo(sx + sw, oy + ph); ctx.stroke();
         // Active Swinging Doors (Rendered open 90-degrees inward)
         ctx.strokeStyle = '#5a5a5a'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.moveTo(dxL, oy + ph); ctx.lineTo(dxL, oy + ph - doorWpx); ctx.stroke();
+        if (doorDirection === 'left') {
+          ctx.beginPath(); ctx.moveTo(dxL, oy + ph); ctx.lineTo(dxL, oy + ph - doorWpx); ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.moveTo(dxL + doorWpx, oy + ph); ctx.lineTo(dxL + doorWpx, oy + ph - doorWpx); ctx.stroke();
+        }
         // Trajectory Swing Arc 
         ctx.beginPath(); ctx.strokeStyle = '#9e9e9e'; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3]);
-        ctx.arc(dxL, oy + ph, doorWpx, -Math.PI / 2, 0, false); ctx.stroke(); ctx.setLineDash([]);
+        if (doorDirection === 'left') {
+          ctx.arc(dxL, oy + ph, doorWpx, -Math.PI / 2, 0, false);
+        } else {
+          ctx.arc(dxL + doorWpx, oy + ph, doorWpx, -Math.PI / 2, -Math.PI, true);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
       }
 
       /* 6. LABELS AND TEXT ANNOTATIONS (Shifted lower down to clear the toilet bowl space) */
